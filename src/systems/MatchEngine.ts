@@ -15,6 +15,7 @@ import {
   POINTS_GOAL,
   POINTS_TACKLE,
   POINTS_STAR_BONUS,
+  POINTS_INJURY,
   SCORE_MULTIPLIER,
   HALF_DURATION,
 } from '../config/gameConfig';
@@ -199,6 +200,7 @@ export class MatchEngine {
     const injuryChance = getInjuryChance(attacker.playerDef.stats.strength);
     if (Math.random() < injuryChance) {
       target.injure();
+      attackerTeam.score += POINTS_INJURY;
     }
 
     return true;
