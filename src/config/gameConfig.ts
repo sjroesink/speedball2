@@ -49,8 +49,8 @@ export const BALL_PICKUP_RANGE        = 36;   // pixels
 
 // ------ Player Movement & Tackling ------
 
-export const PLAYER_TACKLE_LUNGE      = 72;   // px distance of a lunge
-export const PLAYER_TACKLE_HIT_RADIUS = 60;   // px hit detection radius
+export const PLAYER_TACKLE_LUNGE      = 96;   // px distance of a lunge
+export const PLAYER_TACKLE_HIT_RADIUS = 72;   // px hit detection radius
 export const KEEPER_RANGE             = 144;  // px keeper wanders from goal centre
 export const KEEPER_SAVE_ZONE         = 96;   // px zone around goal line for saves
 

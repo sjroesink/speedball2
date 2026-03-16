@@ -358,7 +358,7 @@ export class PhysicsManager {
         nearestOpp = opp;
       }
     }
-    if (nearestOpp && nearestDist < 200) {
+    if (nearestOpp && nearestDist < 250) {
       attacker.facingAngle = Math.atan2(
         nearestOpp.y - attacker.y,
         nearestOpp.x - attacker.x,
