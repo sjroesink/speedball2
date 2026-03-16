@@ -379,11 +379,12 @@ export class MatchScene extends Phaser.Scene {
     }
 
     // Movement — don't move while holding fire with ball (winding up throw)
+    // Don't override velocity during non-interruptible states (TACKLING, STUNNED, etc.)
     const windingUp = input.fireHeld && player.hasBall;
     if (!windingUp && (input.dx !== 0 || input.dy !== 0)) {
-      player.moveInDirection(input.dx, input.dy);
+      if (player.canAct) player.moveInDirection(input.dx, input.dy);
     } else if (!windingUp) {
-      player.idle();
+      if (player.canAct) player.idle();
     }
 
     // Fire button: throw happens on RELEASE (hold longer = lob higher)

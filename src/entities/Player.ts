@@ -115,8 +115,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.facingAngle = Math.atan2(ny, nx);
     this.playerState = PlayerState.RUNNING;
 
+    const speed = this.hasBall ? this.maxSpeed * 0.8 : this.maxSpeed;
     const body = this.body as Phaser.Physics.Arcade.Body;
-    body.setVelocity(nx * this.maxSpeed, ny * this.maxSpeed);
+    body.setVelocity(nx * speed, ny * speed);
   }
 
   /** Stops the player and sets state to IDLE. */

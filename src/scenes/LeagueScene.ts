@@ -271,7 +271,7 @@ export class LeagueScene extends Phaser.Scene {
 
     this.menuSelector = new MenuSelector(this, menuItems, menuCbs);
 
-    createMenuText(this, cx, height - 30, 'UP/DOWN  Z/SPACE TO SELECT', 15);
+    createMenuText(this, cx, height - 30, 'UP/DOWN  Z/SPACE/ENTER TO SELECT', 15);
   }
 
   // ------ Simulation -------------------------------------------------------

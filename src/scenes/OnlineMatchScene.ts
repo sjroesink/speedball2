@@ -9,8 +9,6 @@ import { ALL_TEAMS } from '../config/teams';
 import {
   ARENA_WIDTH,
   ARENA_HEIGHT,
-  TILE_WIDTH,
-  TILE_HEIGHT,
 } from '../config/gameConfig';
 import { Ball } from '../entities/Ball';
 import { Player } from '../entities/Player';
@@ -125,18 +123,11 @@ export class OnlineMatchScene extends Phaser.Scene {
   // ------ Floor ------------------------------------------------------------
 
   private drawFloor(): void {
-    const cols = ARENA_WIDTH  / TILE_WIDTH;
-    const rows = ARENA_HEIGHT / TILE_HEIGHT;
-
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < cols; col++) {
-        this.add.image(
-          col * TILE_WIDTH  + TILE_WIDTH  / 2,
-          row * TILE_HEIGHT + TILE_HEIGHT / 2,
-          'floor_tile',
-        );
-      }
-    }
+    this.add.tileSprite(
+      ARENA_WIDTH / 2, ARENA_HEIGHT / 2,
+      ARENA_WIDTH, ARENA_HEIGHT,
+      'floor_tile',
+    );
   }
 
   // ------ Team creation ----------------------------------------------------
@@ -166,7 +157,7 @@ export class OnlineMatchScene extends Phaser.Scene {
     for (let i = 0; i < starters.length; i++) {
       const def       = starters[i];
       const [x, y]   = positions[i];
-      const p         = new Player(this, x, y, def, side, teamDef.color);
+      const p         = new Player(this, x, y, def, side);
       p.homeX = x;
       p.homeY = y;
       players.push(p);

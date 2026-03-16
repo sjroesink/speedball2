@@ -77,6 +77,7 @@ export class MenuSelector {
   private cursors:   Phaser.Types.Input.Keyboard.CursorKeys;
   private keyZ:      Phaser.Input.Keyboard.Key;
   private keySpace:  Phaser.Input.Keyboard.Key;
+  private keyEnter:  Phaser.Input.Keyboard.Key;
 
   // Debounce flags – prevent holding a key from firing continuously
   // selectWasDown starts true so a held key from the previous menu doesn't
@@ -100,6 +101,7 @@ export class MenuSelector {
     this.cursors  = scene.input.keyboard.createCursorKeys();
     this.keyZ     = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
     this.keySpace = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.keyEnter = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
 
     this.highlight(this.index);
   }
@@ -109,7 +111,7 @@ export class MenuSelector {
   update(): void {
     const upDown    = this.cursors.up.isDown;
     const downDown  = this.cursors.down.isDown;
-    const selectDown = this.keyZ.isDown || this.keySpace.isDown;
+    const selectDown = this.keyZ.isDown || this.keySpace.isDown || this.keyEnter.isDown;
 
     if (upDown && !this.upWasDown) {
       this.move(-1);

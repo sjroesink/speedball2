@@ -161,16 +161,13 @@ export function createArena(scene: Phaser.Scene): ArenaLayout {
 
   /** Helper: create a wall rectangle as a static physics body. */
   function addWall(x: number, y: number, w: number, h: number): void {
-    const g = scene.add.graphics();
-    g.fillStyle(0x770000, 1);
-    g.fillRect(0, 0, w, h);
-    g.generateTexture(`wall_${x}_${y}`, w, h);
-    g.destroy();
-
-    const wall = scene.physics.add.staticImage(x + w / 2, y + h / 2, `wall_${x}_${y}`);
-    wall.setImmovable(true);
-    wall.refreshBody();
-    walls.add(wall);
+    // Render wall using tiled wall_tile texture
+    scene.add.tileSprite(x + w / 2, y + h / 2, w, h, 'wall_tile');
+    // Physics-only zone for collision
+    const zone = scene.add.zone(x + w / 2, y + h / 2, w, h);
+    scene.physics.add.existing(zone, true); // true = static
+    (zone.body as Phaser.Physics.Arcade.StaticBody).setSize(w, h);
+    walls.add(zone);
   }
 
   // Top wall

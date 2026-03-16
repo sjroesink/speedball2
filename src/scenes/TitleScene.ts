@@ -43,7 +43,7 @@ export class TitleScene extends Phaser.Scene {
     this.menuSelector = new MenuSelector(this, items, callbacks);
 
     // Footer
-    createMenuText(this, cx, height - 48, 'UP/DOWN  Z/SPACE TO SELECT', 18);
+    createMenuText(this, cx, height - 48, 'UP/DOWN  Z/SPACE/ENTER TO SELECT', 18);
   }
 
   update(_time: number, _delta: number): void {

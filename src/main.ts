@@ -23,7 +23,7 @@ const config: Phaser.Types.Core.GameConfig = {
 
   scale: {
     mode:       Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
+    autoCenter: Phaser.Scale.NO_CENTER,
     width:      960,
     height:     672,
   },
@@ -55,5 +55,7 @@ const config: Phaser.Types.Core.GameConfig = {
   ],
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const game = new Phaser.Game(config);
+
+// Expose for testing/debugging
+(window as any).__PHASER_GAME__ = game;

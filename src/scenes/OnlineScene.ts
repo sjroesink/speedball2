@@ -83,7 +83,7 @@ export class OnlineScene extends Phaser.Scene {
     }).setOrigin(0.5).setVisible(false);
 
     // Footer
-    createMenuText(this, cx, height - 48, 'UP/DOWN  Z/SPACE TO SELECT', 18);
+    createMenuText(this, cx, height - 48, 'UP/DOWN  Z/SPACE/ENTER TO SELECT', 18);
 
     // Register network handlers
     this.registerNetworkHandlers();

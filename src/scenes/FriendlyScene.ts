@@ -55,7 +55,7 @@ export class FriendlyScene extends Phaser.Scene {
     const callbacks = ALL_TEAMS.map((team) => () => onSelect(team));
 
     // Footer
-    createMenuText(this, cx, height - 42, 'UP/DOWN  Z/SPACE TO SELECT', 18);
+    createMenuText(this, cx, height - 42, 'UP/DOWN  Z/SPACE/ENTER TO SELECT', 18);
 
     this.menuSelector = new MenuSelector(this, items, callbacks);
   }
@@ -96,7 +96,7 @@ export class FriendlyScene extends Phaser.Scene {
       this.startMatch(modes[i].p1, modes[i].p2);
     };
 
-    createMenuText(this, cx, height - 42, 'UP/DOWN  Z/SPACE TO SELECT', 18);
+    createMenuText(this, cx, height - 42, 'UP/DOWN  Z/SPACE/ENTER TO SELECT', 18);
 
     this.menuSelector = new MenuSelector(this, items, callbacks);
   }

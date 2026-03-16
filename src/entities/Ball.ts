@@ -39,6 +39,9 @@ export class Ball extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
+    // Ball should render in front of players
+    this.setDepth(50);
+
     this.initPhysics();
   }
 
