@@ -1,0 +1,48 @@
+name: Build & Push Server Image
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server/**'
+      - 'src/utils/types.ts'
+      - 'src/config/gameConfig.ts'
+      - 'src/config/teams.ts'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install server dependencies
+        working-directory: server
+        run: npm ci
+
+      - name: Compile TypeScript
+        working-directory: server
+        run: npx tsc
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: server
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/speedball2-server:latest
+            ghcr.io/${{ github.repository_owner }}/speedball2-server:${{ github.sha }}
