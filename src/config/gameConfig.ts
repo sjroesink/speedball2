@@ -125,8 +125,10 @@ export function getShotSpeed(str: number): number {
  * @param defenderDef   Defender's defense stat
  */
 export function getTackleSuccessChance(attackerStr: number, defenderDef: number): number {
-  const raw = 0.3 + (attackerStr - defenderDef) * 0.04;
-  return Math.min(0.95, Math.max(0.05, raw));
+  // Base 70% — tackles should succeed most of the time like in the original.
+  // Stat difference shifts this ±5% per point.
+  const raw = 0.70 + (attackerStr - defenderDef) * 0.05;
+  return Math.min(0.95, Math.max(0.25, raw));
 }
 
 /**
