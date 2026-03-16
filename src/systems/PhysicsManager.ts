@@ -21,6 +21,7 @@ import {
   GOAL_Y_TOP,
   GOAL_Y_BOTTOM,
   PLAYER_TACKLE_HIT_RADIUS,
+  PLAYER_TACKLE_LUNGE,
   getShotSpeed,
   ARENA_WIDTH,
   ARENA_HEIGHT,
@@ -347,11 +348,13 @@ export class PhysicsManager {
    * TACKLE_HIT_RADIUS, then calls engine.tryTackle for each hit.
    */
   handleTackle(attacker: Player, opponents: Player[]): void {
-    // Auto-face the nearest opponent before tackling (like original SB2)
+    // Find nearest opponent within tackle range
     let nearestOpp: Player | null = null;
     let nearestDist = Infinity;
     for (const opp of opponents) {
       if (!opp.isActive) continue;
+      if (opp.playerState === PlayerState.STUNNED ||
+          opp.playerState === PlayerState.INJURED) continue;
       const dx = opp.x - attacker.x;
       const dy = opp.y - attacker.y;
       const d = Math.sqrt(dx * dx + dy * dy);
@@ -360,6 +363,8 @@ export class PhysicsManager {
         nearestOpp = opp;
       }
     }
+
+    // Auto-face the nearest opponent
     if (nearestOpp && nearestDist < 250) {
       attacker.facingAngle = Math.atan2(
         nearestOpp.y - attacker.y,
@@ -367,8 +372,15 @@ export class PhysicsManager {
       );
     }
 
-    // Start the lunge — actual hit detection runs every frame in checkActiveTackles()
-    attacker.tackle();
+    // Start the lunge animation
+    if (!attacker.tackle()) return;
+
+    // IMMEDIATE hit: if opponent is within tackle range, tackle them NOW
+    // (don't wait for the lunge animation to bring us closer)
+    const tackleRange = PLAYER_TACKLE_LUNGE + PLAYER_TACKLE_HIT_RADIUS;
+    if (nearestOpp && nearestDist <= tackleRange) {
+      this.engine.tryTackle(attacker, nearestOpp, this.ball);
+    }
   }
 
   /**
