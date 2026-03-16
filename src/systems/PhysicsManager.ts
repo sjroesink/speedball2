@@ -344,6 +344,26 @@ export class PhysicsManager {
    * TACKLE_HIT_RADIUS, then calls engine.tryTackle for each hit.
    */
   handleTackle(attacker: Player, opponents: Player[]): void {
+    // Auto-face the nearest opponent before tackling (like original SB2)
+    let nearestOpp: Player | null = null;
+    let nearestDist = Infinity;
+    for (const opp of opponents) {
+      if (!opp.isActive) continue;
+      const dx = opp.x - attacker.x;
+      const dy = opp.y - attacker.y;
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d < nearestDist) {
+        nearestDist = d;
+        nearestOpp = opp;
+      }
+    }
+    if (nearestOpp && nearestDist < 200) {
+      attacker.facingAngle = Math.atan2(
+        nearestOpp.y - attacker.y,
+        nearestOpp.x - attacker.x,
+      );
+    }
+
     if (!attacker.tackle()) return; // Player.tackle() returns false if cannot act
 
     // Check along the entire lunge path (start → endpoint) for opponents.
