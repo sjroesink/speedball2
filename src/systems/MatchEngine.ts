@@ -141,7 +141,7 @@ export class MatchEngine {
    * @param scoringTeam  The team that just scored
    * @param _multipliers Arena multiplier elements (unused here — deactivated via activateMultiplier)
    */
-  scoreGoal(scoringTeam: TeamMatchData, _multipliers: MultiplierElement[]): void {
+  scoreGoal(scoringTeam: TeamMatchData, multipliers: MultiplierElement[]): void {
     const pts = scoringTeam.hasMultiplier
       ? POINTS_GOAL * SCORE_MULTIPLIER
       : POINTS_GOAL;
@@ -149,15 +149,19 @@ export class MatchEngine {
     scoringTeam.score += pts;
     scoringTeam.goals += 1;
 
+    // Consume the multiplier if active
     if (scoringTeam.hasMultiplier) {
       scoringTeam.hasMultiplier = false;
+      for (const mult of multipliers) {
+        if (mult.activeForTeam === scoringTeam.side) {
+          mult.deactivate();
+          mult.sprite.setVisible(true);
+        }
+      }
     }
 
-    // Transition state
     this.state      = MatchState.GOAL_SCORED;
     this.stateTimer = 2;
-
-    // Kickoff goes to the team that was scored against
     this.kickoffSide = this.getOpponentTeam(scoringTeam.side).side;
   }
 
