@@ -146,11 +146,12 @@ export class MatchScene extends Phaser.Scene {
       this.matchConfig.awayTeam.shortName,
     );
 
-    // 11. Camera
+    // 11. Camera — zoomed in, tight follow on the ball (like original SB2)
     this.cameras.main
       .setBounds(0, 0, ARENA_WIDTH, ARENA_HEIGHT)
-      .startFollow(this.ball, true, 0.1, 0.1)
-      .setDeadzone(120, 120);
+      .startFollow(this.ball, true, 0.15, 0.15)
+      .setDeadzone(40, 40)
+      .setZoom(1.8);
 
     // 12. Kick off
     this.setupKickoff();
