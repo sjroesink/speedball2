@@ -224,21 +224,47 @@ export class MatchScene extends Phaser.Scene {
     this.homeAI?.update(delta);
     this.awayAI?.update(delta);
 
-    // 5. Ball & player updates
+    // 5. Highlight controlled players
+    this.highlightControlledPlayers();
+
+    // 6. Ball & player updates
     this.ball.update(_time, delta);
     for (const p of this.homePlayers) p.update(_time, delta);
     for (const p of this.awayPlayers) p.update(_time, delta);
 
-    // 6. Physics checks
+    // 7. Physics checks
     this.physics_.update();
 
-    // 7. HUD update
+    // 8. HUD update
     this.hud.update(
       this.engine.homeTeam,
       this.engine.awayTeam,
       this.engine.timer,
       this.engine.half,
     );
+  }
+
+  // ------ Controlled player highlight ----------------------------------------
+
+  private highlightControlledPlayers(): void {
+    const highlight = (players: Player[], team: TeamMatchData) => {
+      const controlled = this.engine.getControlledPlayer(team);
+      for (const p of players) {
+        p.setAlpha(p.isActive ? (p === controlled ? 1 : 0.7) : 0.3);
+      }
+    };
+    if (this.matchConfig.p1Controls !== null) {
+      highlight(
+        this.matchConfig.p1Controls === TeamSide.HOME ? this.homePlayers : this.awayPlayers,
+        this.engine.getTeam(this.matchConfig.p1Controls),
+      );
+    }
+    if (this.matchConfig.p2Controls !== null) {
+      highlight(
+        this.matchConfig.p2Controls === TeamSide.HOME ? this.homePlayers : this.awayPlayers,
+        this.engine.getTeam(this.matchConfig.p2Controls),
+      );
+    }
   }
 
   // ------ Floor ------------------------------------------------------------
