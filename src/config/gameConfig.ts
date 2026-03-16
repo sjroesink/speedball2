@@ -34,6 +34,8 @@ export const MULTIPLIER_RESPAWN_TIME = 10;   // seconds before a multiplier powe
 export const POINTS_GOAL        = 10;
 export const POINTS_TACKLE      = 2;
 export const POINTS_STAR_BONUS  = 10;
+export const POINTS_DOME        = 2;
+export const POINTS_INJURY      = 10;
 export const SCORE_MULTIPLIER   = 2;   // 2× when multiplier power-up collected
 
 // ------ Ball Physics ------

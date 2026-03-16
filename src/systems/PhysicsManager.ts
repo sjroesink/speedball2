@@ -22,6 +22,7 @@ import {
   PLAYER_TACKLE_HIT_RADIUS,
   getShotSpeed,
   ARENA_WIDTH,
+  POINTS_DOME,
 } from '../config/gameConfig';
 
 // ================================================================
@@ -358,6 +359,12 @@ export class PhysicsManager {
       Math.cos(newAngle) * newSpeed,
       Math.sin(newAngle) * newSpeed,
     );
+
+    // Award 2 points to the last team that touched the ball
+    if (ball.lastTouchedBy) {
+      const team = this.engine.getTeam(ball.lastTouchedBy);
+      team.score += POINTS_DOME;
+    }
   }
 
   /** Finds the Player entity that currently owns the ball. */
