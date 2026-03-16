@@ -11,6 +11,12 @@ export interface PlayerInput {
   dy: number;
   /** Fire button — true only on the frame it is first pressed */
   fire: boolean;
+  /** Fire button released this frame (throw happens on release) */
+  fireReleased: boolean;
+  /** How long fire was held before release (seconds). 0 if not released this frame. */
+  fireHeldTime: number;
+  /** Fire button is currently held down */
+  fireHeld: boolean;
   /** Pass button — true only on the frame it is first pressed */
   pass: boolean;
 }
@@ -34,11 +40,13 @@ export class InputManager {
   private p2Fire:  Phaser.Input.Keyboard.Key;
   private p2Pass:  Phaser.Input.Keyboard.Key;
 
-  // Manual debounce — JustDown can be unreliable across scenes
+  // Debounce + hold tracking
   private p1FireWasDown = false;
   private p1PassWasDown = false;
+  private p1FireHoldStart = 0; // timestamp when fire was first pressed
   private p2FireWasDown = false;
   private p2PassWasDown = false;
+  private p2FireHoldStart = 0;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -64,10 +72,16 @@ export class InputManager {
 
   /** Returns the current input state for Player 1 (arrows + Space/Ctrl). */
   getP1Input(): PlayerInput {
+    const now = this.scene.time.now;
     const fireDown = this.p1Fire.isDown;
     const passDown = this.p1Pass.isDown;
     const fireJust = fireDown && !this.p1FireWasDown;
     const passJust = passDown && !this.p1PassWasDown;
+    const fireReleased = !fireDown && this.p1FireWasDown;
+
+    if (fireJust) this.p1FireHoldStart = now;
+    const fireHeldTime = fireReleased ? (now - this.p1FireHoldStart) / 1000 : 0;
+
     this.p1FireWasDown = fireDown;
     this.p1PassWasDown = passDown;
 
@@ -75,16 +89,25 @@ export class InputManager {
       dx: (this.p1Left.isDown ? -1 : 0) + (this.p1Right.isDown ? 1 : 0),
       dy: (this.p1Up.isDown ? -1 : 0) + (this.p1Down.isDown ? 1 : 0),
       fire: fireJust,
+      fireReleased,
+      fireHeldTime,
+      fireHeld: fireDown,
       pass: passJust,
     };
   }
 
   /** Returns the current input state for Player 2 (WASD + Q/E). */
   getP2Input(): PlayerInput {
+    const now = this.scene.time.now;
     const fireDown = this.p2Fire.isDown;
     const passDown = this.p2Pass.isDown;
     const fireJust = fireDown && !this.p2FireWasDown;
     const passJust = passDown && !this.p2PassWasDown;
+    const fireReleased = !fireDown && this.p2FireWasDown;
+
+    if (fireJust) this.p2FireHoldStart = now;
+    const fireHeldTime = fireReleased ? (now - this.p2FireHoldStart) / 1000 : 0;
+
     this.p2FireWasDown = fireDown;
     this.p2PassWasDown = passDown;
 
@@ -92,6 +115,9 @@ export class InputManager {
       dx: (this.p2Left.isDown ? -1 : 0) + (this.p2Right.isDown ? 1 : 0),
       dy: (this.p2Up.isDown ? -1 : 0) + (this.p2Down.isDown ? 1 : 0),
       fire: fireJust,
+      fireReleased,
+      fireHeldTime,
+      fireHeld: fireDown,
       pass: passJust,
     };
   }

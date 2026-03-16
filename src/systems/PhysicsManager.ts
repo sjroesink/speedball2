@@ -104,6 +104,7 @@ export class PhysicsManager {
   checkBallPickup(): void {
     if (!this.ball.isLoose()) return;
     if (this.ball.pickupCooldown > 0) return;
+    if (this.ball.isHigh()) return; // can't pick up a high ball
 
     const allPlayers = [...this.homePlayers, ...this.awayPlayers];
     let nearest:  Player | null = null;
@@ -269,19 +270,35 @@ export class PhysicsManager {
    * Releases the ball from the given player and fires it toward (targetX, targetY)
    * at the player's shot speed.
    */
-  shootBall(player: Player, targetX: number, targetY: number): void {
+  /**
+   * Releases the ball from the given player and fires it toward (targetX, targetY).
+   * @param lobPower  0 = ground throw (fast), 0–1 = lob height (slower but flies over players)
+   */
+  shootBall(player: Player, targetX: number, targetY: number, lobPower: number = 0): void {
     player.hasBall = false;
     this.ball.release();
+
+    // Stop the player briefly when throwing (like original SB2)
+    player.idle();
 
     const dx    = targetX - player.x;
     const dy    = targetY - player.y;
     const len   = Math.sqrt(dx * dx + dy * dy);
     if (len === 0) return;
 
-    const speed = getShotSpeed(player.playerDef.stats.strength);
+    const baseSpeed = getShotSpeed(player.playerDef.stats.strength);
+    // Lobs are slower on the ground plane but travel through the air
+    const speedMult = 1.0 - lobPower * 0.4; // lob = 60% ground speed
+    const speed = baseSpeed * speedMult;
+
     const body  = this.ball.body as Phaser.Physics.Arcade.Body;
     body.setVelocity((dx / len) * speed, (dy / len) * speed);
     this.ball.lastTouchedBy = player.teamSide;
+
+    // Launch lob arc if power > 0
+    if (lobPower > 0.1) {
+      this.ball.lob(lobPower * 2.5); // upward velocity scales with hold time
+    }
   }
 
   /**

@@ -378,30 +378,31 @@ export class MatchScene extends Phaser.Scene {
       player = this.engine.getControlledPlayer(team);
     }
 
-    // Movement
-    if (input.dx !== 0 || input.dy !== 0) {
+    // Movement — don't move while holding fire with ball (winding up throw)
+    const windingUp = input.fireHeld && player.hasBall;
+    if (!windingUp && (input.dx !== 0 || input.dy !== 0)) {
       player.moveInDirection(input.dx, input.dy);
-    } else {
+    } else if (!windingUp) {
       player.idle();
     }
 
-    // Fire button
-    if (input.fire) {
-      if (player.hasBall) {
-        // Shoot in player's facing direction, or toward goal if standing still
-        if (player.playerState === PlayerState.RUNNING) {
-          const shootDist = 500;
-          const targetX = player.x + Math.cos(player.facingAngle) * shootDist;
-          const targetY = player.y + Math.sin(player.facingAngle) * shootDist;
-          this.physics_.shootBall(player, targetX, targetY);
-        } else {
-          const targetY = side === TeamSide.HOME ? GOAL_Y_TOP : GOAL_Y_BOTTOM;
-          this.physics_.shootBall(player, ARENA_WIDTH / 2, targetY);
-        }
-      } else {
-        // Tackle opponents
-        this.physics_.handleTackle(player, opponents.players);
-      }
+    // Fire button: throw happens on RELEASE (hold longer = lob higher)
+    // Short tap (< 0.15s) = quick ground throw
+    // Hold longer = higher lob that flies over players
+    if (input.fireReleased && player.hasBall) {
+      // Clamp hold time: 0–0.8s maps to lobPower 0–1
+      const lobPower = Math.min(1, Math.max(0, (input.fireHeldTime - 0.15) / 0.65));
+
+      // Shoot in player's facing direction
+      const shootDist = 500;
+      const targetX = player.x + Math.cos(player.facingAngle) * shootDist;
+      const targetY = player.y + Math.sin(player.facingAngle) * shootDist;
+      this.physics_.shootBall(player, targetX, targetY, lobPower);
+    }
+
+    // Quick tap fire without ball = tackle
+    if (input.fire && !player.hasBall) {
+      this.physics_.handleTackle(player, opponents.players);
     }
 
     // Pass button
@@ -410,7 +411,6 @@ export class MatchScene extends Phaser.Scene {
         // Pass to nearest teammate
         this.physics_.passBall(player, team.players);
       }
-      // Without ball: no action needed (auto-switch handles it)
     }
   }
 }
