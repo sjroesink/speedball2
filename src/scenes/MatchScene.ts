@@ -3,7 +3,7 @@
 // ============================================================
 
 import Phaser from 'phaser';
-import { TeamDef, TeamSide, MatchState, PlayerRole } from '../utils/types';
+import { TeamDef, TeamSide, MatchState, PlayerRole, PlayerState } from '../utils/types';
 import { ALL_TEAMS } from '../config/teams';
 import {
   ARENA_WIDTH,
@@ -387,9 +387,16 @@ export class MatchScene extends Phaser.Scene {
     // Fire button
     if (input.fire) {
       if (player.hasBall) {
-        // Shoot toward opponent goal
-        const targetY = side === TeamSide.HOME ? GOAL_Y_TOP : GOAL_Y_BOTTOM;
-        this.physics_.shootBall(player, ARENA_WIDTH / 2, targetY);
+        // Shoot in player's facing direction, or toward goal if standing still
+        if (player.playerState === PlayerState.RUNNING) {
+          const shootDist = 500;
+          const targetX = player.x + Math.cos(player.facingAngle) * shootDist;
+          const targetY = player.y + Math.sin(player.facingAngle) * shootDist;
+          this.physics_.shootBall(player, targetX, targetY);
+        } else {
+          const targetY = side === TeamSide.HOME ? GOAL_Y_TOP : GOAL_Y_BOTTOM;
+          this.physics_.shootBall(player, ARENA_WIDTH / 2, targetY);
+        }
       } else {
         // Tackle opponents
         this.physics_.handleTackle(player, opponents.players);
