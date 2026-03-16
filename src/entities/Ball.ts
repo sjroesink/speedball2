@@ -74,7 +74,7 @@ export class Ball extends Phaser.Physics.Arcade.Sprite {
   /** Releases the ball from its current owner with a brief pickup cooldown. */
   release(): void {
     this.owner = null;
-    this.pickupCooldown = 0.15; // 150ms before anyone can pick it up again
+    this.pickupCooldown = 0.35; // 350ms before anyone can pick it up again
   }
 
   /** Returns true when no player owns the ball. */

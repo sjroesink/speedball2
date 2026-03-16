@@ -278,8 +278,8 @@ export class PhysicsManager {
     player.hasBall = false;
     this.ball.release();
 
-    // Stop the player briefly when throwing (like original SB2)
-    player.idle();
+    // Brief throw recovery — player can't move/chase their own ball
+    player.throwRecovery();
 
     const dx    = targetX - player.x;
     const dy    = targetY - player.y;
@@ -327,6 +327,7 @@ export class PhysicsManager {
 
     player.hasBall = false;
     this.ball.release();
+    player.throwRecovery();
 
     const dx  = target.x - player.x;
     const dy  = target.y - player.y;

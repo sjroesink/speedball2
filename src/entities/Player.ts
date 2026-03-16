@@ -14,11 +14,20 @@ import {
 // Injury recovery duration (seconds) — defined in spec as 10 s
 const INJURY_DURATION = 10;
 
+function angleToDirIndex(angle: number): number {
+  // Convert atan2 angle (0=East, CW in screen) to compass index (0=N, CW)
+  // In Phaser screen coords: right=0, down=+PI/2, left=+-PI, up=-PI/2
+  const adjusted = angle + Math.PI / 2;
+  const normalized = ((adjusted % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+  return Math.floor((normalized + Math.PI / 8) / (Math.PI / 4)) % 8;
+}
+
 export class Player extends Phaser.Physics.Arcade.Sprite {
   // ------ Core properties -------------------------------------------------
   readonly playerDef:         PlayerDef;
   readonly teamSide:          TeamSide;
   readonly isControlledByHuman: boolean;
+  private readonly teamKey:   'home' | 'away';
 
   playerState: PlayerState = PlayerState.IDLE;
   hasBall:     boolean     = false;
@@ -42,13 +51,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     y: number,
     playerDef: PlayerDef,
     teamSide: TeamSide,
-    teamColor: number,
     isControlledByHuman: boolean = false,
   ) {
-    super(scene, x, y, 'player');
+    super(scene, x, y, teamSide === TeamSide.HOME ? 'player_home' : 'player_away');
 
     this.playerDef           = playerDef;
     this.teamSide            = teamSide;
+    this.teamKey             = teamSide === TeamSide.HOME ? 'home' : 'away';
     this.isControlledByHuman = isControlledByHuman;
     this.homeX               = x;
     this.homeY               = y;
@@ -56,9 +65,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     scene.add.existing(this);
     scene.physics.add.existing(this);
-
-    // Apply team colour tint
-    this.setTint(teamColor);
 
     this.initPhysics();
   }
@@ -153,6 +159,18 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   /**
+   * Brief recovery after throwing/passing. Player can't move for a short time.
+   * This prevents the player from immediately chasing and re-catching their own ball.
+   */
+  throwRecovery(): void {
+    this.playerState = PlayerState.SHOOTING;
+    this.stateTimer  = 0.25; // 250ms recovery
+
+    const body = this.body as Phaser.Physics.Arcade.Body;
+    body.setVelocity(0, 0);
+  }
+
+  /**
    * Injures the player for INJURY_DURATION seconds.
    * The player becomes inactive (alpha 0.3) until recovery.
    */
@@ -160,7 +178,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.playerState = PlayerState.INJURED;
     this.stateTimer  = INJURY_DURATION;
 
-    this.setAlpha(0.3);
+    this.setAlpha(0.5);
     this.setActive(false);
 
     const body = this.body as Phaser.Physics.Arcade.Body;
@@ -172,6 +190,42 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   /** Returns the shot speed (px/s) based on this player's strength stat. */
   getShotSpeed(): number {
     return getShotSpeed(this.playerDef.stats.strength);
+  }
+
+  // ------ Animation --------------------------------------------------------
+
+  private updateAnimation(): void {
+    const dir = angleToDirIndex(this.facingAngle);
+    switch (this.playerState) {
+      case PlayerState.IDLE:
+        this.stop();
+        this.setFrame(dir);
+        break;
+      case PlayerState.RUNNING: {
+        const animKey = `run_${this.teamKey}_${dir}`;
+        if (this.anims.currentAnim?.key !== animKey) {
+          this.play(animKey);
+        }
+        break;
+      }
+      case PlayerState.TACKLING:
+        this.stop();
+        this.setFrame(32 + dir);
+        break;
+      case PlayerState.STUNNED:
+        this.stop();
+        this.setFrame(40 + dir);
+        break;
+      case PlayerState.INJURED:
+        this.stop();
+        this.setFrame(48 + dir);
+        break;
+      case PlayerState.SHOOTING:
+      case PlayerState.PASSING:
+        this.stop();
+        this.setFrame(56 + dir);
+        break;
+    }
   }
 
   // ------ Update -----------------------------------------------------------
@@ -188,6 +242,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.onStateTimerExpired();
       }
     }
+
+    this.updateAnimation();
   }
 
   // ------ Private helpers --------------------------------------------------
@@ -196,6 +252,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     switch (this.playerState) {
       case PlayerState.STUNNED:
       case PlayerState.TACKLING:
+      case PlayerState.SHOOTING:
+      case PlayerState.PASSING:
         this.playerState = PlayerState.IDLE;
         (this.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
         break;
