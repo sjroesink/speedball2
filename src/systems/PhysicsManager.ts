@@ -346,18 +346,40 @@ export class PhysicsManager {
   handleTackle(attacker: Player, opponents: Player[]): void {
     if (!attacker.tackle()) return; // Player.tackle() returns false if cannot act
 
-    // Calculate lunge endpoint
-    const lungeX = attacker.x + Math.cos(attacker.facingAngle) * 72; // PLAYER_TACKLE_LUNGE
-    const lungeY = attacker.y + Math.sin(attacker.facingAngle) * 72;
+    // Check along the entire lunge path (start → endpoint) for opponents.
+    // An opponent is hit if they are close to any point on the lunge line.
+    const faceCos = Math.cos(attacker.facingAngle);
+    const faceSin = Math.sin(attacker.facingAngle);
+    const lungeLen = 72; // PLAYER_TACKLE_LUNGE
+    const hitRadius = PLAYER_TACKLE_HIT_RADIUS;
 
     for (const opp of opponents) {
       if (!opp.isActive) continue;
 
-      const dx = opp.x - lungeX;
-      const dy = opp.y - lungeY;
-      const d  = Math.sqrt(dx * dx + dy * dy);
+      const dx = opp.x - attacker.x;
+      const dy = opp.y - attacker.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
 
-      if (d <= PLAYER_TACKLE_HIT_RADIUS) {
+      // Quick range check — skip if too far away
+      if (dist > lungeLen + hitRadius) continue;
+
+      // Project opponent position onto the lunge direction
+      const dot = dx * faceCos + dy * faceSin;
+
+      // Opponent must be roughly in front (not behind)
+      if (dot < -hitRadius * 0.5) continue;
+
+      // Clamp projection to the lunge line segment [0, lungeLen]
+      const t = Math.max(0, Math.min(lungeLen, dot));
+      const closestX = attacker.x + faceCos * t;
+      const closestY = attacker.y + faceSin * t;
+
+      // Distance from opponent to closest point on the lunge line
+      const cx = opp.x - closestX;
+      const cy = opp.y - closestY;
+      const closestDist = Math.sqrt(cx * cx + cy * cy);
+
+      if (closestDist <= hitRadius) {
         this.engine.tryTackle(attacker, opp, this.ball);
       }
     }
