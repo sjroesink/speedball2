@@ -143,13 +143,13 @@ export class PhysicsManager {
     if (!inGoalWidth) return;
 
     if (by <= GOAL_Y_TOP) {
-      // Ball in top goal — Away team scores
-      const scoringTeam = this.engine.getTeam(TeamSide.AWAY);
+      // Ball in top goal — Home team scores (they attack upward)
+      const scoringTeam = this.engine.getTeam(TeamSide.HOME);
       this.engine.scoreGoal(scoringTeam, this.arena.multipliers);
       this.ball.release();
     } else if (by >= GOAL_Y_BOTTOM) {
-      // Ball in bottom goal — Home team scores
-      const scoringTeam = this.engine.getTeam(TeamSide.HOME);
+      // Ball in bottom goal — Away team scores (they attack downward)
+      const scoringTeam = this.engine.getTeam(TeamSide.AWAY);
       this.engine.scoreGoal(scoringTeam, this.arena.multipliers);
       this.ball.release();
     }

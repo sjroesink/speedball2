@@ -715,25 +715,11 @@ export class ServerSimulation {
     if (!inGoalWidth) return;
 
     if (by <= GOAL_Y_TOP) {
-      // Ball in top goal — AWAY scores (they attack toward top)
-      this.scoreGoal(this.away, TeamSide.HOME);
-    } else if (by >= GOAL_Y_BOTTOM) {
-      // Ball in bottom goal — HOME scores (they attack toward bottom... wait)
-      // HOME defends bottom, attacks top. So if ball is in bottom goal,
-      // the AWAY team scored (they attack toward bottom).
-      // Actually: re-read PhysicsManager:
-      //   by <= GOAL_Y_TOP → Away scores
-      //   by >= GOAL_Y_BOTTOM → Home scores
-      // HOME attacks TOP, their goal is at BOTTOM. So opponent scoring in
-      // HOME's goal (BOTTOM) means AWAY scored? No — PhysicsManager says:
-      //   "Ball in bottom goal — Home team scores"
-      // This means HOME scores when ball enters bottom goal — the opponent's
-      // goal for away team. HOME attacks top? That contradicts.
-      // Let me re-read: AWAY defends TOP goal, HOME defends BOTTOM goal.
-      // If ball enters TOP goal, AWAY's defensive goal is breached => HOME scores.
-      // If ball enters BOTTOM goal, HOME's defensive goal is breached => AWAY scores.
-      // But PhysicsManager says the opposite. Let me just match PhysicsManager exactly.
+      // Ball in top goal — Home team scores (they attack upward)
       this.scoreGoal(this.home, TeamSide.AWAY);
+    } else if (by >= GOAL_Y_BOTTOM) {
+      // Ball in bottom goal — Away team scores (they attack downward)
+      this.scoreGoal(this.away, TeamSide.HOME);
     }
   }
 
