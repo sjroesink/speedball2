@@ -3,13 +3,15 @@
 // ============================================================
 
 import Phaser from 'phaser';
-import { BootScene }     from './scenes/BootScene';
-import { TitleScene }    from './scenes/TitleScene';
-import { MatchScene }    from './scenes/MatchScene';
-import { ResultScene }   from './scenes/ResultScene';
-import { FriendlyScene } from './scenes/FriendlyScene';
-import { LeagueScene }   from './scenes/LeagueScene';
-import { TeamMgmtScene } from './scenes/TeamMgmtScene';
+import { BootScene }         from './scenes/BootScene';
+import { TitleScene }        from './scenes/TitleScene';
+import { MatchScene }        from './scenes/MatchScene';
+import { ResultScene }       from './scenes/ResultScene';
+import { FriendlyScene }     from './scenes/FriendlyScene';
+import { LeagueScene }       from './scenes/LeagueScene';
+import { TeamMgmtScene }     from './scenes/TeamMgmtScene';
+import { OnlineScene }       from './scenes/OnlineScene';
+import { OnlineMatchScene }  from './scenes/OnlineMatchScene';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -48,6 +50,8 @@ const config: Phaser.Types.Core.GameConfig = {
     FriendlyScene,
     LeagueScene,
     TeamMgmtScene,
+    OnlineScene,
+    OnlineMatchScene,
   ],
 };
 

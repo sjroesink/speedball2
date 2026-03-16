@@ -27,11 +27,12 @@ export class TitleScene extends Phaser.Scene {
     createMenuText(this, cx, 282, '─────────────────', 24);
 
     // Menu items
-    const menuY   = [360, 420, 480];
-    const labels  = ['LEAGUE', 'FRIENDLY', 'OPTIONS'];
+    const menuY   = [340, 400, 460, 520];
+    const labels  = ['LEAGUE', 'FRIENDLY', 'ONLINE', 'OPTIONS'];
     const callbacks: Array<() => void> = [
       () => this.scene.start('LeagueScene'),
       () => this.scene.start('FriendlyScene'),
+      () => this.scene.start('OnlineScene'),
       () => { /* OPTIONS: no-op for now */ },
     ];
 
