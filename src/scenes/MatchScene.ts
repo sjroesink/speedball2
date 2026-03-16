@@ -324,7 +324,7 @@ export class MatchScene extends Phaser.Scene {
     for (let i = 0; i < roster.length; i++) {
       const def = roster[i];
       const [x, y] = positions[i];
-      const p = new Player(this, x, y, def, side, teamDef.color);
+      const p = new Player(this, x, y, def, side);
       p.homeX = x;
       p.homeY = y;
       players.push(p);
