@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "outDir": "dist",
+    "rootDir": "..",
+    "sourceMap": true,
+    "declaration": false
+  },
+  "include": ["src/**/*", "../src/utils/types.ts", "../src/config/gameConfig.ts", "../src/config/teams.ts"]
+}
