@@ -13,6 +13,9 @@ export class Ball extends Phaser.Physics.Arcade.Sprite {
   /** The team side that last touched the ball. */
   lastTouchedBy: TeamSide | null = null;
 
+  /** Cooldown (seconds) before the ball can be picked up again after a throw/pass. */
+  pickupCooldown: number = 0;
+
   // ------ Construction -----------------------------------------------------
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
@@ -51,9 +54,10 @@ export class Ball extends Phaser.Physics.Arcade.Sprite {
     body.setVelocity(0, 0);
   }
 
-  /** Releases the ball from its current owner. */
+  /** Releases the ball from its current owner with a brief pickup cooldown. */
   release(): void {
     this.owner = null;
+    this.pickupCooldown = 0.15; // 150ms before anyone can pick it up again
   }
 
   /** Returns true when no player owns the ball. */
@@ -103,6 +107,11 @@ export class Ball extends Phaser.Physics.Arcade.Sprite {
       this.followOwner();
     } else {
       this.applyFriction(delta);
+    }
+
+    // Tick pickup cooldown
+    if (this.pickupCooldown > 0) {
+      this.pickupCooldown -= delta / 1000;
     }
   }
 }

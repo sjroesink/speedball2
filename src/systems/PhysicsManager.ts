@@ -103,6 +103,7 @@ export class PhysicsManager {
    */
   checkBallPickup(): void {
     if (!this.ball.isLoose()) return;
+    if (this.ball.pickupCooldown > 0) return;
 
     const allPlayers = [...this.homePlayers, ...this.awayPlayers];
     let nearest:  Player | null = null;
