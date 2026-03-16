@@ -22,6 +22,7 @@ import { InputManager, PlayerInput } from '../systems/InputManager';
 import { HUD } from '../ui/HUD';
 import { AIController } from '../systems/AIController';
 import { Difficulty } from '../utils/types';
+import { LeagueData } from './LeagueScene';
 
 // ================================================================
 // MatchConfig
@@ -34,7 +35,7 @@ export interface MatchConfig {
   p1Controls:  TeamSide | null;
   /** Which side P2 controls, or null for CPU. */
   p2Controls:  TeamSide | null;
-  leagueData?: unknown;
+  leagueData?: LeagueData;
 }
 
 // ================================================================
@@ -179,7 +180,11 @@ export class MatchScene extends Phaser.Scene {
             this.matchConfig.homeTeam.name,
             this.matchConfig.awayTeam.name,
           );
-          this.scene.start('ResultScene', { result, matchConfig: this.matchConfig });
+          this.scene.start('ResultScene', {
+            result,
+            matchConfig: this.matchConfig,
+            leagueData:  this.matchConfig.leagueData,
+          });
         });
       }
       return;
