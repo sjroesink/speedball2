@@ -22,7 +22,10 @@ import {
   PLAYER_TACKLE_HIT_RADIUS,
   getShotSpeed,
   ARENA_WIDTH,
+  ARENA_HEIGHT,
   POINTS_DOME,
+  KEEPER_SAVE_ZONE,
+  getKeeperSaveChance,
 } from '../config/gameConfig';
 
 // ================================================================
@@ -144,12 +147,12 @@ export class PhysicsManager {
     if (!inGoalWidth) return;
 
     if (by <= GOAL_Y_TOP) {
-      // Ball in top goal — Home team scores (they attack upward)
+      if (this.tryKeeperSave(this.awayPlayers)) return;
       const scoringTeam = this.engine.getTeam(TeamSide.HOME);
       this.engine.scoreGoal(scoringTeam, this.arena.multipliers);
       this.ball.release();
     } else if (by >= GOAL_Y_BOTTOM) {
-      // Ball in bottom goal — Away team scores (they attack downward)
+      if (this.tryKeeperSave(this.homePlayers)) return;
       const scoringTeam = this.engine.getTeam(TeamSide.AWAY);
       this.engine.scoreGoal(scoringTeam, this.arena.multipliers);
       this.ball.release();
@@ -201,14 +204,19 @@ export class PhysicsManager {
     const team = this.engine.getTeam(touchingSide);
 
     for (const mult of this.arena.multipliers) {
-      if (!mult.isAvailable()) continue;
-
       const dx = this.ball.x - mult.sprite.x;
       const dy = this.ball.y - mult.sprite.y;
       const d  = Math.sqrt(dx * dx + dy * dy);
 
-      if (d <= BALL_PICKUP_RANGE) {
+      if (d > BALL_PICKUP_RANGE) continue;
+
+      if (mult.isAvailable()) {
         this.engine.activateMultiplier(mult, team);
+      } else if (mult.activeForTeam !== null && mult.activeForTeam !== touchingSide) {
+        const oppTeam = this.engine.getOpponentTeam(touchingSide);
+        oppTeam.hasMultiplier = false;
+        mult.deactivate();
+        mult.sprite.setVisible(true);
       }
     }
   }
@@ -338,6 +346,39 @@ export class PhysicsManager {
   }
 
   // ------ Private helpers --------------------------------------------------
+
+  private tryKeeperSave(teamPlayers: Player[]): boolean {
+    const keeper = teamPlayers.find(p => p.isGoalkeeper && p.isActive);
+    if (!keeper) return false;
+
+    const dx = keeper.x - this.ball.x;
+    const dy = keeper.y - this.ball.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist > KEEPER_SAVE_ZONE) return false;
+
+    const saveChance = getKeeperSaveChance(
+      keeper.playerDef.stats.defense,
+      3,
+    );
+
+    if (Math.random() < saveChance) {
+      const body = this.ball.body as Phaser.Physics.Arcade.Body;
+      const punchAngle = Math.atan2(
+        ARENA_HEIGHT / 2 - keeper.y,
+        (Math.random() - 0.5) * 200,
+      );
+      const punchSpeed = 400;
+      body.setVelocity(
+        Math.cos(punchAngle) * punchSpeed,
+        Math.sin(punchAngle) * punchSpeed,
+      );
+      this.ball.lastTouchedBy = keeper.teamSide;
+      return true;
+    }
+
+    return false;
+  }
 
   private applyDomeBounce(ball: Ball): void {
     const body = ball.body as Phaser.Physics.Arcade.Body;

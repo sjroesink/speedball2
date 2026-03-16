@@ -117,21 +117,28 @@ export class AIController {
   // ------ Keeper Update ----------------------------------------------------
 
   private updateKeeper(keeper: Player): void {
-    // Track ball X, clamped to KEEPER_RANGE from goal centre
     const minX    = this.centreX - KEEPER_RANGE;
     const maxX    = this.centreX + KEEPER_RANGE;
     const targetX = Math.max(minX, Math.min(maxX, this.ball.x));
-    const targetY = this.goalY;
+    let targetY = this.goalY;
 
-    // Only move if not already close enough (24px dead zone)
+    // Move forward slightly when ball is in keeper's half
+    const ballInOurHalf = this.teamSide === TeamSide.HOME
+      ? this.ball.y > ARENA_HEIGHT / 2
+      : this.ball.y < ARENA_HEIGHT / 2;
+
+    if (ballInOurHalf) {
+      const advance = this.teamSide === TeamSide.HOME ? -48 : 48;
+      targetY = this.goalY + advance;
+    }
+
     const dx = targetX - keeper.x;
     const dy = targetY - keeper.y;
 
     if (Math.abs(dx) < 24 && Math.abs(dy) < 24) {
       keeper.idle();
     } else {
-      // Lock Y movement — only move horizontally along goal line
-      keeper.moveInDirection(dx, 0);
+      keeper.moveInDirection(dx, dy);
     }
   }
 
