@@ -37,6 +37,8 @@ import {
   POINTS_GOAL,
   POINTS_TACKLE,
   POINTS_STAR_BONUS,
+  POINTS_DOME,
+  POINTS_INJURY,
   SCORE_MULTIPLIER,
   BALL_PASS_SPEED,
   BALL_FRICTION,
@@ -47,12 +49,14 @@ import {
   PLAYER_TACKLE_LUNGE,
   PLAYER_TACKLE_HIT_RADIUS,
   KEEPER_RANGE,
+  KEEPER_SAVE_ZONE,
   AI_PARAMS,
   type AIDifficultyParams,
   getMaxSpeed,
   getShotSpeed,
   getTackleSuccessChance,
   getInjuryChance,
+  getKeeperSaveChance,
 } from '../../src/config/gameConfig.js';
 
 // ================================================================
@@ -640,6 +644,12 @@ export class ServerSimulation {
         const newSpeed = speed * BALL_DOME_RESTITUTION;
         this.ball.vx = Math.cos(reflectedAngle) * newSpeed;
         this.ball.vy = Math.sin(reflectedAngle) * newSpeed;
+
+        // Award 2 points to the last team that touched the ball (Task 4)
+        if (this.ball.lastTouchedBy) {
+          const team = this.getTeam(this.ball.lastTouchedBy);
+          team.score += POINTS_DOME;
+        }
       }
     }
   }
@@ -716,11 +726,54 @@ export class ServerSimulation {
 
     if (by <= GOAL_Y_TOP) {
       // Ball in top goal — Home team scores (they attack upward)
+      // Away keeper defends the top goal
+      if (this.tryKeeperSave(TeamSide.AWAY)) return;
       this.scoreGoal(this.home, TeamSide.AWAY);
     } else if (by >= GOAL_Y_BOTTOM) {
       // Ball in bottom goal — Away team scores (they attack downward)
+      // Home keeper defends the bottom goal
+      if (this.tryKeeperSave(TeamSide.HOME)) return;
       this.scoreGoal(this.away, TeamSide.HOME);
     }
+  }
+
+  /**
+   * Checks if the defending team's goalkeeper can save the ball (Task 8).
+   * On a successful save, punches the ball back toward center.
+   * @param defendingSide  The side that is defending (keeper's team)
+   * @returns true if the save was made (goal should be cancelled)
+   */
+  private tryKeeperSave(defendingSide: TeamSide): boolean {
+    const team = defendingSide === TeamSide.HOME ? this.home : this.away;
+    const keeper = team.players.find(
+      p => p.role === PlayerRole.GOALKEEPER && p.isActive,
+    );
+    if (!keeper) return false;
+
+    const dx = keeper.x - this.ball.x;
+    const dy = keeper.y - this.ball.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist > KEEPER_SAVE_ZONE) return false;
+
+    const saveChance = getKeeperSaveChance(keeper.stats.defense, 3);
+
+    if (Math.random() < saveChance) {
+      // Punch ball back toward arena center
+      const punchAngle = Math.atan2(
+        ARENA_CENTER_Y - keeper.y,
+        (Math.random() - 0.5) * 200,
+      );
+      const punchSpeed = 400;
+      this.ball.vx = Math.cos(punchAngle) * punchSpeed;
+      this.ball.vy = Math.sin(punchAngle) * punchSpeed;
+      this.ball.ownerSide = null;
+      this.ball.ownerIndex = -1;
+      this.ball.lastTouchedBy = defendingSide;
+      return true;
+    }
+
+    return false;
   }
 
   private scoreGoal(scoringTeam: SimTeam, concedingSide: TeamSide): void {
@@ -731,8 +784,17 @@ export class ServerSimulation {
     scoringTeam.score += pts;
     scoringTeam.goals += 1;
 
+    // Consume the multiplier and reset the element so it becomes available again (Task 9)
     if (scoringTeam.hasMultiplier) {
       scoringTeam.hasMultiplier = false;
+      const scoringSide = concedingSide === TeamSide.HOME ? TeamSide.AWAY : TeamSide.HOME;
+      for (const mult of this.multipliers) {
+        if (mult.activeForTeam === scoringSide) {
+          mult.activeForTeam = null;
+          mult.available = true;
+          mult.respawnTimer = 0;
+        }
+      }
     }
 
     // Release ball
@@ -749,26 +811,34 @@ export class ServerSimulation {
   // ------ Stars --------------------------------------------------------------
 
   private checkStars(): void {
-    if (this.ball.ownerSide === null) return;
+    // Stars activate when ANY ball (carried or loose last-touched) touches them (Task 6)
+    const side = this.ball.lastTouchedBy;
+    if (side === null) return;
 
-    const ownerSide = this.ball.ownerSide;
-    const team = ownerSide === TeamSide.HOME ? this.home : this.away;
+    const team = side === TeamSide.HOME ? this.home : this.away;
 
     for (const star of this.stars) {
-      if (star.activated) continue;
+      // Skip if already activated by this same team
+      if (star.activated && star.activatedBy === side) continue;
 
       const dx = this.ball.x - star.x;
       const dy = this.ball.y - star.y;
       const d = Math.sqrt(dx * dx + dy * dy);
 
       if (d <= BALL_PICKUP_RANGE) {
+        // Dousing: if star was activated by the opponent, reset it first (Task 6)
+        if (star.activated && star.activatedBy !== side) {
+          star.activated = false;
+          star.activatedBy = null;
+        }
+
         star.activated = true;
-        star.activatedBy = ownerSide;
+        star.activatedBy = side;
 
         // Check for full set (5 stars same side, same team)
         const sideStars = this.stars.filter(s => s.side === star.side);
         const allByTeam = sideStars.every(
-          s => s.activated && s.activatedBy === ownerSide,
+          s => s.activated && s.activatedBy === side,
         );
 
         if (allByTeam) {
@@ -791,17 +861,25 @@ export class ServerSimulation {
     const team = touchingSide === TeamSide.HOME ? this.home : this.away;
 
     for (const mult of this.multipliers) {
-      if (!mult.available || mult.activeForTeam !== null) continue;
-
       const dx = this.ball.x - mult.x;
       const dy = this.ball.y - mult.y;
       const d = Math.sqrt(dx * dx + dy * dy);
 
-      if (d <= BALL_PICKUP_RANGE) {
+      if (d > BALL_PICKUP_RANGE) continue;
+
+      if (mult.available) {
+        // Pick up available multiplier
         mult.activeForTeam = touchingSide;
         mult.available = false;
         mult.respawnTimer = MULTIPLIER_RESPAWN_TIME;
         team.hasMultiplier = true;
+      } else if (mult.activeForTeam !== null && mult.activeForTeam !== touchingSide) {
+        // Opponent's ball touches our active multiplier — neutralize it (Task 9)
+        const oppTeam = touchingSide === TeamSide.HOME ? this.away : this.home;
+        oppTeam.hasMultiplier = false;
+        mult.activeForTeam = null;
+        mult.available = true;
+        mult.respawnTimer = 0;
       }
     }
   }
@@ -977,12 +1055,18 @@ export class ServerSimulation {
       target.injuryTimer = 10; // 10 seconds out
       target.vx = 0;
       target.vy = 0;
+      // Award injury bonus points to attacker's team (Task 5)
+      attackerTeam.score += POINTS_INJURY;
     }
 
     return true;
   }
 
   // ------ Helper Methods -----------------------------------------------------
+
+  private getTeam(side: TeamSide): SimTeam {
+    return side === TeamSide.HOME ? this.home : this.away;
+  }
 
   private canAct(player: SimPlayer): boolean {
     return player.isActive &&
