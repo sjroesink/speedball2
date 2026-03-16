@@ -65,6 +65,14 @@ export class MatchScene extends Phaser.Scene {
   /** True once MATCH_END result scene has been triggered. */
   private matchEnded: boolean = false;
 
+  // ------ Player switch tracking ------------------------------------------
+  /** Which team last had ball possession (for detecting changes). */
+  private lastBallOwnerSide: TeamSide | null = null;
+
+  // ------ Role indicator labels -------------------------------------------
+  private roleLabels: Map<Player, Phaser.GameObjects.Text> = new Map();
+  private blinkTimer: number = 0;
+
   // ------ Construction -----------------------------------------------------
 
   constructor() {
@@ -138,6 +146,9 @@ export class MatchScene extends Phaser.Scene {
 
     // 9. InputManager
     this.input_ = new InputManager(this);
+
+    // 9b. Role indicator labels above each player
+    this.createRoleLabels();
 
     // 10. HUD
     this.hud = new HUD(
@@ -223,8 +234,8 @@ export class MatchScene extends Phaser.Scene {
     this.homeAI?.update(delta);
     this.awayAI?.update(delta);
 
-    // 5. Highlight controlled players
-    this.highlightControlledPlayers();
+    // 5. Update role labels (position + blink)
+    this.updateRoleLabels(delta);
 
     // 6. Ball & player updates
     this.ball.update(_time, delta);
@@ -243,26 +254,118 @@ export class MatchScene extends Phaser.Scene {
     );
   }
 
-  // ------ Controlled player highlight ----------------------------------------
+  // ------ Smart player switching (original SB2 behavior) --------------------
 
-  private highlightControlledPlayers(): void {
-    const highlight = (players: Player[], team: TeamMatchData) => {
-      const controlled = this.engine.getControlledPlayer(team);
-      for (const p of players) {
-        p.setAlpha(p.isActive ? (p === controlled ? 1 : 0.7) : 0.3);
+  /**
+   * Switches controlled player only on possession changes, not every frame.
+   * In the original SB2, control switches when:
+   * - Ball changes owner (opponent takes it / teammate catches it)
+   * - Ball becomes loose and a different teammate is clearly closer
+   * - Current controlled player is injured
+   */
+  private updateControlledPlayer(side: TeamSide): void {
+    const team = this.engine.getTeam(side);
+    const player = this.engine.getControlledPlayer(team);
+
+    // Always switch if current player is injured
+    if (!player.isActive) {
+      this.engine.switchControlledPlayer(team, this.ball);
+      return;
+    }
+
+    // Detect possession change
+    const currentOwnerSide = this.ball.lastTouchedBy;
+    const possessionChanged = currentOwnerSide !== this.lastBallOwnerSide;
+
+    if (possessionChanged) {
+      this.lastBallOwnerSide = currentOwnerSide;
+      this.engine.switchControlledPlayer(team, this.ball);
+      return;
+    }
+
+    // If our team has the ball, switch to the ball carrier
+    if (!this.ball.isLoose()) {
+      const carrier = team.players.find(p => p.hasBall);
+      if (carrier && carrier !== player) {
+        const idx = team.players.indexOf(carrier);
+        if (idx >= 0) team.controlledPlayerIndex = idx;
+        return;
       }
-    };
-    if (this.matchConfig.p1Controls !== null) {
-      highlight(
-        this.matchConfig.p1Controls === TeamSide.HOME ? this.homePlayers : this.awayPlayers,
-        this.engine.getTeam(this.matchConfig.p1Controls),
+    }
+
+    // If ball is loose, switch only if another teammate is MUCH closer (>2x closer)
+    if (this.ball.isLoose()) {
+      const currentDist = Math.sqrt(
+        (player.x - this.ball.x) ** 2 + (player.y - this.ball.y) ** 2,
       );
+      let bestIdx = team.controlledPlayerIndex;
+      let bestDist = currentDist;
+      for (let i = 0; i < team.players.length; i++) {
+        const p = team.players[i];
+        if (!p.isActive || p.isGoalkeeper) continue;
+        const d = Math.sqrt((p.x - this.ball.x) ** 2 + (p.y - this.ball.y) ** 2);
+        if (d < bestDist) { bestDist = d; bestIdx = i; }
+      }
+      // Only switch if the other player is significantly closer (2x)
+      if (bestIdx !== team.controlledPlayerIndex && bestDist < currentDist * 0.5) {
+        team.controlledPlayerIndex = bestIdx;
+      }
+    }
+  }
+
+  // ------ Role indicator labels -------------------------------------------
+
+  private getRoleLabel(role: PlayerRole): string {
+    switch (role) {
+      case PlayerRole.GOALKEEPER: return 'G';
+      case PlayerRole.DEFENDER:   return 'D';
+      case PlayerRole.MIDFIELDER: return 'M';
+      case PlayerRole.FORWARD:    return 'F';
+      default:                    return '?';
+    }
+  }
+
+  private createRoleLabels(): void {
+    const allPlayers = [...this.homePlayers, ...this.awayPlayers];
+    for (const p of allPlayers) {
+      const label = this.add.text(p.x, p.y - 28, this.getRoleLabel(p.playerDef.role), {
+        fontSize: '10px',
+        color: '#ffffff',
+        fontFamily: 'monospace',
+        stroke: '#000000',
+        strokeThickness: 2,
+      }).setOrigin(0.5).setDepth(100);
+      this.roleLabels.set(p, label);
+    }
+  }
+
+  private updateRoleLabels(delta: number): void {
+    this.blinkTimer += delta / 1000;
+    const blinkOn = Math.floor(this.blinkTimer * 4) % 2 === 0; // 4 Hz blink
+
+    // Determine which players are controlled
+    const controlledPlayers = new Set<Player>();
+    if (this.matchConfig.p1Controls !== null) {
+      const team = this.engine.getTeam(this.matchConfig.p1Controls);
+      controlledPlayers.add(this.engine.getControlledPlayer(team));
     }
     if (this.matchConfig.p2Controls !== null) {
-      highlight(
-        this.matchConfig.p2Controls === TeamSide.HOME ? this.homePlayers : this.awayPlayers,
-        this.engine.getTeam(this.matchConfig.p2Controls),
-      );
+      const team = this.engine.getTeam(this.matchConfig.p2Controls);
+      controlledPlayers.add(this.engine.getControlledPlayer(team));
+    }
+
+    for (const [player, label] of this.roleLabels) {
+      // Follow player position
+      label.setPosition(player.x, player.y - 28);
+
+      if (!player.isActive) {
+        label.setVisible(false);
+        continue;
+      }
+
+      const isControlled = controlledPlayers.has(player);
+      label.setVisible(isControlled ? blinkOn : true);
+      label.setAlpha(isControlled ? 1 : 0.6);
     }
   }
 
@@ -367,16 +470,10 @@ export class MatchScene extends Phaser.Scene {
     const team      = this.engine.getTeam(side);
     const opponents = this.engine.getOpponentTeam(side);
 
-    // Auto-switch to player nearest to ball (original SB2 behavior)
-    this.engine.switchControlledPlayer(team, this.ball);
+    // Smart switch: only on possession changes (like original SB2)
+    this.updateControlledPlayer(side);
 
-    let   player    = this.engine.getControlledPlayer(team);
-
-    // If inactive, switch to nearest active player
-    if (!player.isActive) {
-      this.engine.switchControlledPlayer(team, this.ball);
-      player = this.engine.getControlledPlayer(team);
-    }
+    const player = this.engine.getControlledPlayer(team);
 
     // Movement — don't move while holding fire with ball (winding up throw)
     // Don't override velocity during non-interruptible states (TACKLING, STUNNED, etc.)
