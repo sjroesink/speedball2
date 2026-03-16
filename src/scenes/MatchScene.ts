@@ -8,8 +8,6 @@ import { ALL_TEAMS } from '../config/teams';
 import {
   ARENA_WIDTH,
   ARENA_HEIGHT,
-  TILE_WIDTH,
-  TILE_HEIGHT,
   GOAL_Y_TOP,
   GOAL_Y_BOTTOM,
 } from '../config/gameConfig';
@@ -269,20 +267,13 @@ export class MatchScene extends Phaser.Scene {
 
   // ------ Floor ------------------------------------------------------------
 
-  /** Tiles the arena floor with 48×48 floor_tile sprites. */
+  /** Tiles the arena floor with a single TileSprite. */
   private drawFloor(): void {
-    const cols = ARENA_WIDTH  / TILE_WIDTH;   // 20
-    const rows = ARENA_HEIGHT / TILE_HEIGHT;  // 30
-
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < cols; col++) {
-        this.add.image(
-          col * TILE_WIDTH  + TILE_WIDTH  / 2,
-          row * TILE_HEIGHT + TILE_HEIGHT / 2,
-          'floor_tile',
-        );
-      }
-    }
+    this.add.tileSprite(
+      ARENA_WIDTH / 2, ARENA_HEIGHT / 2,
+      ARENA_WIDTH, ARENA_HEIGHT,
+      'floor_tile',
+    );
   }
 
   // ------ Team Creation ----------------------------------------------------
@@ -327,7 +318,7 @@ export class MatchScene extends Phaser.Scene {
 
       // Override role for position index to match formation
       // (teams define roles on their PlayerDef; we trust them)
-      const p = new Player(this, x, y, def, side, teamDef.color);
+      const p = new Player(this, x, y, def, side);
       p.homeX = x;
       p.homeY = y;
       players.push(p);
@@ -368,6 +359,10 @@ export class MatchScene extends Phaser.Scene {
   private processHumanInput(input: PlayerInput, side: TeamSide): void {
     const team      = this.engine.getTeam(side);
     const opponents = this.engine.getOpponentTeam(side);
+
+    // Auto-switch to player nearest to ball (original SB2 behavior)
+    this.engine.switchControlledPlayer(team, this.ball);
+
     let   player    = this.engine.getControlledPlayer(team);
 
     // If inactive, switch to nearest active player
@@ -400,10 +395,8 @@ export class MatchScene extends Phaser.Scene {
       if (player.hasBall) {
         // Pass to nearest teammate
         this.physics_.passBall(player, team.players);
-      } else {
-        // Switch controlled player
-        this.engine.switchControlledPlayer(team, this.ball);
       }
+      // Without ball: no action needed (auto-switch handles it)
     }
   }
 }
