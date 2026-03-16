@@ -19,6 +19,7 @@ import { PhysicsManager } from '../systems/PhysicsManager';
 import { InputManager, PlayerInput } from '../systems/InputManager';
 import { HUD } from '../ui/HUD';
 import { AIController } from '../systems/AIController';
+import { TeammateAI } from '../systems/TeammateAI';
 import { Difficulty } from '../utils/types';
 import { LeagueData } from './LeagueScene';
 
@@ -57,6 +58,10 @@ export class MatchScene extends Phaser.Scene {
   // ------ AI Controllers ---------------------------------------------------
   private homeAI: AIController | null = null;
   private awayAI: AIController | null = null;
+
+  // ------ Teammate AI (for human-controlled teams) ------------------------
+  private homeTeammateAI: TeammateAI | null = null;
+  private awayTeammateAI: TeammateAI | null = null;
 
   // ------ Kick-off tracking -----------------------------------------------
   /** Prevents setupKickoff() being called every frame while in KICKOFF state. */
@@ -141,6 +146,18 @@ export class MatchScene extends Phaser.Scene {
         this.physics_,
         this.engine,
         Difficulty.MEDIUM,
+      );
+    }
+
+    // 8b. Teammate AI — for human teams, control the non-controlled players
+    if (this.matchConfig.p1Controls === TeamSide.HOME || this.matchConfig.p2Controls === TeamSide.HOME) {
+      this.homeTeammateAI = new TeammateAI(
+        TeamSide.HOME, this.homePlayers, this.awayPlayers, this.ball, this.engine,
+      );
+    }
+    if (this.matchConfig.p1Controls === TeamSide.AWAY || this.matchConfig.p2Controls === TeamSide.AWAY) {
+      this.awayTeammateAI = new TeammateAI(
+        TeamSide.AWAY, this.awayPlayers, this.homePlayers, this.ball, this.engine,
       );
     }
 
@@ -230,9 +247,11 @@ export class MatchScene extends Phaser.Scene {
       this.processHumanInput(this.input_.getP2Input(), this.matchConfig.p2Controls);
     }
 
-    // 4b. AI input
+    // 4b. AI input (full AI for CPU teams, teammate AI for human teams)
     this.homeAI?.update(delta);
     this.awayAI?.update(delta);
+    this.homeTeammateAI?.update(delta);
+    this.awayTeammateAI?.update(delta);
 
     // 5. Update role labels (position + blink)
     this.updateRoleLabels(delta);
@@ -343,7 +362,7 @@ export class MatchScene extends Phaser.Scene {
     this.blinkTimer += delta / 1000;
     const blinkOn = Math.floor(this.blinkTimer * 4) % 2 === 0; // 4 Hz blink
 
-    // Determine which players are controlled
+    // Determine which players are controlled by humans
     const controlledPlayers = new Set<Player>();
     if (this.matchConfig.p1Controls !== null) {
       const team = this.engine.getTeam(this.matchConfig.p1Controls);
@@ -355,7 +374,6 @@ export class MatchScene extends Phaser.Scene {
     }
 
     for (const [player, label] of this.roleLabels) {
-      // Follow player position
       label.setPosition(player.x, player.y - 28);
 
       if (!player.isActive) {
@@ -364,8 +382,8 @@ export class MatchScene extends Phaser.Scene {
       }
 
       const isControlled = controlledPlayers.has(player);
-      label.setVisible(isControlled ? blinkOn : true);
-      label.setAlpha(isControlled ? 1 : 0.6);
+      // Only show indicator for the controlled player (blinking)
+      label.setVisible(isControlled && blinkOn);
     }
   }
 
