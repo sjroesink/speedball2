@@ -79,9 +79,11 @@ export class MenuSelector {
   private keySpace:  Phaser.Input.Keyboard.Key;
 
   // Debounce flags – prevent holding a key from firing continuously
+  // selectWasDown starts true so a held key from the previous menu doesn't
+  // immediately trigger on the first frame of a newly created MenuSelector.
   private upWasDown    = false;
   private downWasDown  = false;
-  private selectWasDown = false;
+  private selectWasDown = true;
 
   constructor(
     scene: Phaser.Scene,
