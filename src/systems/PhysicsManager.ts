@@ -159,27 +159,29 @@ export class PhysicsManager {
   // ------ Stars ------------------------------------------------------------
 
   /**
-   * If the ball is being carried (owned), checks proximity to each
-   * unactivated star and activates it for the ball owner's team.
+   * Stars can be activated by:
+   * 1. A carried ball (player walks near star)
+   * 2. A loose ball that was last touched by a team
+   * Opponents can douse (reset) stars activated by the other team.
    */
   checkStars(): void {
-    if (this.ball.isLoose()) return;
+    const side = this.ball.lastTouchedBy;
+    if (!side) return;
 
-    // Find the owning player to get their team
-    const owner = this.findOwner();
-    if (!owner) return;
-
-    const team = this.engine.getTeam(owner.teamSide);
+    const team = this.engine.getTeam(side);
 
     for (const star of this.arena.stars) {
-      if (star.activated) continue;
+      if (star.activated && star.activatedBy === side) continue;
 
       const dx = this.ball.x - star.sprite.x;
       const dy = this.ball.y - star.sprite.y;
       const d  = Math.sqrt(dx * dx + dy * dy);
 
-      // 36px proximity threshold (same as pickup range)
       if (d <= BALL_PICKUP_RANGE) {
+        // If star was activated by the other team, reset it first (dousing)
+        if (star.activated && star.activatedBy !== side) {
+          star.reset();
+        }
         this.engine.activateStar(star, team, this.arena.stars);
       }
     }
