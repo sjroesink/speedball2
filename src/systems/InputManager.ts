@@ -18,7 +18,7 @@ export interface PlayerInput {
 export class InputManager {
   private scene: Phaser.Scene;
 
-  // P1 keys: arrow keys + Z (fire) + X (pass)
+  // P1 keys: arrow keys + Space (fire) + Ctrl (pass)
   private p1Up:    Phaser.Input.Keyboard.Key;
   private p1Down:  Phaser.Input.Keyboard.Key;
   private p1Left:  Phaser.Input.Keyboard.Key;
@@ -34,18 +34,24 @@ export class InputManager {
   private p2Fire:  Phaser.Input.Keyboard.Key;
   private p2Pass:  Phaser.Input.Keyboard.Key;
 
+  // Manual debounce — JustDown can be unreliable across scenes
+  private p1FireWasDown = false;
+  private p1PassWasDown = false;
+  private p2FireWasDown = false;
+  private p2PassWasDown = false;
+
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
 
     const kb = scene.input.keyboard!;
 
-    // Player 1 — arrows + Z/X
+    // Player 1 — arrows + Space (fire) + Ctrl (pass)
     this.p1Up    = kb.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
     this.p1Down  = kb.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN);
     this.p1Left  = kb.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
     this.p1Right = kb.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
-    this.p1Fire  = kb.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
-    this.p1Pass  = kb.addKey(Phaser.Input.Keyboard.KeyCodes.X);
+    this.p1Fire  = kb.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.p1Pass  = kb.addKey(Phaser.Input.Keyboard.KeyCodes.CTRL);
 
     // Player 2 — WASD + Q/E
     this.p2Up    = kb.addKey(Phaser.Input.Keyboard.KeyCodes.W);
@@ -56,47 +62,37 @@ export class InputManager {
     this.p2Pass  = kb.addKey(Phaser.Input.Keyboard.KeyCodes.E);
   }
 
-  /** Returns the current input state for Player 1 (arrow keys + Z/X). */
+  /** Returns the current input state for Player 1 (arrows + Space/Ctrl). */
   getP1Input(): PlayerInput {
-    return this.readInput(
-      this.p1Up, this.p1Down, this.p1Left, this.p1Right,
-      this.p1Fire, this.p1Pass,
-    );
+    const fireDown = this.p1Fire.isDown;
+    const passDown = this.p1Pass.isDown;
+    const fireJust = fireDown && !this.p1FireWasDown;
+    const passJust = passDown && !this.p1PassWasDown;
+    this.p1FireWasDown = fireDown;
+    this.p1PassWasDown = passDown;
+
+    return {
+      dx: (this.p1Left.isDown ? -1 : 0) + (this.p1Right.isDown ? 1 : 0),
+      dy: (this.p1Up.isDown ? -1 : 0) + (this.p1Down.isDown ? 1 : 0),
+      fire: fireJust,
+      pass: passJust,
+    };
   }
 
   /** Returns the current input state for Player 2 (WASD + Q/E). */
   getP2Input(): PlayerInput {
-    return this.readInput(
-      this.p2Up, this.p2Down, this.p2Left, this.p2Right,
-      this.p2Fire, this.p2Pass,
-    );
-  }
-
-  // ------ Private helpers --------------------------------------------------
-
-  private readInput(
-    up:    Phaser.Input.Keyboard.Key,
-    down:  Phaser.Input.Keyboard.Key,
-    left:  Phaser.Input.Keyboard.Key,
-    right: Phaser.Input.Keyboard.Key,
-    fire:  Phaser.Input.Keyboard.Key,
-    pass:  Phaser.Input.Keyboard.Key,
-  ): PlayerInput {
-    const JustDown = Phaser.Input.Keyboard.JustDown;
-
-    let dx = 0;
-    let dy = 0;
-
-    if (left.isDown)  dx -= 1;
-    if (right.isDown) dx += 1;
-    if (up.isDown)    dy -= 1;
-    if (down.isDown)  dy += 1;
+    const fireDown = this.p2Fire.isDown;
+    const passDown = this.p2Pass.isDown;
+    const fireJust = fireDown && !this.p2FireWasDown;
+    const passJust = passDown && !this.p2PassWasDown;
+    this.p2FireWasDown = fireDown;
+    this.p2PassWasDown = passDown;
 
     return {
-      dx,
-      dy,
-      fire: JustDown(fire),
-      pass: JustDown(pass),
+      dx: (this.p2Left.isDown ? -1 : 0) + (this.p2Right.isDown ? 1 : 0),
+      dy: (this.p2Up.isDown ? -1 : 0) + (this.p2Down.isDown ? 1 : 0),
+      fire: fireJust,
+      pass: passJust,
     };
   }
 }
