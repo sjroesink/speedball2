@@ -112,11 +112,11 @@ export class AIController {
     const targetX = Math.max(minX, Math.min(maxX, this.ball.x));
     const targetY = this.goalY;
 
-    // Only move if not already close enough (8px dead zone)
+    // Only move if not already close enough (24px dead zone)
     const dx = targetX - keeper.x;
     const dy = targetY - keeper.y;
 
-    if (Math.abs(dx) < 8 && Math.abs(dy) < 8) {
+    if (Math.abs(dx) < 24 && Math.abs(dy) < 24) {
       keeper.idle();
     } else {
       // Lock Y movement — only move horizontally along goal line
@@ -152,7 +152,7 @@ export class AIController {
       const dy          = targetGoalY - player.y;
       const distToGoal  = Math.abs(dy);
 
-      if (distToGoal < 120) {
+      if (distToGoal < 360) {
         // Close enough — shoot
         this.physics.shootBall(player, this.centreX, targetGoalY);
       } else {
@@ -171,7 +171,7 @@ export class AIController {
       const supportY = this.teamSide === TeamSide.HOME
         ? ARENA_HEIGHT * 0.30
         : ARENA_HEIGHT * 0.70;
-      const supportX = this.centreX + (_index % 2 === 0 ? -40 : 40);
+      const supportX = this.centreX + (_index % 2 === 0 ? -120 : 120);
       this.moveToward(player, supportX, supportY);
     }
   }
@@ -189,7 +189,7 @@ export class AIController {
     const dy = nearest.y - player.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
-    if (dist < 30) {
+    if (dist < 90) {
       // In tackle range — attempt tackle with probability based on aggressiveness
       if (Math.random() < this.params.tackleAggressiveness && player.canAct) {
         // Face the opponent before tackling
@@ -218,13 +218,13 @@ export class AIController {
 
   // ------ Helper Methods ---------------------------------------------------
 
-  /** Moves a player toward (tx, ty), stopping within 4px. */
+  /** Moves a player toward (tx, ty), stopping within 12px. */
   private moveToward(player: Player, tx: number, ty: number): void {
     const dx = tx - player.x;
     const dy = ty - player.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
-    if (dist < 4) {
+    if (dist < 12) {
       player.idle();
     } else {
       player.moveInDirection(dx, dy);

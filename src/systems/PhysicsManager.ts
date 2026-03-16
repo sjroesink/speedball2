@@ -177,7 +177,7 @@ export class PhysicsManager {
       const dy = this.ball.y - star.sprite.y;
       const d  = Math.sqrt(dx * dx + dy * dy);
 
-      // 12px proximity threshold (same as pickup range)
+      // 36px proximity threshold (same as pickup range)
       if (d <= BALL_PICKUP_RANGE) {
         this.engine.activateStar(star, team, this.arena.stars);
       }
@@ -225,7 +225,7 @@ export class PhysicsManager {
       const rightX = warp.right.x;
       const warpY  = warp.left.y; // both portals share same Y
 
-      const proximity = 10; // px to trigger warp
+      const proximity = 30; // px to trigger warp
 
       // Ball near left portal and moving left
       if (
@@ -318,8 +318,8 @@ export class PhysicsManager {
     if (!attacker.tackle()) return; // Player.tackle() returns false if cannot act
 
     // Calculate lunge endpoint
-    const lungeX = attacker.x + Math.cos(attacker.facingAngle) * 24; // PLAYER_TACKLE_LUNGE
-    const lungeY = attacker.y + Math.sin(attacker.facingAngle) * 24;
+    const lungeX = attacker.x + Math.cos(attacker.facingAngle) * 72; // PLAYER_TACKLE_LUNGE
+    const lungeY = attacker.y + Math.sin(attacker.facingAngle) * 72;
 
     for (const opp of opponents) {
       if (!opp.isActive) continue;

@@ -40,26 +40,26 @@ export class ResultScene extends Phaser.Scene {
     // If we came from a league match, update the league state now
     this.applyLeagueResult();
 
-    let y = 28;
+    let y = 84;
 
     // Title
-    createMenuText(this, cx, y, 'MATCH RESULT', 12);
-    y += 28;
+    createMenuText(this, cx, y, 'MATCH RESULT', 36);
+    y += 84;
 
     // Score
-    createMenuText(this, cx, y, `${result.homeScore}  -  ${result.awayScore}`, 16);
-    y += 28;
+    createMenuText(this, cx, y, `${result.homeScore}  -  ${result.awayScore}`, 48);
+    y += 84;
 
     // Team names beneath score
-    createMenuText(this, cx - 50, y, result.homeTeam, 7);
-    createMenuText(this, cx + 50, y, result.awayTeam, 7);
-    y += 18;
+    createMenuText(this, cx - 150, y, result.homeTeam, 21);
+    createMenuText(this, cx + 150, y, result.awayTeam, 21);
+    y += 54;
 
     // Separator
-    createMenuText(this, cx, y, '─────────────────', 6);
-    y += 14;
+    createMenuText(this, cx, y, '─────────────────', 18);
+    y += 42;
 
-    // Stats block (7px)
+    // Stats block (21px)
     const statsLines: string[] = [
       `TACKLES  ${result.homeTackles}  -  ${result.awayTackles}`,
     ];
@@ -73,17 +73,17 @@ export class ResultScene extends Phaser.Scene {
     statsLines.push(`MVP  ${result.mvp}`);
 
     for (const line of statsLines) {
-      createMenuText(this, cx, y, line, 7);
-      y += 12;
+      createMenuText(this, cx, y, line, 21);
+      y += 36;
     }
 
-    // Credits earned (8px) — only shown if > 0
+    // Credits earned (24px) — only shown if > 0
     if (result.creditsEarned > 0) {
-      y += 6;
-      createMenuText(this, cx, y, `CREDITS EARNED  ${result.creditsEarned}`, 8);
-      y += 16;
+      y += 18;
+      createMenuText(this, cx, y, `CREDITS EARNED  ${result.creditsEarned}`, 24);
+      y += 48;
     } else {
-      y += 10;
+      y += 30;
     }
 
     // CONTINUE menu item
@@ -96,7 +96,7 @@ export class ResultScene extends Phaser.Scene {
     );
 
     // Footer hint
-    createMenuText(this, cx, height - 14, 'Z / SPACE TO CONTINUE', 6);
+    createMenuText(this, cx, height - 42, 'Z / SPACE TO CONTINUE', 18);
   }
 
   update(_time: number, _delta: number): void {

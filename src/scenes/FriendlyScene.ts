@@ -43,19 +43,19 @@ export class FriendlyScene extends Phaser.Scene {
     const cx = width / 2;
 
     // Title
-    createMenuText(this, cx, 20, title, 9);
-    createMenuText(this, cx, 34, '─────────────────', 6);
+    createMenuText(this, cx, 60, title, 27);
+    createMenuText(this, cx, 102, '─────────────────', 18);
 
     // One item per team
-    const startY   = 50;
-    const stepY    = 14;
+    const startY   = 150;
+    const stepY    = 42;
     const items    = ALL_TEAMS.map((team, i) =>
       createMenuItem(this, cx, startY + i * stepY, team.name.toUpperCase(), () => onSelect(team)),
     );
     const callbacks = ALL_TEAMS.map((team) => () => onSelect(team));
 
     // Footer
-    createMenuText(this, cx, height - 14, 'UP/DOWN  Z/SPACE TO SELECT', 6);
+    createMenuText(this, cx, height - 42, 'UP/DOWN  Z/SPACE TO SELECT', 18);
 
     this.menuSelector = new MenuSelector(this, items, callbacks);
   }
@@ -68,8 +68,8 @@ export class FriendlyScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const cx = width / 2;
 
-    createMenuText(this, cx, 20, 'SELECT MODE', 9);
-    createMenuText(this, cx, 34, '─────────────────', 6);
+    createMenuText(this, cx, 60, 'SELECT MODE', 27);
+    createMenuText(this, cx, 102, '─────────────────', 18);
 
     type ModeEntry = { label: string; p1: TeamSide | null; p2: TeamSide | null };
 
@@ -80,8 +80,8 @@ export class FriendlyScene extends Phaser.Scene {
       { label: 'BACK',       p1: TeamSide.HOME,  p2: null             }, // sentinel — handled below
     ];
 
-    const startY  = 68;
-    const stepY   = 16;
+    const startY  = 204;
+    const stepY   = 48;
 
     const items     = modes.map((m, i) =>
       createMenuItem(this, cx, startY + i * stepY, m.label, () => onMode(i)),
@@ -96,7 +96,7 @@ export class FriendlyScene extends Phaser.Scene {
       this.startMatch(modes[i].p1, modes[i].p2);
     };
 
-    createMenuText(this, cx, height - 14, 'UP/DOWN  Z/SPACE TO SELECT', 6);
+    createMenuText(this, cx, height - 42, 'UP/DOWN  Z/SPACE TO SELECT', 18);
 
     this.menuSelector = new MenuSelector(this, items, callbacks);
   }

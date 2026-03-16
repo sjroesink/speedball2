@@ -17,8 +17,8 @@ export class HUD {
     const font  = 'monospace';
 
     // Home score — top-left
-    this.homeScore = scene.add.text(8, 4, `${homeName} 0`, {
-      fontSize: '7px',
+    this.homeScore = scene.add.text(24, 12, `${homeName} 0`, {
+      fontSize: '21px',
       color: '#3b82f6',
       fontFamily: font,
     })
@@ -26,8 +26,8 @@ export class HUD {
       .setDepth(depth);
 
     // Away score — top-right (right-aligned)
-    this.awayScore = scene.add.text(312, 4, `0 ${awayName}`, {
-      fontSize: '7px',
+    this.awayScore = scene.add.text(936, 12, `0 ${awayName}`, {
+      fontSize: '21px',
       color: '#ef4444',
       fontFamily: font,
     })
@@ -36,8 +36,8 @@ export class HUD {
       .setDepth(depth);
 
     // Timer — top-center
-    this.timer = scene.add.text(160, 4, '1:30', {
-      fontSize: '7px',
+    this.timer = scene.add.text(480, 12, '1:30', {
+      fontSize: '21px',
       color: '#ffffff',
       fontFamily: font,
     })
@@ -46,8 +46,8 @@ export class HUD {
       .setDepth(depth);
 
     // Half indicator — below timer
-    this.halfText = scene.add.text(160, 14, 'HALF 1', {
-      fontSize: '6px',
+    this.halfText = scene.add.text(480, 42, 'HALF 1', {
+      fontSize: '18px',
       color: '#888888',
       fontFamily: font,
     })
@@ -56,8 +56,8 @@ export class HUD {
       .setDepth(depth);
 
     // Message — center screen (for KICK OFF, GOAL!, HALF TIME, FULL TIME)
-    this.message = scene.add.text(160, 112, '', {
-      fontSize: '10px',
+    this.message = scene.add.text(480, 336, '', {
+      fontSize: '30px',
       color: '#f59e0b',
       fontFamily: font,
     })

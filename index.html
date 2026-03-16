@@ -5,9 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Speedball 2: Brutal Deluxe</title>
   <style>
-    * { margin: 0; padding: 0; }
-    body { background: #000; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
-    canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    canvas {
+      display: block;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
   </style>
 </head>
 <body>

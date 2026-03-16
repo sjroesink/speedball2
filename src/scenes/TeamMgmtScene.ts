@@ -55,16 +55,16 @@ export class TeamMgmtScene extends Phaser.Scene {
     const ld  = this.leagueData;
     const team = ALL_TEAMS[ld.playerTeamIndex];
 
-    let y = 16;
+    let y = 48;
 
-    createMenuText(this, cx, y, team.name.toUpperCase(), 10);
-    y += 16;
-    createMenuText(this, cx, y, `CREDITS: ${ld.credits}`, 7);
-    y += 14;
+    createMenuText(this, cx, y, team.name.toUpperCase(), 30);
+    y += 48;
+    createMenuText(this, cx, y, `CREDITS: ${ld.credits}`, 21);
+    y += 42;
 
     // Column header
-    createMenuText(this, cx, y, '#  NAME           S   T   D', 6);
-    y += 10;
+    createMenuText(this, cx, y, '#  NAME           S   T   D', 18);
+    y += 30;
 
     // Player rows — each is clickable to open upgrade menu
     const playerItems:  Phaser.GameObjects.Text[] = [];
@@ -78,16 +78,16 @@ export class TeamMgmtScene extends Phaser.Scene {
       });
       // Override origin to left-align
       item.setOrigin(0, 0.5);
-      item.setX(14);
+      item.setX(42);
       playerItems.push(item);
       playerCbs.push(() => {
         this.selectedPlayer = idx;
         this.showUpgradeMenu();
       });
-      y += 10;
+      y += 30;
     });
 
-    y += 6;
+    y += 18;
     const backItem = createMenuItem(this, cx, y, 'BACK', () => {
       this.scene.start('LeagueScene', { leagueData: ld });
     });
@@ -96,7 +96,7 @@ export class TeamMgmtScene extends Phaser.Scene {
 
     this.menuSelector = new MenuSelector(this, playerItems, playerCbs);
 
-    createMenuText(this, cx, height - 10, 'UP/DOWN  Z/SPACE TO SELECT', 5);
+    createMenuText(this, cx, height - 30, 'UP/DOWN  Z/SPACE TO SELECT', 15);
   }
 
   // ------ Upgrade menu screen ----------------------------------------------
@@ -111,23 +111,23 @@ export class TeamMgmtScene extends Phaser.Scene {
     const team = ALL_TEAMS[ld.playerTeamIndex];
     const p    = team.players[this.selectedPlayer];
 
-    let y = 16;
+    let y = 48;
 
-    createMenuText(this, cx, y, 'UPGRADE PLAYER', 10);
-    y += 16;
+    createMenuText(this, cx, y, 'UPGRADE PLAYER', 30);
+    y += 48;
 
-    createMenuText(this, cx, y, `CREDITS: ${ld.credits}`, 7);
-    y += 14;
+    createMenuText(this, cx, y, `CREDITS: ${ld.credits}`, 21);
+    y += 42;
 
     // Selected player info
-    createMenuText(this, cx, y, `${p.number}. ${p.name}`, 8);
-    y += 12;
+    createMenuText(this, cx, y, `${p.number}. ${p.name}`, 24);
+    y += 36;
     createMenuText(
       this, cx, y,
       `SPD ${p.stats.speed}  STR ${p.stats.strength}  DEF ${p.stats.defense}`,
-      7,
+      21,
     );
-    y += 16;
+    y += 48;
 
     // Build upgrade options
     const menuItems: Phaser.GameObjects.Text[] = [];
@@ -137,22 +137,22 @@ export class TeamMgmtScene extends Phaser.Scene {
       const item = createMenuItem(this, cx, y, label, cb);
       menuItems.push(item);
       menuCbs.push(cb);
-      y += 12;
+      y += 36;
     };
 
     addOpt(`SPEED +1  (${TRAINING_COST_SPEED.toLocaleString()})`, () => this.buyUpgrade('speed'));
     addOpt(`STRENGTH +1  (${TRAINING_COST_STR.toLocaleString()})`, () => this.buyUpgrade('strength'));
     addOpt(`DEFENSE +1  (${TRAINING_COST_DEF.toLocaleString()})`, () => this.buyUpgrade('defense'));
 
-    y += 4;
+    y += 12;
     addOpt(`BUY REPLACEMENT  (${BUY_PLAYER_COST.toLocaleString()})`, () => this.buyPlayer());
 
-    y += 4;
+    y += 12;
     addOpt('BACK', () => this.showRoster());
 
     this.menuSelector = new MenuSelector(this, menuItems, menuCbs);
 
-    createMenuText(this, cx, height - 10, 'UP/DOWN  Z/SPACE TO SELECT', 5);
+    createMenuText(this, cx, height - 30, 'UP/DOWN  Z/SPACE TO SELECT', 15);
   }
 
   // ------ Upgrades ---------------------------------------------------------
@@ -232,8 +232,8 @@ export class TeamMgmtScene extends Phaser.Scene {
 
   private flashMessage(msg: string): void {
     const { width } = this.scale;
-    const text = this.add.text(width / 2, 110, msg, {
-      fontSize: '7px',
+    const text = this.add.text(width / 2, 330, msg, {
+      fontSize: '21px',
       color: '#ff4444',
       fontFamily: 'monospace',
     }).setOrigin(0.5);

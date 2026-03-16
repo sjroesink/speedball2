@@ -125,15 +125,15 @@ export class MultiplierElement {
 
 /**
  * A pair of warp portals on the left and right walls at the same Y.
- * Left portal is at x=24, right at x=296.
+ * Left portal is at x=72, right at x=888 (3x scaled from 24, 296).
  */
 export class WarpPair {
   readonly left:  Phaser.GameObjects.Image;
   readonly right: Phaser.GameObjects.Image;
 
   constructor(scene: Phaser.Scene, y: number) {
-    this.left  = scene.add.image(24,  y, 'warp');
-    this.right = scene.add.image(296, y, 'warp');
+    this.left  = scene.add.image(72,  y, 'warp');
+    this.right = scene.add.image(888, y, 'warp');
   }
 }
 
@@ -157,13 +157,12 @@ export function createArena(scene: Phaser.Scene): ArenaLayout {
   // ------ Walls -----------------------------------------------------------
   const walls = scene.physics.add.staticGroup();
 
-  const wallThickness = 16;
-  const wallColor     = 0x4a6fa5;
+  const wallThickness = 48;
 
   /** Helper: create a wall rectangle as a static physics body. */
   function addWall(x: number, y: number, w: number, h: number): void {
     const g = scene.add.graphics();
-    g.fillStyle(wallColor, 1);
+    g.fillStyle(0x770000, 1);
     g.fillRect(0, 0, w, h);
     g.generateTexture(`wall_${x}_${y}`, w, h);
     g.destroy();
@@ -184,34 +183,44 @@ export function createArena(scene: Phaser.Scene): ArenaLayout {
   addWall(W - wallThickness, 0, wallThickness, H);
 
   // ------ Goals -----------------------------------------------------------
-  const goalTop    = scene.add.image(W / 2, 24,      'goal');
-  const goalBottom = scene.add.image(W / 2, H - 24,  'goal');
+  const goalTop    = scene.add.image(W / 2, 72,      'goal');
+  const goalBottom = scene.add.image(W / 2, H - 72,  'goal');
 
   // ------ Domes -----------------------------------------------------------
   const domes = scene.physics.add.staticGroup();
 
+  // Original positions × 3:
+  // (96,48)→(288,144), (224,48)→(672,144)
+  // (112,80)→(336,240), (208,80)→(624,240)
+  // (96,224)→(288,672), (224,224)→(672,672)
+  // (112,400)→(336,1200), (208,400)→(624,1200)
   const domePositions: [number, number][] = [
-    [96,  48],  [224,  48],
-    [112, 80],  [208,  80],
-    [96,  224], [224, 224],
-    [112, 400], [208, 400],
+    [288, 144], [672, 144],
+    [336, 240], [624, 240],
+    [288, 672], [672, 672],
+    [336, 1200], [624, 1200],
   ];
 
   for (const [dx, dy] of domePositions) {
     const dome = scene.physics.add.staticImage(dx, dy, 'dome');
     dome.setImmovable(true);
-    // Circular hitbox radius 8, centred on the 16×16 sprite
-    (dome.body as Phaser.Physics.Arcade.StaticBody).setCircle(8, 0, 0);
+    // Circular hitbox radius 24, centred on the 48×48 sprite
+    (dome.body as Phaser.Physics.Arcade.StaticBody).setCircle(24, 0, 0);
     dome.refreshBody();
     domes.add(dome);
   }
 
   // ------ Stars -----------------------------------------------------------
+  // Original positions × 3:
+  // top:    (40,48)→(120,144), (40,64)→(120,192), (40,96)→(120,288)
+  //         (280,48)→(840,144), (280,64)→(840,192)
+  // bottom: (40,384)→(120,1152), (40,416)→(120,1248), (40,432)→(120,1296)
+  //         (280,416)→(840,1248), (280,384)→(840,1152)
   const topStarPositions:    [number, number][] = [
-    [40,  48], [40,  64], [40,  96], [280, 48], [280, 64],
+    [120, 144], [120, 192], [120, 288], [840, 144], [840, 192],
   ];
   const bottomStarPositions: [number, number][] = [
-    [40,  384], [40,  416], [40,  432], [280, 416], [280, 384],
+    [120, 1152], [120, 1248], [120, 1296], [840, 1248], [840, 1152],
   ];
 
   const stars: StarElement[] = [
@@ -220,15 +229,17 @@ export function createArena(scene: Phaser.Scene): ArenaLayout {
   ];
 
   // ------ Multipliers -----------------------------------------------------
+  // (W/2, 64)→(W/2, 192), (W/2, H-64)→(W/2, H-192)
   const multipliers: MultiplierElement[] = [
-    new MultiplierElement(scene, W / 2, 64,       'top'),
-    new MultiplierElement(scene, W / 2, H - 64,   'bottom'),
+    new MultiplierElement(scene, W / 2, 192,       'top'),
+    new MultiplierElement(scene, W / 2, H - 192,   'bottom'),
   ];
 
   // ------ Warps -----------------------------------------------------------
+  // y positions: 112→336, 368→1104
   const warps: WarpPair[] = [
-    new WarpPair(scene, 112),
-    new WarpPair(scene, 368),
+    new WarpPair(scene, 336),
+    new WarpPair(scene, 1104),
   ];
 
   // ------ Layout ----------------------------------------------------------

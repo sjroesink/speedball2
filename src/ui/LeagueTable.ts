@@ -7,8 +7,8 @@ import { LeagueStanding } from '../utils/types';
 
 const COLOR_AMBER  = '#f59e0b';
 const COLOR_WHITE  = '#ffffff';
-const FONT_SIZE    = 6;
-const ROW_HEIGHT   = 9;
+const FONT_SIZE    = 18;
+const ROW_HEIGHT   = 27;
 
 /**
  * Draws a formatted league table onto the scene.
@@ -43,7 +43,7 @@ export function drawLeagueTable(
     fontFamily: 'monospace',
   }).setOrigin(0, 0);
 
-  y += ROW_HEIGHT + 2;
+  y += ROW_HEIGHT + 6;
 
   // Rows
   sorted.forEach((s, idx) => {

@@ -138,31 +138,31 @@ export class LeagueScene extends Phaser.Scene {
     const playerTeam = ALL_TEAMS[ld.playerTeamIndex];
     const playerWon  = winner.teamName === playerTeam.shortName;
 
-    let y = 24;
-    createMenuText(this, cx, y, 'SEASON COMPLETE', 12);
-    y += 24;
+    let y = 72;
+    createMenuText(this, cx, y, 'SEASON COMPLETE', 36);
+    y += 72;
 
     if (playerWon) {
-      createMenuText(this, cx, y, 'CHAMPIONS!', 10);
+      createMenuText(this, cx, y, 'CHAMPIONS!', 30);
     } else {
-      createMenuText(this, cx, y, `WINNER: ${winner.teamName}`, 8);
+      createMenuText(this, cx, y, `WINNER: ${winner.teamName}`, 24);
     }
-    y += 18;
+    y += 54;
 
-    createMenuText(this, cx, y, `YOUR CREDITS: ${ld.credits}`, 7);
-    y += 14;
+    createMenuText(this, cx, y, `YOUR CREDITS: ${ld.credits}`, 21);
+    y += 42;
 
     // Draw table
-    drawLeagueTable(this, 20, y, ld.standings);
-    y += 12 + ld.standings.length * 9 + 14;
+    drawLeagueTable(this, 60, y, ld.standings);
+    y += 36 + ld.standings.length * 27 + 42;
 
     // Menu
-    const newSeasonItem = createMenuItem(this, cx, height - 40, 'NEW SEASON', () => {
+    const newSeasonItem = createMenuItem(this, cx, height - 120, 'NEW SEASON', () => {
       const fresh = createInitialLeagueData();
       fresh.playerTeamIndex = ld.playerTeamIndex;
       this.scene.start('LeagueScene', { leagueData: fresh });
     });
-    const titleItem = createMenuItem(this, cx, height - 26, 'TITLE SCREEN', () => {
+    const titleItem = createMenuItem(this, cx, height - 78, 'TITLE SCREEN', () => {
       this.scene.start('TitleScene');
     });
 
@@ -191,31 +191,31 @@ export class LeagueScene extends Phaser.Scene {
       fixture.home === ld.playerTeamIndex ||
       fixture.away === ld.playerTeamIndex;
 
-    let y = 14;
+    let y = 42;
 
     // Title + credits
-    createMenuText(this, cx, y, 'LEAGUE', 10);
-    y += 16;
-    createMenuText(this, cx, y, `CREDITS: ${ld.credits}`, 7);
-    y += 14;
+    createMenuText(this, cx, y, 'LEAGUE', 30);
+    y += 48;
+    createMenuText(this, cx, y, `CREDITS: ${ld.credits}`, 21);
+    y += 42;
 
     // League table
-    createMenuText(this, cx, y, 'STANDINGS', 7);
-    y += 10;
-    drawLeagueTable(this, 14, y, ld.standings);
-    y += 12 + ld.standings.length * 9 + 4;
+    createMenuText(this, cx, y, 'STANDINGS', 21);
+    y += 30;
+    drawLeagueTable(this, 42, y, ld.standings);
+    y += 36 + ld.standings.length * 27 + 12;
 
     // Match counter
     createMenuText(
       this, cx, y,
       `MATCH ${ld.currentMatch + 1} / ${ld.schedule.length}`,
-      6,
+      18,
     );
-    y += 10;
+    y += 30;
 
     // Next fixture
-    createMenuText(this, cx, y, `NEXT: ${homeTeam.shortName} vs ${awayTeam.shortName}`, 7);
-    y += 14;
+    createMenuText(this, cx, y, `NEXT: ${homeTeam.shortName} vs ${awayTeam.shortName}`, 21);
+    y += 42;
 
     // Build menu items
     const menuItems:  Phaser.GameObjects.Text[] = [];
@@ -246,21 +246,21 @@ export class LeagueScene extends Phaser.Scene {
         };
         this.scene.start('MatchScene', config);
       });
-      y += 14;
+      y += 42;
 
       const teamItem = createMenuItem(this, cx, y, 'TEAM', () => {
         this.scene.start('TeamMgmtScene', { leagueData: ld });
       });
       menuItems.push(teamItem);
       menuCbs.push(() => this.scene.start('TeamMgmtScene', { leagueData: ld }));
-      y += 14;
+      y += 42;
     } else {
       const simItem = createMenuItem(this, cx, y, 'SIMULATE', () => {
         this.simulateMatch(fixture);
       });
       menuItems.push(simItem);
       menuCbs.push(() => this.simulateMatch(fixture));
-      y += 14;
+      y += 42;
     }
 
     const quitItem = createMenuItem(this, cx, y, 'QUIT', () => {
@@ -271,7 +271,7 @@ export class LeagueScene extends Phaser.Scene {
 
     this.menuSelector = new MenuSelector(this, menuItems, menuCbs);
 
-    createMenuText(this, cx, height - 10, 'UP/DOWN  Z/SPACE TO SELECT', 5);
+    createMenuText(this, cx, height - 30, 'UP/DOWN  Z/SPACE TO SELECT', 15);
   }
 
   // ------ Simulation -------------------------------------------------------

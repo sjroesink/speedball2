@@ -20,14 +20,14 @@ export class TitleScene extends Phaser.Scene {
     const cx = width / 2;
 
     // Title text
-    createMenuText(this, cx, 48, 'SPEEDBALL 2', 16);
-    createMenuText(this, cx, 72, 'BRUTAL DELUXE', 10);
+    createMenuText(this, cx, 144, 'SPEEDBALL 2', 48);
+    createMenuText(this, cx, 216, 'BRUTAL DELUXE', 30);
 
     // Decorative separator
-    createMenuText(this, cx, 94, '─────────────────', 8);
+    createMenuText(this, cx, 282, '─────────────────', 24);
 
     // Menu items
-    const menuY   = [120, 140, 160];
+    const menuY   = [360, 420, 480];
     const labels  = ['LEAGUE', 'FRIENDLY', 'OPTIONS'];
     const callbacks: Array<() => void> = [
       () => this.scene.start('LeagueScene'),
@@ -42,7 +42,7 @@ export class TitleScene extends Phaser.Scene {
     this.menuSelector = new MenuSelector(this, items, callbacks);
 
     // Footer
-    createMenuText(this, cx, height - 16, 'UP/DOWN  Z/SPACE TO SELECT', 6);
+    createMenuText(this, cx, height - 48, 'UP/DOWN  Z/SPACE TO SELECT', 18);
   }
 
   update(_time: number, _delta: number): void {

@@ -66,8 +66,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private initPhysics(): void {
     const body = this.body as Phaser.Physics.Arcade.Body;
     body.setCollideWorldBounds(true);
-    // Circular hitbox: radius 6, offset to centre on the 16×16 sprite
-    body.setCircle(6, 2, 2);
+    // Circular hitbox: radius 18, offset to centre on the 48×48 sprite
+    body.setCircle(18, 6, 6);
   }
 
   // ------ Getters ----------------------------------------------------------

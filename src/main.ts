@@ -14,22 +14,22 @@ import { TeamMgmtScene } from './scenes/TeamMgmtScene';
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
 
-  width:  320,
-  height: 224,
+  width:  960,
+  height: 672,
 
   backgroundColor: '#000000',
 
   scale: {
-    mode:           Phaser.Scale.FIT,
-    autoCenter:     Phaser.Scale.CENTER_BOTH,
-    width:          320,
-    height:         224,
+    mode:       Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width:      960,
+    height:     672,
   },
 
   render: {
-    pixelArt:       true,
-    antialias:      false,
-    roundPixels:    true,
+    pixelArt:    true,
+    antialias:   false,
+    roundPixels: true,
   },
 
   physics: {

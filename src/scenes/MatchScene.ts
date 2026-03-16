@@ -152,7 +152,7 @@ export class MatchScene extends Phaser.Scene {
     this.cameras.main
       .setBounds(0, 0, ARENA_WIDTH, ARENA_HEIGHT)
       .startFollow(this.ball, true, 0.1, 0.1)
-      .setDeadzone(40, 40);
+      .setDeadzone(120, 120);
 
     // 12. Kick off
     this.setupKickoff();
@@ -269,7 +269,7 @@ export class MatchScene extends Phaser.Scene {
 
   // ------ Floor ------------------------------------------------------------
 
-  /** Tiles the arena floor with 16×16 floor_tile sprites. */
+  /** Tiles the arena floor with 48×48 floor_tile sprites. */
   private drawFloor(): void {
     const cols = ARENA_WIDTH  / TILE_WIDTH;   // 20
     const rows = ARENA_HEIGHT / TILE_HEIGHT;  // 30
@@ -291,31 +291,31 @@ export class MatchScene extends Phaser.Scene {
    * Creates Player entities for one team and assigns home positions.
    * Formation:
    *   [0] Keeper       — centreX, near own goal
-   *   [1] Defender L   — centreX - 48, 75% (HOME) / 25% (AWAY) of height
-   *   [2] Defender R   — centreX + 48, same row
-   *   [3] Midfielder L — centreX - 56, 50%
-   *   [4] Midfielder R — centreX + 56, 50%
+   *   [1] Defender L   — centreX - 144, 75% (HOME) / 25% (AWAY) of height
+   *   [2] Defender R   — centreX + 144, same row
+   *   [3] Midfielder L — centreX - 168, 50%
+   *   [4] Midfielder R — centreX + 168, 50%
    *   [5] Forward      — centreX, 25% (HOME) / 75% (AWAY)
    */
   private createTeamPlayers(teamDef: TeamDef, side: TeamSide): Player[] {
-    const cx = ARENA_WIDTH / 2;   // 160
-    const H  = ARENA_HEIGHT;       // 480
+    const cx = ARENA_WIDTH / 2;   // 480
+    const H  = ARENA_HEIGHT;       // 1440
 
     const isHome = side === TeamSide.HOME;
 
     // Y positions relative to arena height
-    const goalY      = isHome ? H - 24       : 24;
+    const goalY      = isHome ? H - 72       : 72;
     const defY       = isHome ? H * 0.75     : H * 0.25;
     const midY       = H * 0.5;
     const fwdY       = isHome ? H * 0.25     : H * 0.75;
 
     const positions: [number, number][] = [
-      [cx,       goalY],  // 0 Keeper
-      [cx - 48,  defY ],  // 1 Defender L
-      [cx + 48,  defY ],  // 2 Defender R
-      [cx - 56,  midY ],  // 3 Midfielder L
-      [cx + 56,  midY ],  // 4 Midfielder R
-      [cx,       fwdY ],  // 5 Forward
+      [cx,        goalY],  // 0 Keeper
+      [cx - 144,  defY ],  // 1 Defender L
+      [cx + 144,  defY ],  // 2 Defender R
+      [cx - 168,  midY ],  // 3 Midfielder L
+      [cx + 168,  midY ],  // 4 Midfielder R
+      [cx,        fwdY ],  // 5 Forward
     ];
 
     const players: Player[] = [];

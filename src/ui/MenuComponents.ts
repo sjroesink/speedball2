@@ -22,7 +22,7 @@ export function createMenuText(
   x: number,
   y: number,
   text: string,
-  size: number = 8,
+  size: number = 24,
 ): Phaser.GameObjects.Text {
   return scene.add.text(x, y, text, {
     fontSize: `${size}px`,
@@ -47,7 +47,7 @@ export function createMenuItem(
   callback: () => void,
 ): Phaser.GameObjects.Text {
   const item = scene.add.text(x, y, text, {
-    fontSize: '8px',
+    fontSize: '30px',
     color: TEXT_COLOR_NORMAL,
     fontFamily: 'monospace',
   }).setOrigin(0.5).setInteractive({ useHandCursor: true });

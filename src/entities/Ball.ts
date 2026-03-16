@@ -32,8 +32,8 @@ export class Ball extends Phaser.Physics.Arcade.Sprite {
     body.setBounce(BALL_WALL_RESTITUTION, BALL_WALL_RESTITUTION);
     body.setDrag(0, 0); // friction handled manually in applyFriction()
 
-    // Circular hitbox: radius 3, centred on the 8×8 sprite
-    body.setCircle(3, 1, 1);
+    // Circular hitbox: radius 9, centred on the 24×24 sprite
+    body.setCircle(9, 3, 3);
   }
 
   // ------ Ownership --------------------------------------------------------
