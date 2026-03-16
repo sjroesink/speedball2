@@ -287,6 +287,9 @@ export class MatchScene extends Phaser.Scene {
    *   [3] Midfielder L — centreX - 168, 50%
    *   [4] Midfielder R — centreX + 168, 50%
    *   [5] Forward      — centreX, 25% (HOME) / 75% (AWAY)
+   *   [6] Wing Defender L — centreX - 264, 65% (HOME) / 35% (AWAY)
+   *   [7] Wing Defender R — centreX + 264, 65% (HOME) / 35% (AWAY)
+   *   [8] Deep Midfielder — centreX, 40% (HOME) / 60% (AWAY)
    */
   private createTeamPlayers(teamDef: TeamDef, side: TeamSide): Player[] {
     const cx = ARENA_WIDTH / 2;   // 480
@@ -299,26 +302,29 @@ export class MatchScene extends Phaser.Scene {
     const defY       = isHome ? H * 0.75     : H * 0.25;
     const midY       = H * 0.5;
     const fwdY       = isHome ? H * 0.25     : H * 0.75;
+    // Additional positions for bench players (wings and deep midfielder)
+    const wingDefY   = isHome ? H * 0.65     : H * 0.35;
+    const deepMidY   = isHome ? H * 0.40     : H * 0.60;
 
     const positions: [number, number][] = [
-      [cx,        goalY],  // 0 Keeper
-      [cx - 144,  defY ],  // 1 Defender L
-      [cx + 144,  defY ],  // 2 Defender R
-      [cx - 168,  midY ],  // 3 Midfielder L
-      [cx + 168,  midY ],  // 4 Midfielder R
-      [cx,        fwdY ],  // 5 Forward
+      [cx,        goalY],     // 0 Keeper
+      [cx - 144,  defY ],     // 1 Defender L
+      [cx + 144,  defY ],     // 2 Defender R
+      [cx - 168,  midY ],     // 3 Midfielder L
+      [cx + 168,  midY ],     // 4 Midfielder R
+      [cx,        fwdY ],     // 5 Forward
+      [cx - 264,  wingDefY],  // 6 Wing Defender L
+      [cx + 264,  wingDefY],  // 7 Wing Defender R
+      [cx,        deepMidY],  // 8 Deep Midfielder
     ];
 
     const players: Player[] = [];
-    const starters = teamDef.players.slice(0, 6);
+    const roster = teamDef.players.slice(0, 9); // Use all 9 players
 
-    for (let i = 0; i < starters.length; i++) {
-      const def = starters[i];
+    for (let i = 0; i < roster.length; i++) {
+      const def = roster[i];
       const [x, y] = positions[i];
-
-      // Override role for position index to match formation
-      // (teams define roles on their PlayerDef; we trust them)
-      const p = new Player(this, x, y, def, side);
+      const p = new Player(this, x, y, def, side, teamDef.color);
       p.homeX = x;
       p.homeY = y;
       players.push(p);
