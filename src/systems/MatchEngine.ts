@@ -11,7 +11,6 @@ import {
 import {
   getCreditsEarned,
   getInjuryChance,
-  getTackleSuccessChance,
   POINTS_GOAL,
   POINTS_TACKLE,
   POINTS_STAR_BONUS,
@@ -182,14 +181,8 @@ export class MatchEngine {
    * @returns true if the tackle succeeded
    */
   tryTackle(attacker: Player, target: Player, ball: Ball): boolean {
-    const chance = getTackleSuccessChance(
-      attacker.playerDef.stats.strength,
-      target.playerDef.stats.defense,
-    );
-
-    if (Math.random() > chance) return false;
-
-    // Success
+    // Tackles are deterministic — if you hit someone, they always go down.
+    // Only the injury roll is random (like the original SB2).
     if (target.hasBall) {
       target.hasBall = false;
       ball.release();
