@@ -115,3 +115,65 @@ export interface LeagueStanding {
   pointsFor: number;
   pointsAgainst: number;
 }
+
+// ── Online multiplayer state interfaces ─────────────────────────
+
+export interface BallState {
+  x: number; y: number;
+  vx: number; vy: number;
+  ownerSide: TeamSide | null;
+  ownerIndex: number;
+}
+
+export interface ServerPlayerState {
+  x: number; y: number;
+  vx: number; vy: number;
+  state: PlayerState;
+  hasBall: boolean;
+  facingAngle: number;
+  role: PlayerRole;
+  stats: PlayerStats;
+  injuryTimer: number;
+  stateTimer: number;
+  homeX: number; homeY: number;
+}
+
+export interface StarState {
+  x: number; y: number;
+  side: 'top' | 'bottom';
+  activated: boolean;
+  activatedBy: TeamSide | null;
+}
+
+export interface MultiplierState {
+  x: number; y: number;
+  side: 'top' | 'bottom';
+  activeForTeam: TeamSide | null;
+  respawnTimer: number;
+}
+
+export interface TeamState {
+  score: number;
+  goals: number;
+  tackles: number;
+  hasMultiplier: boolean;
+  controlledPlayerIndex: number;
+  players: ServerPlayerState[];
+}
+
+export interface GameStateMsg {
+  ball: BallState;
+  home: TeamState;
+  away: TeamState;
+  stars: StarState[];
+  multipliers: MultiplierState[];
+  timer: number;
+  half: number;
+  matchState: MatchState;
+  tick: number;
+}
+
+export interface ClientInput {
+  dx: number; dy: number;
+  fire: boolean; pass: boolean;
+}
