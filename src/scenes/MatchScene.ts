@@ -20,6 +20,8 @@ import { MatchEngine, TeamMatchData } from '../systems/MatchEngine';
 import { PhysicsManager } from '../systems/PhysicsManager';
 import { InputManager, PlayerInput } from '../systems/InputManager';
 import { HUD } from '../ui/HUD';
+import { AIController } from '../systems/AIController';
+import { Difficulty } from '../utils/types';
 
 // ================================================================
 // MatchConfig
@@ -52,6 +54,10 @@ export class MatchScene extends Phaser.Scene {
   private awayPlayers:  Player[] = [];
 
   private matchConfig!: MatchConfig;
+
+  // ------ AI Controllers ---------------------------------------------------
+  private homeAI: AIController | null = null;
+  private awayAI: AIController | null = null;
 
   // ------ Kick-off tracking -----------------------------------------------
   /** Prevents setupKickoff() being called every frame while in KICKOFF state. */
@@ -107,23 +113,47 @@ export class MatchScene extends Phaser.Scene {
     this.physics_ = new PhysicsManager(this);
     this.physics_.setup(this.ball, this.arena, this.engine, this.homePlayers, this.awayPlayers);
 
-    // 8. InputManager
+    // 8. AI Controllers — create for any team not controlled by a human
+    if (this.matchConfig.p1Controls !== TeamSide.HOME && this.matchConfig.p2Controls !== TeamSide.HOME) {
+      this.homeAI = new AIController(
+        TeamSide.HOME,
+        this.homePlayers,
+        this.awayPlayers,
+        this.ball,
+        this.physics_,
+        this.engine,
+        Difficulty.MEDIUM,
+      );
+    }
+    if (this.matchConfig.p1Controls !== TeamSide.AWAY && this.matchConfig.p2Controls !== TeamSide.AWAY) {
+      this.awayAI = new AIController(
+        TeamSide.AWAY,
+        this.awayPlayers,
+        this.homePlayers,
+        this.ball,
+        this.physics_,
+        this.engine,
+        Difficulty.MEDIUM,
+      );
+    }
+
+    // 9. InputManager
     this.input_ = new InputManager(this);
 
-    // 9. HUD
+    // 10. HUD
     this.hud = new HUD(
       this,
       this.matchConfig.homeTeam.shortName,
       this.matchConfig.awayTeam.shortName,
     );
 
-    // 10. Camera
+    // 11. Camera
     this.cameras.main
       .setBounds(0, 0, ARENA_WIDTH, ARENA_HEIGHT)
       .startFollow(this.ball, true, 0.1, 0.1)
       .setDeadzone(40, 40);
 
-    // 11. Kick off
+    // 12. Kick off
     this.setupKickoff();
   }
 
@@ -184,6 +214,10 @@ export class MatchScene extends Phaser.Scene {
     if (this.matchConfig.p2Controls !== null) {
       this.processHumanInput(this.input_.getP2Input(), this.matchConfig.p2Controls);
     }
+
+    // 4b. AI input
+    this.homeAI?.update(delta);
+    this.awayAI?.update(delta);
 
     // 5. Ball & player updates
     this.ball.update(_time, delta);
