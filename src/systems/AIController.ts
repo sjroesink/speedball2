@@ -37,6 +37,9 @@ export class AIController {
   /** Seconds remaining before the AI next takes action. */
   private reactionTimer:  number = 0;
 
+  /** Seconds the team has been holding the ball without acting. */
+  private ballHoldTimer: number = 0;
+
   /** Keeper's goal-line Y (locked for keeper movement). */
   private goalY:          number;
 
@@ -76,6 +79,14 @@ export class AIController {
     this.reactionTimer -= dt;
     if (this.reactionTimer > 0) return;
     this.reactionTimer = this.params.reactionTime;
+
+    // Track how long our team has held the ball
+    const weHaveBall = this.players.some(p => p.hasBall);
+    if (weHaveBall) {
+      this.ballHoldTimer += this.params.reactionTime;
+    } else {
+      this.ballHoldTimer = 0;
+    }
 
     const teamState = this.determineTeamState();
 
@@ -149,29 +160,31 @@ export class AIController {
   private updateAttacking(player: Player, _index: number): void {
     if (player.hasBall) {
       const targetGoalY = this.teamSide === TeamSide.HOME ? GOAL_Y_TOP : GOAL_Y_BOTTOM;
-      const dy          = targetGoalY - player.y;
-      const distToGoal  = Math.abs(dy);
+      const dy = targetGoalY - player.y;
+      const distToGoal = Math.abs(dy);
 
-      if (distToGoal < 360) {
-        // Close enough — shoot
-        this.physics.shootBall(player, this.centreX, targetGoalY);
+      // If held ball for too long (>2 seconds), force a pass or shot
+      const desperate = this.ballHoldTimer > 2.0;
+
+      if (distToGoal < 360 && Math.random() < this.params.shootAccuracy) {
+        // Close enough — shoot (with accuracy check)
+        this.physics.shootBall(player, this.centreX + (Math.random() - 0.5) * 60, targetGoalY);
+        this.ballHoldTimer = 0;
+      } else if (desperate || Math.random() < 0.30 * this.params.passAccuracy) {
+        // Pass to teammate
+        const teammates = this.engine.getTeam(this.teamSide).players;
+        this.physics.passBall(player, teammates);
+        this.ballHoldTimer = 0;
       } else {
-        // Consider a pass (30% base chance × passAccuracy)
-        const passRoll = Math.random();
-        if (passRoll < 0.30 * this.params.passAccuracy) {
-          const teammates = this.engine.getTeam(this.teamSide).players;
-          this.physics.passBall(player, teammates);
-        } else {
-          // Advance toward the opponent's goal
-          this.moveToward(player, this.centreX, targetGoalY);
-        }
+        // Advance toward the opponent's goal
+        this.moveToward(player, this.centreX + (Math.random() - 0.5) * 120, targetGoalY);
       }
     } else {
-      // Support: move to an attacking support position
+      // Support: move to an attacking support position (vary by player index)
       const supportY = this.teamSide === TeamSide.HOME
-        ? ARENA_HEIGHT * 0.30
-        : ARENA_HEIGHT * 0.70;
-      const supportX = this.centreX + (_index % 2 === 0 ? -120 : 120);
+        ? ARENA_HEIGHT * 0.20 + (_index * 60)
+        : ARENA_HEIGHT * 0.80 - (_index * 60);
+      const supportX = this.centreX + (_index % 2 === 0 ? -150 : 150);
       this.moveToward(player, supportX, supportY);
     }
   }
@@ -189,16 +202,20 @@ export class AIController {
     const dy = nearest.y - player.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
-    if (dist < 90) {
-      // In tackle range — attempt tackle with probability based on aggressiveness
-      if (Math.random() < this.params.tackleAggressiveness && player.canAct) {
-        // Face the opponent before tackling
+    if (dist < 120) {
+      // In tackle range — face opponent and tackle
+      if (player.canAct) {
         player.moveInDirection(dx, dy);
-        this.physics.handleTackle(player, this.opponents);
+        if (Math.random() < this.params.tackleAggressiveness) {
+          this.physics.handleTackle(player, this.opponents);
+        }
       }
-    } else {
-      // Mark the nearest opponent
+    } else if (dist < 300) {
+      // Chase the nearest opponent
       this.moveToward(player, nearest.x, nearest.y);
+    } else {
+      // Too far — return to formation
+      this.moveToward(player, player.homeX, player.homeY);
     }
   }
 
