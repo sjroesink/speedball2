@@ -1,25 +1,21 @@
 {
-  "name": "speedball2",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "directories": {
-    "doc": "docs"
-  },
+  "name": "speedball-neon-league",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "test": "node --test src/game.test.js",
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "server": "go run ./server",
+    "assets": "\"C:/Program Files/Blender Foundation/Blender 5.2/blender.exe\" --background --python assets/build.py"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "phaser": "^3.90.0"
+    "three": "^0.180.0"
   },
   "devDependencies": {
-    "pngjs": "^7.0.0",
-    "typescript": "^5.9.3",
-    "vite": "^8.0.0"
+    "prettier": "^3.9.6",
+    "vite": "^7.1.0"
   }
 }

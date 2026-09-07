@@ -1,0 +1,433 @@
+// Local training counterpart of server/game.go. Coordinates: X upfield, Z across.
+export const formation = [
+  [-19, 0],
+  [-14, -6],
+  [-14, 0],
+  [-14, 6],
+  [-8, -7],
+  [-8, 0],
+  [-8, 7],
+  [-3, -4],
+  [-3, 4],
+];
+export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const norm = (x, z) => {
+  const d = Math.hypot(x, z);
+  return d < 0.001 ? [0, 0] : [x / d, z / d];
+};
+export const direction = (s, t) =>
+  (t === 0 ? 1 : -1) * (s.period === 2 ? -1 : 1);
+export function initial() {
+  const s = {
+    players: [],
+    ball: {},
+    score: [0, 0],
+    time: 90,
+    tick: 0,
+    over: false,
+    period: 1,
+    pause: 0,
+    controlled: [7, 16],
+    charge: [0, 0],
+    event: { id: 0, kind: 0, x: 0, z: 0, h: 0, actor: -1, target: -1 },
+    previous: [{}, {}],
+    stars: [0, 0],
+    multiplier: 0,
+  };
+  resetPitch(s);
+  return s;
+}
+export function resetPitch(s) {
+  s.players = Array.from({ length: 18 }, (_, i) => {
+    const team = Math.floor(i / 9),
+      d = direction(s, team);
+    return {
+      x: formation[i % 9][0] * d,
+      z: formation[i % 9][1],
+      team,
+      fx: d,
+      fz: 0,
+      stun: 0,
+      actionTime: 0,
+      cooldown: 0,
+      action: 0,
+    };
+  });
+  s.ball = {
+    x: 0,
+    z: 0,
+    h: 3,
+    vx: 0,
+    vz: 0,
+    vh: 0,
+    owner: -1,
+    lastTouch: -1,
+    lock: 0,
+    after: 0,
+  };
+  s.charge = [0, 0];
+}
+function event(s, kind, actor, target, x, z, h) {
+  s.event = { id: s.event.id + 1, kind, actor, target, x, z, h };
+}
+export const jumpHeight = (p) =>
+  p.action === 2 && p.actionTime > 0
+    ? Math.sin(((0.7 - p.actionTime) / 0.7) * Math.PI) * 1.8
+    : 0;
+export function selectPlayers(s) {
+  for (let t = 0; t < 2; t++) {
+    const b = s.ball;
+    if (b.owner >= 0 && s.players[b.owner].team === t) {
+      s.controlled[t] = b.owner;
+      continue;
+    }
+    const cur = s.controlled[t];
+    if (s.players[cur].actionTime > 0 && s.players[cur].stun <= 0) continue;
+    let best = -1,
+      dist = Infinity;
+    s.players.forEach((p, i) => {
+      if (p.team !== t || p.stun > 0) return;
+      let d = Math.hypot(p.x - b.x, p.z - b.z);
+      if (i % 9 === 0 && Math.abs(b.x) > 15) d -= 1;
+      if (i === cur) d -= 0.7;
+      if (d < dist) {
+        best = i;
+        dist = d;
+      }
+    });
+    if (best >= 0) s.controlled[t] = best;
+  }
+}
+export function throwBall(s, i, lob) {
+  const p = s.players[i],
+    b = s.ball,
+    speed = lob ? 16 : 24;
+  Object.assign(b, {
+    x: p.x + p.fx * 0.9,
+    z: p.z + p.fz * 0.9,
+    h: 1,
+    vx: p.fx * speed,
+    vz: p.fz * speed,
+    vh: lob ? 11 : 2,
+    owner: -1,
+    lastTouch: i,
+    lock: 0.18,
+    after: 0.45,
+  });
+  p.action = 3;
+  p.actionTime = 0.32;
+  event(s, 3, i, -1, b.x, b.z, b.h);
+}
+export function points(s, t, base) {
+  return (t === 0 && s.multiplier > 0) || (t === 1 && s.multiplier < 0)
+    ? base + (base * Math.abs(s.multiplier)) / 2
+    : base;
+}
+export function wallBonus(s) {
+  const b = s.ball;
+  if (b.lastTouch < 0 || b.h > 1.7) return;
+  const t = s.players[b.lastTouch].team;
+  if (Math.abs(b.x) < 1.3) {
+    s.multiplier = clamp(s.multiplier + (t === 0 ? 1 : -1), -2, 2);
+    event(s, 9, t, s.multiplier, b.x, b.z, b.h);
+    return;
+  }
+  const group = b.z > 0 ? 1 : 0,
+    sign = group === 0 ? 1 : -1,
+    index = Math.round((b.x * sign - 5) / 2);
+  if (index < 0 || index > 4 || Math.abs(b.x * sign - (5 + index * 2)) > 0.7)
+    return;
+  const owner = s.period === 2 ? 1 - group : group,
+    mask = 1 << index;
+  if (t === owner && !(s.stars[group] & mask)) {
+    s.stars[group] |= mask;
+    const n = points(s, t, 2) + (s.stars[group] === 31 ? points(s, t, 10) : 0);
+    s.score[t] += n;
+    event(s, 8, t, n, b.x, b.z, 1);
+  } else if (t !== owner && s.stars[group] & mask) {
+    s.stars[group] &= ~mask;
+    const n = points(s, owner, 2);
+    s.score[owner] = Math.max(0, s.score[owner] - n);
+    event(s, 10, owner, n, b.x, b.z, 1);
+  }
+}
+export function domeBounce(s) {
+  const b = s.ball;
+  if (b.h > 1.4) return;
+  for (const z of [-4, 4]) {
+    const dx = b.x,
+      dz = b.z - z,
+      d = Math.hypot(dx, dz);
+    if (d > 0.001 && d < 1.1 && b.vx * dx + b.vz * dz < 0) {
+      const nx = dx / d,
+        nz = dz / d,
+        dot = b.vx * nx + b.vz * nz;
+      b.vx -= 2 * dot * nx;
+      b.vz -= 2 * dot * nz;
+      b.x = nx * 1.12;
+      b.z = z + nz * 1.12;
+      if (b.lastTouch >= 0) {
+        const t = s.players[b.lastTouch].team,
+          n = points(s, t, 2);
+        s.score[t] += n;
+        event(s, 8, t, n, b.x, b.z, b.h);
+      }
+    }
+  }
+}
+export function step(
+  s,
+  dt,
+  input = {},
+  humans = [true, false],
+  secondInput = {},
+) {
+  const inputs = [input, secondInput];
+  s.tick++;
+  if (s.over) return;
+  if (s.pause > 0) {
+    s.pause = Math.max(0, s.pause - dt);
+    s.previous = inputs.map((u) => ({ ...u }));
+    return;
+  }
+  s.time = Math.max(0, s.time - dt);
+  if (s.time === 0) {
+    if (s.period === 1) {
+      s.period = 2;
+      s.time = 90;
+      s.stars = [0, 0];
+      s.multiplier = 0;
+      s.pause = 3;
+      resetPitch(s);
+      event(s, 6, -1, -1, 0, 0, 0);
+    } else s.over = true;
+    return;
+  }
+  const b = s.ball;
+  b.lock = Math.max(0, b.lock - dt);
+  b.after = Math.max(0, b.after - dt);
+  for (const p of s.players) {
+    p.stun = Math.max(0, p.stun - dt);
+    p.actionTime = Math.max(0, p.actionTime - dt);
+    p.cooldown = Math.max(0, p.cooldown - dt);
+    if (p.actionTime === 0) p.action = 0;
+  }
+  selectPlayers(s);
+  for (let i = 0; i < s.players.length; i++) {
+    const p = s.players[i];
+    if (p.stun > 0) continue;
+    const t = p.team,
+      human = humans[t] && s.controlled[t] === i;
+    let u = inputs[t],
+      dx = u.x || 0,
+      dz = u.z || 0;
+    if (!human) {
+      const d = direction(s, t);
+      let tx = formation[i % 9][0] * d,
+        tz = formation[i % 9][1];
+      if (b.owner === i) {
+        tx = d * 22;
+        tz = clamp(p.z * 0.4, -2, 2);
+      } else if (i % 9 === 0) {
+        tx = -d * 19.5;
+        tz = clamp(b.z, -3.3, 3.3);
+      } else if (s.controlled[t] === i) {
+        tx = b.x + b.vx * 0.15;
+        tz = b.z + b.vz * 0.15;
+      } else {
+        tx += clamp(b.x * 0.35, -6, 6);
+        if (b.owner >= 0 && s.players[b.owner].team === t) tx += d * 5;
+        tz += b.z * 0.18;
+      }
+      [dx, dz] = norm(tx - p.x, tz - p.z);
+      if (Math.hypot(tx - p.x, tz - p.z) < 0.3) {
+        dx = 0;
+        dz = 0;
+      }
+      u = {};
+      if (
+        p.cooldown <= 0 &&
+        Math.hypot(b.x - p.x, b.z - p.z) < 3 &&
+        b.owner !== i
+      ) {
+        if (b.h > 1.4) u.shoot = true;
+        else if (b.owner >= 0 && s.players[b.owner].team !== t) u.tackle = true;
+      }
+      if (b.owner === i) {
+        const danger = s.players.some(
+          (q) => q.team !== t && Math.hypot(q.x - p.x, q.z - p.z) < 3,
+        );
+        if (p.x * d > 12 || danger || i % 9 === 0) {
+          [p.fx, p.fz] = norm(d * 23 - p.x, -p.z);
+          throwBall(s, i, danger && p.x * d < 10);
+        }
+      }
+    }
+    if (p.action !== 1 && Math.hypot(dx, dz) > 0.01)
+      [p.fx, p.fz] = norm(dx, dz);
+    const prev = s.previous[t],
+      pressed = human
+        ? (u.shoot && !prev.shoot) ||
+          (u.tackle && !prev.tackle) ||
+          (u.fire || 0) > (prev.fire || 0) ||
+          (u.tackleId || 0) > (prev.tackleId || 0)
+        : u.shoot || u.tackle;
+    if (human && b.owner === i) {
+      if ((u.lob && !prev.lob) || (u.lobId || 0) > (prev.lobId || 0)) {
+        throwBall(s, i, true);
+        s.charge[t] = 0;
+      } else if ((u.fire || 0) > (prev.fire || 0) && !u.shoot) {
+        throwBall(s, i, false);
+        s.charge[t] = 0;
+      } else if (u.shoot) s.charge[t] = Math.min(1, s.charge[t] + dt);
+      else if (s.charge[t] > 0) {
+        throwBall(s, i, s.charge[t] >= 0.24);
+        s.charge[t] = 0;
+      }
+    } else if (human) s.charge[t] = 0;
+    if (pressed && b.owner !== i && p.cooldown <= 0 && p.actionTime <= 0) {
+      if (b.h > 1.5 && Math.hypot(b.x - p.x, b.z - p.z) < 4 && !u.tackle) {
+        p.action = 2;
+        p.actionTime = 0.7;
+        p.cooldown = 0.85;
+        event(s, 2, i, -1, p.x, p.z, 0);
+      } else {
+        p.action = 1;
+        p.actionTime = 0.38;
+        p.cooldown = 0.85;
+        event(s, 1, i, -1, p.x, p.z, 0);
+      }
+    }
+    let speed = b.owner === i ? 6.2 : 6.8;
+    if (p.action === 1) {
+      dx = p.fx;
+      dz = p.fz;
+      speed = 14;
+    }
+    if (p.action === 2) speed = 4.5;
+    const n = Math.max(1, Math.hypot(dx, dz));
+    p.x = clamp(p.x + (dx / n) * speed * dt, -20.5, 20.5);
+    p.z = clamp(p.z + (dz / n) * speed * dt, -10.7, 10.7);
+    if (i % 9 === 0) {
+      const d = direction(s, t);
+      p.x = d * clamp(p.x * d, -20.5, -15);
+    }
+  }
+  for (let o = 0; o < 18; o++) {
+    const i = s.tick % 2 === 0 ? 17 - o : o,
+      p = s.players[i];
+    if (p.stun > 0) continue;
+    if (p.action === 1)
+      s.players.forEach((q, j) => {
+        if (q.team === p.team || q.stun > 0) return;
+        const dx = q.x - p.x,
+          dz = q.z - p.z;
+        if (Math.hypot(dx, dz) < 1.15 && dx * p.fx + dz * p.fz > -0.3) {
+          q.stun = 1.35;
+          q.action = 4;
+          q.actionTime = 1.35;
+          q.x = clamp(q.x + p.fx * 0.7, -20.5, 20.5);
+          q.z = clamp(q.z + p.fz * 0.7, -10.7, 10.7);
+          if (b.owner === j)
+            Object.assign(b, {
+              x: q.x,
+              z: q.z,
+              h: 0.5,
+              vx: p.fx * 5,
+              vz: p.fz * 5,
+              vh: 3,
+              owner: -1,
+              lastTouch: i,
+              lock: 0.08,
+              after: 0,
+            });
+          event(s, 4, i, j, q.x, q.z, 0.5);
+        }
+      });
+  }
+  for (let i = 0; i < 18; i++) {
+    const p = s.players[i];
+    for (let j = i + 1; j < 18; j++) {
+      const q = s.players[j];
+      if (p.stun > 0 || q.stun > 0 || p.action === 1 || q.action === 1)
+        continue;
+      const dx = q.x - p.x,
+        dz = q.z - p.z,
+        d = Math.hypot(dx, dz);
+      if (d > 0.001 && d < 0.85) {
+        const push = (0.85 - d) * 0.5;
+        p.x = clamp(p.x - (dx / d) * push, -20.5, 20.5);
+        p.z = clamp(p.z - (dz / d) * push, -10.7, 10.7);
+        q.x = clamp(q.x + (dx / d) * push, -20.5, 20.5);
+        q.z = clamp(q.z + (dz / d) * push, -10.7, 10.7);
+      }
+    }
+  }
+  if (b.owner >= 0) {
+    const p = s.players[b.owner];
+    b.x = p.x + p.fx * 0.5;
+    b.z = p.z + p.fz * 0.5;
+    b.h = 1;
+    b.vx = b.vz = b.vh = 0;
+  } else {
+    if (b.after > 0 && b.lastTouch >= 0) {
+      const t = s.players[b.lastTouch].team;
+      if (humans[t]) {
+        b.vx += (inputs[t].x || 0) * 5 * dt;
+        b.vz += (inputs[t].z || 0) * 5 * dt;
+      }
+    }
+    b.x += b.vx * dt;
+    b.z += b.vz * dt;
+    b.h += b.vh * dt;
+    b.vh -= 18 * dt;
+    if (b.h < 0.25) {
+      b.h = 0.25;
+      b.vh = b.vh < -2 ? -b.vh * 0.5 : 0;
+      const drag = Math.pow(0.993, dt * 60);
+      b.vx *= drag;
+      b.vz *= drag;
+    }
+    if (Math.abs(b.z) > 11.2) {
+      b.z = Math.sign(b.z) * (22.4 - Math.abs(b.z));
+      b.vz *= -0.92;
+      event(s, 5, b.lastTouch, -1, b.x, b.z, b.h);
+      wallBonus(s);
+    }
+    if (Math.abs(b.x) > 21) {
+      if (Math.abs(b.z) < 3.8 && b.h < 2) {
+        const scorer = b.x * direction(s, 0) < 0 ? 1 : 0;
+        s.score[scorer] += points(s, scorer, 10);
+        event(s, 7, scorer, -1, b.x, b.z, b.h);
+        resetPitch(s);
+        s.pause = 1.4;
+        s.previous = inputs.map((u) => ({ ...u }));
+        return;
+      } else {
+        b.x = Math.sign(b.x) * (42 - Math.abs(b.x));
+        b.vx *= -0.92;
+        event(s, 5, b.lastTouch, -1, b.x, b.z, b.h);
+      }
+    }
+    domeBounce(s);
+    if (b.lock <= 0) {
+      let best = -1,
+        dist = 0.8;
+      s.players.forEach((p, i) => {
+        if (p.stun > 0 || b.h > 1.25 + jumpHeight(p)) return;
+        const d = Math.hypot(p.x - b.x, p.z - b.z);
+        if (d < dist) {
+          best = i;
+          dist = d;
+        }
+      });
+      if (best >= 0) {
+        b.owner = best;
+        b.lastTouch = best;
+        b.after = 0;
+        s.controlled[s.players[best].team] = best;
+      }
+    }
+  }
+  s.previous = inputs.map((u) => ({ ...u }));
+}

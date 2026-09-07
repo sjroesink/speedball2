@@ -1,3 +1,9 @@
 node_modules/
 dist/
-.superpowers/
+.venv/
+certs/
+public/connection.json
+__pycache__/
+*.log
+*.blend1
+speedball-server*
