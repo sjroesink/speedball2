@@ -2,6 +2,26 @@ package main
 
 import "math"
 
+// goalie_deflect_ball (0xed52), direction table at 0xedf4.
+func (s *State) deflectBall(i int) {
+	p, b := &s.Players[i], &s.Ball
+	side := i / 9
+	if s.Period == 2 {
+		side ^= 1
+	}
+	facing := (int(math.Round(math.Atan2(p.FZ, p.FX)/(math.Pi/4))) + 8) % 8
+	dir := [2][8]int{{0, 0, 1, 2, 0, 6, 7, 0}, {4, 2, 3, 4, 4, 4, 5, 6}}[side][facing]
+	b.DirX = math.Round(math.Cos(float64(dir) * math.Pi / 4))
+	b.DirZ = math.Round(math.Sin(float64(dir) * math.Pi / 4))
+	b.VX, b.VZ = b.DirX*8*velocityUnit, b.DirZ*8*velocityUnit
+	thr := p.Stats[4]
+	setBallSpeed(b, ((thr>>1)|thr)>>1)
+	startFlight(b, true)
+	if b.LastTouch >= 0 && s.Players[b.LastTouch].Team != p.Team {
+		b.Electric = 0
+	}
+}
+
 // Unselected keeper positioning: base_goalie_set_intercept_position, 0xfb30.
 func (s *State) goalieTarget(i int) (float64, float64) {
 	side := i / 9

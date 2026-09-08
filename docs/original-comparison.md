@@ -213,3 +213,12 @@ Ported base_goalie_set_intercept_position (Amiga 0xfb30; C# Player.E456) into bo
 Prediction follows get_predicted_ball_position_for_goalie at 0xfed0. Dump table 0x020a contains shifts 0 for intelligence 100..149, 1 for 150..199 and 2 for 200..255. Longitudinal prediction reduces that shift when the original side-dependent zone condition fails, then applies the same horizon to transverse velocity. Velocities are adapted from current simulation units; original global update ordering remains open. The dive decision, local interaction override, selected-keeper no-ball AI and block/deflection sequence are separate unfinished branches.
 
 All 79 JavaScript tests, Go tests/vet and the production build pass. Paired cases cover both side-shot angles, distant recentering, halftime, carrier versus released diagonal shots and intelligence thresholds. The backend was restarted for this demo. Full gameplay parity, original timing/injuries and listening-based audio verification are still unproven.
+
+
+## Fidelity audit: goalkeeper deflection
+
+Ported goalie_deflect_ball at Amiga 0xed52 and its two eight-direction tables at 0xedf4. A keeper's blocking action now preserves its identity for the action lifetime, rather than recalculating blocking movement from the changing ball state. At selected-player contact, a blocking keeper deflects an eligible low ball instead of taking possession. The lookup uses keeper facing and starting direction; the outgoing ball uses eight units per nonzero component, a high flight animation and sustain derived from ((throw >> 1) | throw) >> 1. Last throw attribution remains unchanged, as in the reference. Opposing electric hits still resolve before a deflection; the existing shield adaptation remains in that shared contact path.
+
+Added event 17 and an original synthesized deflection cue to distinguish the rebound from a catch. Protocol layout and packet size are unchanged; current clients recognize the new event. Paired tests cover all sixteen table entries, speed timer, high-flight restart, throw attribution, ordinary keeper catches, high-ball exclusion and electric damage. Audio coverage now includes event 17.
+
+All 81 JavaScript tests, Go tests/vet and the production build pass. The updated backend was restarted and training was opened with sound enabled. These checks do not establish the audible mix quality. Original dive animation/duration, active keeper decisions, full electric flag semantics, simulation ordering, medical sequencing and complete AI parity remain unfinished.

@@ -1,4 +1,4 @@
-import { goalieTarget } from "./goalie.js";
+import { goalieTarget, deflectBall } from "./goalie.js";
 import { supportTarget } from "./support.js";
 import { emit as event } from "./events.js";
 import { enterMultiplier, runMultiplier } from "./multiplier.js";
@@ -449,6 +449,11 @@ export function step(
       } else {
         p.action = 1;
         p.tackleResolved = false;
+        p.keeperBlock =
+          i % 9 === 0 &&
+          b.owner < 0 &&
+          (b.vx !== 0 || b.vz !== 0) &&
+          Math.abs(p.fz) > 0.1;
         p.actionTime = 0.38;
         p.cooldown = 0.85;
         event(s, 1, i, -1, p.x, p.z, 0);
@@ -459,11 +464,7 @@ export function step(
       dz = p.fz;
     }
     [dx, dz] = eightWay(dx, dz);
-    const keeperBlock =
-      i % 9 === 0 &&
-      b.owner < 0 &&
-      Math.hypot(b.vx, b.vz) > 0 &&
-      Math.abs(p.fz) > 0.1;
+    const keeperBlock = p.keeperBlock && p.action === 1;
     const speed = active(s, 1, 1 - t)
       ? 0
       : movementSpeed(p, b.owner === i, keeperBlock);
@@ -644,6 +645,11 @@ export function catchBall(s) {
           b.electricBudget = b.electric;
           continue;
         }
+      }
+      if (p.action === 1 && p.keeperBlock) {
+        deflectBall(s, i);
+        event(s, 17, i, -1, b.x, b.z, b.h);
+        return;
       }
       b.electric = 0;
       s.charge[team] = 0;

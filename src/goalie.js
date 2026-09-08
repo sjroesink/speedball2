@@ -1,3 +1,27 @@
+import { startFlight, setBallSpeed } from "./ball.js";
+import { velocityUnit } from "./attributes.js";
+
+// goalie_deflect_ball (0xed52), table 0xedf4. The last thrower is preserved.
+export function deflectBall(s, i) {
+  const p = s.players[i],
+    b = s.ball;
+  const side = Math.floor(i / 9) ^ (s.period === 2 ? 1 : 0);
+  const facing = (Math.round(Math.atan2(p.fz, p.fx) / (Math.PI / 4)) + 8) % 8;
+  const dir = [
+    [0, 0, 1, 2, 0, 6, 7, 0],
+    [4, 2, 3, 4, 4, 4, 5, 6],
+  ][side][facing];
+  b.dirX = Math.round(Math.cos((dir * Math.PI) / 4));
+  b.dirZ = Math.round(Math.sin((dir * Math.PI) / 4));
+  b.vx = b.dirX * 8 * velocityUnit;
+  b.vz = b.dirZ * 8 * velocityUnit;
+  const thr = p.stats[4];
+  setBallSpeed(b, ((thr >> 1) | thr) >> 1);
+  startFlight(b, true);
+  if (b.lastTouch >= 0 && s.players[b.lastTouch].team !== p.team)
+    b.electric = 0;
+}
+
 const unit = 22.4 / 576;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 

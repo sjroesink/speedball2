@@ -12,6 +12,7 @@ const (
 
 // Actions are replicated, including misses: 1 slide, 2 jump, 3 throw, 4 hit.
 type Player struct {
+	keeperBlock                 bool
 	moveX, moveZ                float64
 	Stats, StatBackup           [8]int
 	GearBackup, GearPowerBackup int
@@ -407,6 +408,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			} else {
 				p.Action = 1
 				p.tackleResolved = false
+				p.keeperBlock = i%9 == 0 && b.Owner < 0 && (b.VX != 0 || b.VZ != 0) && math.Abs(p.FZ) > .1
 				p.ActionTime = .38
 				p.Cooldown = .85
 				s.event(1, i, -1, p.X, p.Z, 0)
@@ -416,7 +418,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			dx, dz = p.FX, p.FZ
 		}
 		dx, dz = eightWay(dx, dz)
-		keeperBlock := i%9 == 0 && b.Owner < 0 && math.Hypot(b.VX, b.VZ) > 0 && math.Abs(p.FZ) > .1
+		keeperBlock := p.keeperBlock && p.Action == 1
 		speed := movementSpeed(p, b.Owner == i, keeperBlock)
 		if s.active(1, 1-t) {
 			speed = 0
@@ -575,6 +577,11 @@ func (s *State) catchBall() {
 					b.ElectricBudget = b.Electric
 					continue
 				}
+			}
+			if p.Action == 1 && p.keeperBlock {
+				s.deflectBall(i)
+				s.event(17, i, -1, b.X, b.Z, b.H)
+				return
 			}
 			b.Electric = 0
 			s.Charge[team] = 0

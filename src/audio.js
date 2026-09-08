@@ -1,6 +1,10 @@
 // Original synthesized effects: no samples from the commercial game are used.
 // Each layer is [waveform, start Hz, end Hz, seconds, gain, delay seconds].
 export const cues = {
+  17: [
+    ["noise", 1100, 250, 0.1, 0.18, 0],
+    ["triangle", 750, 320, 0.14, 0.12, 0],
+  ],
   16: [
     ["noise", 450, 180, 0.08, 0.1, 0],
     ["sine", 160, 80, 0.07, 0.12, 0],

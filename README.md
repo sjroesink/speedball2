@@ -93,7 +93,7 @@ The Dockerfile builds the frontend and server in multiple stages. Publish `4433/
 
 ## Validation and scope
 
-Enable **SOUND ON** in the lobby or the full-screen toolbar. Original synthesized effects distinguish throws, catches, sliding, jumps, impacts, wall rebounds, scoring, pickups, warps, electric balls, injuries and substitutions. Whistles mark kickoff, halftime and full time. Effects use stereo position across the court, bounded polyphony and a compressor. Muting, opening the menu or hiding the tab stops current sounds. Snapshots repeat the latest 16 gameplay events so short packet gaps do not drop retained sounds; repeated events play only once. Longer gaps can exceed this history. Audio starts only after pressing the sound button; no original commercial sound samples are included.
+Enable **SOUND ON** in the lobby or the full-screen toolbar. Original synthesized effects distinguish throws, catches, goalkeeper deflections, sliding, jumps, impacts, wall rebounds, scoring, pickups, warps, electric balls, injuries and substitutions. Whistles mark kickoff, halftime and full time. Effects use stereo position across the court, bounded polyphony and a compressor. Muting, opening the menu or hiding the tab stops current sounds. Snapshots repeat the latest 16 gameplay events so short packet gaps do not drop retained sounds; repeated events play only once. Longer gaps can exceed this history. Audio starts only after pressing the sound button; no original commercial sound samples are included.
 
 ```powershell
 go test ./server
