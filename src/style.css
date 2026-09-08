@@ -1053,3 +1053,41 @@ footer b {
 @media(max-width:700px){.power-hud{top:85px;left:8px;padding:8px;font-size:9px;max-width:70vw}.power-hud strong{font-size:10px}}
 
 body:not(.in-game) .power-hud {display:none;}
+
+/* Reserve separate rows for controls, match status, score and power status. */
+@media (max-width: 850px) {
+  .in-game .game-toolbar > span {
+    left: 0;
+    right: 0;
+    top: 42px;
+    max-width: none;
+    transform: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .in-game .scoreboard {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto auto minmax(0, 1fr);
+    width: calc(100% - 24px);
+    box-sizing: border-box;
+    gap: 8px;
+    padding: 8px 12px;
+  }
+  .in-game .scoreboard .team {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 11px;
+  }
+  .in-game .scoreboard .team small { max-width: 100%; }
+  .in-game .scoreboard .clock { padding: 0 8px; }
+  .in-game .power-hud {
+    top: 148px;
+    left: 12px;
+    max-width: calc(100% - 48px);
+    padding: 8px 10px;
+    gap: 4px;
+    font-size: 9px;
+  }
+  .in-game .power-hud strong { font-size: 11px; }
+}

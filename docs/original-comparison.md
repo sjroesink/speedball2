@@ -292,3 +292,8 @@ The Blender arena still contains rounded goal/end-wall geometry (for example sca
 Aligned the authored arena with the exact simulation bounds after its legacy scale transform. Goal upright inner faces now sit at transverse +/-1.866667; end-wall inner faces and end-line centers at longitudinal +/-21.155556; side-wall inner faces at +/-11.2. Updated goal floors/crossbars, goal-shield width/position, playing surface and touchline lengths to fit. Rebuilt arena.blend and arena.glb through Blender only.
 
 Loaded the exported GLB with Three.js and measured actual mesh world bounding boxes: post inner faces +/-1.866666661, end-wall contact faces +/-21.155555725, side-wall contact faces +/-11.200000197 (export precision). The production build succeeds and the updated browser arena renders without reported runtime errors. This verifies contact geometry, not complete visual/gameplay parity. Full original AI/action/medical sequences and listening-based audio verification remain unfinished; narrow-viewport HUD overlap is also still visible in the browser check.
+
+
+## Browser follow-up: narrow HUD overlap
+
+Separated toolbar controls, room status, scoreboard and power status below 850px. The scoreboard uses bounded grid columns and truncates team labels rather than overflowing. In the current 616px browser, measured rows are controls 14..54, room status 56..70.39, scoreboard 76..129 and power status 148..207; the previously observed overlap is gone. Inspected the running match screenshot and verified the production build. Other viewport sizes were not directly exercised in this check. Full original AI/action/medical sequencing and listening-based audio verification remain open.
