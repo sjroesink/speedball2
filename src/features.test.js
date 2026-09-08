@@ -124,8 +124,14 @@ test("four warp entrances preserve height and travel direction; high ball reboun
 test("electro-bounce gains multiplier charges and knocks an enemy down instead of catching", () => {
   const s = isolated();
   s.multiplier = 2;
-  Object.assign(s.ball, { x: 16, z: 11.3, h: 1, lastTouch: 7 });
-  assert.equal(sideFeature(s), false);
+  Object.assign(s.ball, {
+    x: (304 * 22.4) / 576,
+    z: 11.3,
+    h: 1,
+    lastTouch: 7,
+    electricBudget: 3,
+  });
+  assert.equal(sideFeature(s), true);
   assert.equal(s.ball.electric, 3);
   Object.assign(s.players[16], { x: 5, z: 2, stun: 0, health: 100 });
   Object.assign(s.ball, {
@@ -140,6 +146,7 @@ test("electro-bounce gains multiplier charges and knocks an enemy down instead o
   step(s, dt, {}, [true, true]);
   assert.equal(s.ball.owner, -1);
   assert.equal(s.ball.electric, 2);
+  assert.equal(s.ball.electricBudget, 2);
   assert.ok(s.players[16].stun > 0);
   s.players[16].stun = 0;
   pickup(s, 16, 10);

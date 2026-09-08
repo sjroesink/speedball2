@@ -25,6 +25,7 @@ type Player struct {
 	Gear                        int
 }
 type Ball struct {
+	ElectricBudget                       int
 	DomeFraction                         float64
 	MultiplierPath, MultiplierIndex      int
 	MultiplierFraction                   float64
@@ -174,6 +175,10 @@ func (s *State) throw(i int, lob bool, release ...Input) {
 	}
 	fx, fz := eightWay(p.FX, p.FZ)
 	*b = Ball{X: p.X + p.FX*.9, Z: p.Z + p.FZ*.9, H: 1, DirX: fx, DirZ: fz, VX: fx * speed, VZ: fz * speed, VH: vh, Owner: -1, LastTouch: i, Lock: .18, After: 0}
+	b.ElectricBudget = 1
+	if p.Team == 0 && s.Multiplier > 0 || p.Team == 1 && s.Multiplier < 0 {
+		b.ElectricBudget += int(math.Abs(float64(s.Multiplier)))
+	}
 	if len(release) > 0 {
 		steerRelease(b, release[0])
 	}
@@ -480,7 +485,8 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				}
 			}
 		}
-		if math.Abs(b.Z) > pitchZ && !s.sideFeature() {
+		specialContact := s.sideFeature()
+		if math.Abs(b.Z) > pitchZ && !specialContact {
 			s.event(5, b.LastTouch, -1, b.X, b.Z, b.H)
 			s.wallBonus()
 			b.Z = math.Copysign(2*pitchZ-math.Abs(b.Z), b.Z)
@@ -526,6 +532,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				if d < .8 && b.Electric > 0 && b.LastTouch >= 0 && p.Team != s.Players[b.LastTouch].Team && !s.active(10, p.Team) {
 					if s.damage(b.LastTouch, i) {
 						b.Electric--
+						b.ElectricBudget = b.Electric
 						continue
 					}
 				}

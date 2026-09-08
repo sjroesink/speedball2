@@ -211,13 +211,44 @@ func (s *State) sideFeature() bool {
 		s.event(12, b.LastTouch, -1, b.X, b.Z, b.H)
 		return true
 	}
-	if math.Abs(b.X-16*math.Copysign(1, b.Z)) < .7 && b.LastTouch >= 0 {
-		t := s.Players[b.LastTouch].Team
-		b.Electric = 1
-		if (t == 0 && s.Multiplier > 0) || (t == 1 && s.Multiplier < 0) {
-			b.Electric += int(math.Abs(float64(s.Multiplier)))
+	if b.Owner >= 0 && s.Players[b.Owner].Action != 3 {
+		return false
+	}
+	for _, center := range [][2]int{{20, 880}, {620, 272}} {
+		dx, dz := center[1]-terrainY, terrainX-center[0]
+		ax, az := int(math.Abs(float64(dx))), int(math.Abs(float64(dz)))
+		if ax > 15 || az > 15 {
+			continue
 		}
+		fx, fz := 0., 0.
+		if ax > az>>1 {
+			fx = math.Copysign(1, float64(dx))
+		}
+		if az > ax>>1 {
+			fz = math.Copysign(1, float64(dz))
+		}
+		if fx == 0 && fz == 0 {
+			continue
+		}
+		b.Z = 11.2
+		if terrainX <= 320 {
+			b.Z = -11.2
+		}
+		b.DirX, b.DirZ = fx, fz
+		b.VX, b.VZ = fx*8*velocityUnit, fz*8*velocityUnit
+		if b.FlightKind != 0 {
+			startFlight(b, b.FlightKind == 2)
+		}
+		attribute := 100
+		if b.LastTouch >= 0 {
+			p := &s.Players[b.LastTouch]
+			ensureStats(p)
+			attribute = p.Stats[4]
+		}
+		setBallSpeed(b, attribute)
+		b.Electric = b.ElectricBudget
 		s.event(13, b.LastTouch, b.Electric, b.X, b.Z, b.H)
+		return true
 	}
 	return false
 }

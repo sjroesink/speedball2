@@ -163,6 +163,11 @@ export function throwBall(s, i, lob, input = {}) {
     lock: 0.18,
     after: 0,
     electric: 0,
+    electricBudget:
+      1 +
+      ((p.team === 0 && s.multiplier > 0) || (p.team === 1 && s.multiplier < 0)
+        ? Math.abs(s.multiplier)
+        : 0),
   });
   steerRelease(b, input);
   setBallSpeed(b, p.stats[4]);
@@ -512,7 +517,8 @@ export function step(
         b.vh = b.vh < -2 ? -b.vh * 0.5 : 0;
       }
     }
-    if (Math.abs(b.z) > 11.2 && !sideFeature(s)) {
+    const specialContact = sideFeature(s);
+    if (Math.abs(b.z) > 11.2 && !specialContact) {
       event(s, 5, b.lastTouch, -1, b.x, b.z, b.h);
       wallBonus(s);
       b.z = Math.sign(b.z) * (22.4 - Math.abs(b.z));
@@ -566,6 +572,7 @@ export function step(
         ) {
           if (damage(s, b.lastTouch, i)) {
             b.electric--;
+            b.electricBudget = b.electric;
             return;
           }
         }

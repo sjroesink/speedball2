@@ -1,6 +1,7 @@
-import { warpBall } from "./ball.js";
+import { warpBall, setBallSpeed, startFlight } from "./ball.js";
 import {
   defaultStats,
+  velocityUnit,
   restorePower,
   applyPowerStats,
   equip,
@@ -229,15 +230,27 @@ export function sideFeature(s) {
     emit(s, 12, b.lastTouch, -1, b.x, b.z, b.h);
     return true;
   }
-  // Two electro-bounces occupy the walls opposite the star banks.
-  if (Math.abs(b.x - 16 * Math.sign(b.z)) < 0.7 && b.lastTouch >= 0) {
-    const t = s.players[b.lastTouch].team;
-    b.electric =
-      1 +
-      ((t === 0 && s.multiplier > 0) || (t === 1 && s.multiplier < 0)
-        ? Math.abs(s.multiplier)
-        : 0);
+  if (b.owner >= 0 && s.players[b.owner].action !== 3) return false;
+  for (const [cx, cy] of [
+    [20, 880],
+    [620, 272],
+  ]) {
+    const dx = cy - terrainY,
+      dz = terrainX - cx;
+    if (Math.abs(dx) > 15 || Math.abs(dz) > 15) continue;
+    const fx = Math.abs(dx) > Math.abs(dz) >> 1 ? Math.sign(dx) : 0;
+    const fz = Math.abs(dz) > Math.abs(dx) >> 1 ? Math.sign(dz) : 0;
+    if (!fx && !fz) continue;
+    b.z = terrainX <= 320 ? -11.2 : 11.2;
+    b.dirX = fx;
+    b.dirZ = fz;
+    b.vx = fx * 8 * velocityUnit;
+    b.vz = fz * 8 * velocityUnit;
+    if (b.flightKind) startFlight(b, b.flightKind === 2);
+    setBallSpeed(b, s.players[b.lastTouch]?.stats?.[4] ?? 100);
+    b.electric = b.electricBudget ?? 0;
     emit(s, 13, b.lastTouch, b.electric, b.x, b.z, b.h);
+    return true;
   }
   return false;
 }

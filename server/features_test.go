@@ -120,7 +120,7 @@ func TestWarpsAndHighBounce(t *testing.T) {
 func TestElectroChargesAndShieldCatch(t *testing.T) {
 	s := isolated()
 	s.Multiplier = 2
-	s.Ball = Ball{X: 16, Z: 11.3, H: 1, LastTouch: 7, Owner: -1}
+	s.Ball = Ball{ElectricBudget: 3, X: 304 * terrainUnit, Z: 11.3, H: 1, LastTouch: 7, Owner: -1}
 	s.sideFeature()
 	if s.Ball.Electric != 3 {
 		t.Fatal("charge")

@@ -120,7 +120,7 @@ for x in [-206*22.4/576,206*22.4/576]:
   cube('Warp tunnel housing',(x,y,.55),(1.3,1.1,1.1),steel,.12)
   bpy.ops.mesh.primitive_torus_add(major_radius=.40,minor_radius=.09,location=(x,y,1.5));o=bpy.context.object;o.name='WarpRing';o.data.materials.append(cyan)
   cube('Warp throat',(x,y,1.49),(.55,.55,.06),rubber,.08)
-for x,y in [(16,-11.2),(-16,11.2)]:
+for x,y in [(304*22.4/576,-300*22.4/576),(-304*22.4/576,300*22.4/576)]:
  cube('Electro bounce',(x,y,.5),(1.25,1.0,1.0),armor,.12)
  for dx in [-.35,0,.35]: cube('Electrode',(x+dx,y,1.1),(.12,.65,.12),white,.03)
 for x in [-21.1,21.1]:
