@@ -320,7 +320,7 @@ export async function start() {
       ? `MEDICS · ${Math.ceil(medical.injury)}s · CLOCK STOPPED`
       : state.effect.time > 0
         ? `${state.effect.team === team ? "YOUR TEAM" : "OPPONENT"}: ${powerNames[state.effect.kind]} · ${Math.ceil(state.effect.time)}s`
-        : state.ball.electric > 0
+        : state.ball.charged
           ? `ELECTROBALL · ${state.ball.electric} HITS`
           : "NO ACTIVE POWER-UP";
     $("healthStatus").textContent =

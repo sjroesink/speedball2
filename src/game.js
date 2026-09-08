@@ -139,6 +139,7 @@ export function resetPitch(s) {
     lock: 0,
     after: 0,
     electric: 0,
+    charged: false,
   };
   s.charge = [0, 0];
 }
@@ -186,6 +187,7 @@ export function throwBall(s, i, lob, input = {}) {
     lock: 0.18,
     after: 0,
     electric: 0,
+    charged: false,
     electricBudget:
       1 +
       ((p.team === 0 && s.multiplier > 0) || (p.team === 1 && s.multiplier < 0)
@@ -635,6 +637,7 @@ export function catchBall(s) {
         continue;
       if (referenceDistance(p.x - b.x, p.z - b.z) > 16) continue;
       if (
+        b.charged &&
         b.electric > 0 &&
         b.lastTouch >= 0 &&
         p.team !== s.players[b.lastTouch].team &&
@@ -651,7 +654,14 @@ export function catchBall(s) {
         event(s, 17, i, -1, b.x, b.z, b.h);
         return;
       }
-      b.electric = 0;
+      if (
+        (b.vx !== 0 || b.vz !== 0) &&
+        b.lastTouch >= 0 &&
+        s.players[b.lastTouch].team !== p.team
+      ) {
+        b.electric = 0;
+        b.charged = false;
+      }
       s.charge[team] = 0;
       b.flightKind = 0;
       b.owner = i;

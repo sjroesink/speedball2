@@ -27,6 +27,7 @@ type Player struct {
 	Gear                        int
 }
 type Ball struct {
+	Charged                              bool
 	ElectricBudget                       int
 	DomeFraction                         float64
 	MultiplierPath, MultiplierIndex      int
@@ -571,7 +572,7 @@ func (s *State) catchBall() {
 			if referenceDistance(p.X-b.X, p.Z-b.Z) > 16 {
 				continue
 			}
-			if b.Electric > 0 && b.LastTouch >= 0 && p.Team != s.Players[b.LastTouch].Team && !s.active(10, p.Team) {
+			if b.Charged && b.Electric > 0 && b.LastTouch >= 0 && p.Team != s.Players[b.LastTouch].Team && !s.active(10, p.Team) {
 				if s.damage(b.LastTouch, i) {
 					b.Electric--
 					b.ElectricBudget = b.Electric
@@ -583,7 +584,10 @@ func (s *State) catchBall() {
 				s.event(17, i, -1, b.X, b.Z, b.H)
 				return
 			}
-			b.Electric = 0
+			if (b.VX != 0 || b.VZ != 0) && b.LastTouch >= 0 && s.Players[b.LastTouch].Team != p.Team {
+				b.Electric = 0
+				b.Charged = false
+			}
 			s.Charge[team] = 0
 			b.FlightKind = 0
 			b.Owner = i

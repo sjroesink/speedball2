@@ -222,3 +222,12 @@ Ported goalie_deflect_ball at Amiga 0xed52 and its two eight-direction tables at
 Added event 17 and an original synthesized deflection cue to distinguish the rebound from a catch. Protocol layout and packet size are unchanged; current clients recognize the new event. Paired tests cover all sixteen table entries, speed timer, high-flight restart, throw attribution, ordinary keeper catches, high-ball exclusion and electric damage. Audio coverage now includes event 17.
 
 All 81 JavaScript tests, Go tests/vet and the production build pass. The updated backend was restarted and training was opened with sound enabled. These checks do not establish the audible mix quality. Original dive animation/duration, active keeper decisions, full electric flag semantics, simulation ordering, medical sequencing and complete AI parity remain unfinished.
+
+
+## Fidelity audit: charged flag and remaining electric hits
+
+Separated the ball's charged flag from its remaining electric hit count. The original zapper sets the flag; zap_player decrements the count without clearing that flag. Player.sub_D520/get_ball returns before clearing charge for a stationary catch, and also preserves charge for a friendly catch. An opposing moving catch clears it. Deflections clear it on an opposing shot, while throws reset the flag and initialize a new budget. These rules now apply in both simulations and the renderer/HUD uses the flag independently of the remaining count. Existing shield and medical adaptations are still not exact original action sequencing.
+
+Protocol v6 packs the flag into bit 7 of the existing electric byte, with remaining hits in the low bits. Packet length stays unchanged and old clients are rejected by the version check. The real Go snapshot decoding test verifies both fields. Paired lifecycle tests exercise hit exhaustion, friendly recovery, throw reset and moving versus stationary opposing catches; an older stationary-catch assertion was corrected to the source behavior.
+
+All 83 JavaScript tests, Go tests/vet and the production build pass. The backend and both browser clients were restarted for the protocol change. Full original AI/timing, medical and pickup sequencing, and listening-based audio verification remain unfinished.

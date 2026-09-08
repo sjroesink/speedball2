@@ -143,6 +143,7 @@ func (s *State) medicalStep(dt float64) bool {
 					p.Action = 4
 				}
 				s.Ball.Electric = 0
+				s.Ball.Charged = false
 			}
 		} else if p.Health <= 0 {
 			p.Stun = 10
@@ -247,6 +248,7 @@ func (s *State) sideFeature() bool {
 		}
 		setBallSpeed(b, attribute)
 		b.Electric = b.ElectricBudget
+		b.Charged = true
 		s.event(13, b.LastTouch, b.Electric, b.X, b.Z, b.H)
 		return true
 	}

@@ -18,8 +18,10 @@ export function deflectBall(s, i) {
   const thr = p.stats[4];
   setBallSpeed(b, ((thr >> 1) | thr) >> 1);
   startFlight(b, true);
-  if (b.lastTouch >= 0 && s.players[b.lastTouch].team !== p.team)
+  if (b.lastTouch >= 0 && s.players[b.lastTouch].team !== p.team) {
     b.electric = 0;
+    b.charged = false;
+  }
 }
 
 const unit = 22.4 / 576;

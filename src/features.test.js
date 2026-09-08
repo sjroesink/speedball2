@@ -153,7 +153,9 @@ test("electro-bounce gains multiplier charges and knocks an enemy down instead o
   Object.assign(s.ball, { x: s.players[16].x, z: s.players[16].z });
   step(s, dt, {}, [true, true]);
   assert.equal(s.ball.owner, 16);
-  assert.equal(s.ball.electric, 0);
+  // The original returns before clearing charge when the caught ball is stationary.
+  assert.equal(s.ball.electric, 2);
+  assert.equal(s.ball.charged, true);
 });
 test("injury awards points once, pauses clock, substitutes a reserve, preserves depleted reserves", () => {
   const s = initial();

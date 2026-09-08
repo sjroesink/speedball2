@@ -84,6 +84,7 @@ export function damage(s, i, j) {
       lock: 0.12,
       after: 0,
       electric: 0,
+      charged: false,
     });
   emit(s, 4, i, j, q.x, q.z);
   if (q.health <= 0) {
@@ -115,6 +116,7 @@ export function giveBall(s, i) {
     vz: 0,
     vh: 0,
     electric: 0,
+    charged: false,
     after: 0,
   });
   s.controlled[p.team] = i;
@@ -176,6 +178,7 @@ export function medicalStep(s, dt) {
           p.action = 4;
         }
         s.ball.electric = 0;
+        s.ball.charged = false;
       }
     } else if (p.health <= 0) p.stun = 10;
   });
@@ -249,6 +252,7 @@ export function sideFeature(s) {
     if (b.flightKind) startFlight(b, b.flightKind === 2);
     setBallSpeed(b, s.players[b.lastTouch]?.stats?.[4] ?? 100);
     b.electric = b.electricBudget ?? 0;
+    b.charged = true;
     emit(s, 13, b.lastTouch, b.electric, b.x, b.z, b.h);
     return true;
   }

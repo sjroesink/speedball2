@@ -24,7 +24,7 @@ export function decodeSnapshot(bytes) {
       return n;
     },
     q = () => i16() / 1000;
-  if (u8() !== 83 || u8() !== 66 || u8() !== 50 || u8() !== 5)
+  if (u8() !== 83 || u8() !== 66 || u8() !== 50 || u8() !== 6)
     throw new Error("Server version mismatch. Restart the game server.");
   const s = { tick: u32(), time: f(), period: u8() },
     flags = u8(),
@@ -66,7 +66,9 @@ export function decodeSnapshot(bytes) {
     cooldown: q(),
     team: Math.floor(i / 9),
   }));
-  s.ball.electric = u8();
+  const electric = u8();
+  s.ball.electric = electric & 0x7f;
+  s.ball.charged = (electric & 0x80) !== 0;
   s.effect = { kind: u8(), team: i8(), time: q() };
   s.credits = [u16(), u16()];
   s.reserves = [u8(), u8()];

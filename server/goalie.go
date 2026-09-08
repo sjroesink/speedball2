@@ -19,6 +19,7 @@ func (s *State) deflectBall(i int) {
 	startFlight(b, true)
 	if b.LastTouch >= 0 && s.Players[b.LastTouch].Team != p.Team {
 		b.Electric = 0
+		b.Charged = false
 	}
 }
 

@@ -63,6 +63,7 @@ test("standing keeper catches, high ball bypasses a block, electric shot still i
   Object.assign(s.ball, {
     flightStage: 1,
     electric: 1,
+    charged: true,
     electricBudget: 1,
     lastTouch: 17,
   });

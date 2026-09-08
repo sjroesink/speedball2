@@ -9,7 +9,7 @@ import (
 // Versioned, bounded binary snapshots keep all 18 players in one QUIC datagram.
 func encodeSnapshot(m Snapshot) []byte {
 	b := new(bytes.Buffer)
-	b.Write([]byte{'S', 'B', '2', 5})
+	b.Write([]byte{'S', 'B', '2', 6})
 	put := func(v any) { _ = binary.Write(b, binary.LittleEndian, v) }
 	u8 := func(v int) { put(uint8(v)) }
 	i8 := func(v int) { put(int8(v)) }
@@ -70,7 +70,11 @@ func encodeSnapshot(m Snapshot) []byte {
 		q(p.ActionTime)
 		q(p.Cooldown)
 	}
-	u8(s.Ball.Electric)
+	electric := s.Ball.Electric
+	if s.Ball.Charged {
+		electric |= 0x80
+	}
+	u8(electric)
 	u8(s.Effect.Kind)
 	i8(s.Effect.Team)
 	q(s.Effect.Time)

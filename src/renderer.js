@@ -303,8 +303,8 @@ export class ArenaRenderer {
     });
     this.ball.traverse((o) => {
       if (o.isMesh && o.material.emissive) {
-        o.material.emissive.setHex(b.electric > 0 ? 0x3388ff : 0x444444);
-        o.material.emissiveIntensity = b.electric > 0 ? 3 : 0.15;
+        o.material.emissive.setHex(b.charged ? 0x3388ff : 0x444444);
+        o.material.emissiveIntensity = b.charged ? 3 : 0.15;
       }
     });
     this.ball.position.set(b.x, b.h - 0.25, b.z);

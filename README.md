@@ -53,7 +53,7 @@ Eight equipment categories improve aggression (earlier AI tackles), attack (tack
 
 Energy loss reduces performance. At zero energy the player is injured: the opponent scores 10 points with any multiplier, the clock stops for a six-second medical evacuation, and a substitute enters. Teams have three reserves. Once exhausted, injured positions remain empty. Damage persists after goals.
 
-Four warp-gates at the original latitudes (approximately X = +/-8.01) on both side walls move low balls to the opposite wall while preserving direction. High balls rebound normally. Two electro-bounces opposite the star banks charge the ball for one to three hits, fixed by the multiplier at throw time. They relaunch the ball away from the emitter at full throw speed; another bounce does not replenish used hits. Charged balls knock opponents down instead of being caught; shields protect the catcher. A catch or new throw clears the charge.
+Four warp-gates at the original latitudes (approximately X = +/-8.01) on both side walls move low balls to the opposite wall while preserving direction. High balls rebound normally. Two electro-bounces opposite the star banks charge the ball for one to three hits, fixed by the multiplier at throw time. They relaunch the ball away from the emitter at full throw speed; another bounce does not replenish used hits. Charged balls with remaining hits knock opponents down instead of being caught; shields protect the catcher. The charged appearance persists after hits are exhausted. Friendly catches preserve it; opposing catches clear it when the ball is moving. A catch or new throw clears the charge.
 
 The HUD displays energy, equipment, reserves, credits, active effects and remaining duration, charged-ball hits and medical stoppages.
 
@@ -102,7 +102,7 @@ npm test
 npm run build
 ```
 
-Tests cover actions, throws, catches, collisions, scoring, power effects and expiry, injuries and substitutes, equipment, warp-gates, charged balls, goal locks, audio lifecycle and packet size. JavaScript tests decode an actual Go-generated protocol-v5 snapshot. Two local browser clients are used for WebTransport checks.
+Tests cover actions, throws, catches, collisions, scoring, power effects and expiry, injuries and substitutes, equipment, warp-gates, charged balls, goal locks, audio lifecycle and packet size. JavaScript tests decode an actual Go-generated protocol-v6 snapshot. Two local browser clients are used for WebTransport checks.
 
 This is an exhibition-match adaptation. Career/league management, transfers, persistent injuries between matches, ranked matchmaking, accounts, reconnect and touch controls are not included. Attribute values, damage, pickup timing and AI are tuned for this remake rather than emulated cycle for cycle. See [original-game comparison](docs/original-comparison.md) for source findings and differences.
 

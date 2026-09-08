@@ -194,6 +194,7 @@ func TestFeatureSnapshot(t *testing.T) {
 	s.Effect = Effect{10, 1, 5.5}
 	s.Credits = [2]int{100, 50}
 	s.Reserves = [2]int{2, 1}
+	s.Ball.Charged = true
 	s.Ball.Electric = 3
 	for i := range s.Players {
 		s.Players[i].Health = float64(90 - i)

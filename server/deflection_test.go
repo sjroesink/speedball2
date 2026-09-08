@@ -49,6 +49,7 @@ func TestKeeperCatchAndBlockExclusions(t *testing.T) {
 		t.Fatal("blocked high ball")
 	}
 	s.Ball.FlightStage = 1
+	s.Ball.Charged = true
 	s.Ball.Electric = 1
 	s.Ball.ElectricBudget = 1
 	s.Ball.LastTouch = 17
