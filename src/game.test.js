@@ -88,7 +88,7 @@ test("a high throw at the goal rebounds above the crossbar", () => {
 test("five stars bonus, enemy extinguish, and dome score", () => {
   const s = isolated();
   s.stars[0] = 15;
-  Object.assign(s.ball, { x: 13, z: -11.1, h: 1, lastTouch: 7 });
+  Object.assign(s.ball, { x: (48 * 22.4) / 576, z: -11.2, h: 1, lastTouch: 7 });
   wallBonus(s);
   assert.equal(s.score[0], 2);
   s.ball.lastTouch = 16;
@@ -192,7 +192,12 @@ test("full star banks pay on the clock pulse, clear, and can be completed again"
     const owner = period === 1 ? 0 : 1;
     s.multiplier = owner === 0 ? 2 : -2;
     s.stars[0] = 30;
-    Object.assign(s.ball, { x: 5, z: -11.2, h: 3, lastTouch: owner * 9 + 7 });
+    Object.assign(s.ball, {
+      x: (176 * 22.4) / 576,
+      z: -11.2,
+      h: 3,
+      lastTouch: owner * 9 + 7,
+    });
     wallBonus(s);
     assert.equal(s.score[owner], 4);
     assert.equal(s.stars[0], 31);
@@ -213,7 +218,12 @@ test("extinguishing deducts exactly two and can cancel a pending bank bonus", ()
   s.multiplier = 2;
   s.stars[0] = 31;
   s.score[0] = 20;
-  Object.assign(s.ball, { x: 5, z: -11.2, h: 1, lastTouch: 16 });
+  Object.assign(s.ball, {
+    x: (176 * 22.4) / 576,
+    z: -11.2,
+    h: 1,
+    lastTouch: 16,
+  });
   wallBonus(s);
   assert.equal(s.score[0], 18);
   assert.equal(s.stars[0], 30);

@@ -15,18 +15,27 @@ func (s *State) wallBonus() {
 		return
 	}
 	t := s.Players[b.LastTouch].Team
-	group := 0
-	if b.Z > 0 {
-		group = 1
-	}
-	sign := 1.
-	if group == 1 {
-		sign = -1
-	}
-	index := int(math.Round((b.X*sign - 5) / 2))
-	if index < 0 || index > 4 || math.Abs(b.X*sign-(5+float64(index)*2)) > .7 {
+	if b.Owner >= 0 && s.Players[b.Owner].Action != 3 {
 		return
 	}
+	terrainX, terrainY := int(math.Round(320+b.Z/terrainUnit)), int(math.Round(576-b.X/terrainUnit))
+	group := -1
+	if terrainX <= 32 {
+		group = 0
+	} else if terrainX >= 608 {
+		group = 1
+	}
+	if group < 0 {
+		return
+	}
+	start := 384
+	if group == 1 {
+		start = 608
+	}
+	if terrainY < start || terrainY >= start+160 {
+		return
+	}
+	index := (terrainY - start) >> 5
 	owner := group
 	if s.Period == 2 {
 		owner = 1 - group

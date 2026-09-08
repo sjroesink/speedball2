@@ -211,11 +211,15 @@ export function wallBonus(s) {
   const b = s.ball;
   if (b.lastTouch < 0) return;
   const t = s.players[b.lastTouch].team;
-  const group = b.z > 0 ? 1 : 0,
-    sign = group === 0 ? 1 : -1,
-    index = Math.round((b.x * sign - 5) / 2);
-  if (index < 0 || index > 4 || Math.abs(b.x * sign - (5 + index * 2)) > 0.7)
-    return;
+  if (b.owner >= 0 && s.players[b.owner].action !== 3) return;
+  const unit = 22.4 / 576;
+  const terrainX = Math.round(320 + b.z / unit),
+    terrainY = Math.round(576 - b.x / unit);
+  const group = terrainX <= 32 ? 0 : terrainX >= 608 ? 1 : -1;
+  if (group < 0) return;
+  const start = group === 0 ? 384 : 608;
+  if (terrainY < start || terrainY >= start + 160) return;
+  const index = (terrainY - start) >> 5;
   const owner = s.period === 2 ? 1 - group : group,
     mask = 1 << index;
   if (t === owner && !(s.stars[group] & mask)) {
@@ -509,11 +513,11 @@ export function step(
       }
     }
     if (Math.abs(b.z) > 11.2 && !sideFeature(s)) {
-      b.z = Math.sign(b.z) * (22.4 - Math.abs(b.z));
-      reflectBall(b, "z");
       event(s, 5, b.lastTouch, -1, b.x, b.z, b.h);
       wallBonus(s);
-    }
+      b.z = Math.sign(b.z) * (22.4 - Math.abs(b.z));
+      reflectBall(b, "z");
+    } else wallBonus(s);
     if (Math.abs(b.x) > 21) {
       if (
         Math.abs(b.z) < 1.85 &&

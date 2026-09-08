@@ -481,9 +481,11 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			}
 		}
 		if math.Abs(b.Z) > pitchZ && !s.sideFeature() {
+			s.event(5, b.LastTouch, -1, b.X, b.Z, b.H)
+			s.wallBonus()
 			b.Z = math.Copysign(2*pitchZ-math.Abs(b.Z), b.Z)
 			reflectBall(b, false)
-			s.event(5, b.LastTouch, -1, b.X, b.Z, b.H)
+		} else {
 			s.wallBonus()
 		}
 		if math.Abs(b.X) > pitchX {

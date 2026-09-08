@@ -124,12 +124,12 @@ func TestWallsGoalsAndHighGoalMiss(t *testing.T) {
 func TestStarBonusExtinguishAndMultiplier(t *testing.T) {
 	s := isolated()
 	s.Stars[0] = 15
-	s.Ball = Ball{X: 13, Z: -11.1, H: 1, VZ: -24, Owner: -1, LastTouch: 7}
+	s.Ball = Ball{X: 48 * terrainUnit, Z: -11.1, H: 1, VZ: -24, Owner: -1, LastTouch: 7}
 	s.step(dt, [2]Input{})
 	if s.Score[0] != 2 || s.Stars[0] != 31 {
 		t.Fatal("five stars bonus")
 	}
-	s.Ball = Ball{X: 13, Z: -11.1, H: 1, VZ: -24, Owner: -1, LastTouch: 16}
+	s.Ball = Ball{X: 48 * terrainUnit, Z: -11.1, H: 1, VZ: -24, Owner: -1, LastTouch: 16}
 	s.step(dt, [2]Input{})
 	if s.Score[0] != 0 || s.Stars[0] != 15 {
 		t.Fatal("opponent must extinguish star and deduct points")
@@ -269,7 +269,7 @@ func TestStarBankClockAndExtinguish(t *testing.T) {
 			s.Multiplier = -2
 		}
 		s.Stars[0] = 30
-		s.Ball = Ball{Owner: -1, X: 5, Z: -11.2, H: 3, LastTouch: owner*9 + 7}
+		s.Ball = Ball{Owner: -1, X: 176 * terrainUnit, Z: -11.2, H: 3, LastTouch: owner*9 + 7}
 		s.wallBonus()
 		if s.Score[owner] != 4 || s.Stars[0] != 31 {
 			t.Fatal("star hit")
@@ -295,7 +295,7 @@ func TestStarBankClockAndExtinguish(t *testing.T) {
 	s.Multiplier = 2
 	s.Stars[0] = 31
 	s.Score[0] = 20
-	s.Ball = Ball{Owner: -1, X: 5, Z: -11.2, H: 1, LastTouch: 16}
+	s.Ball = Ball{Owner: -1, X: 176 * terrainUnit, Z: -11.2, H: 1, LastTouch: 16}
 	s.wallBonus()
 	if s.Score[0] != 18 || s.Stars[0] != 30 {
 		t.Fatal("extinguish penalty")

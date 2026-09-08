@@ -90,7 +90,7 @@ def star(name,x,y,material):
  mod=o.modifiers.new('Raised target','SOLIDIFY');mod.thickness=.12
 for group in range(2):
  for i in range(5):
-  x=(5+i*2)*(1 if group==0 else -1); y=11.2 if group==0 else -11.2
+  x=(576-((400 if group==0 else 624)+i*32))*22.4/576; y=11.2 if group==0 else -11.2
   cube('Target housing',(x,y,.6),(1.15,1.1,1.2),steel,.12)
   star('Star_%d_%d'%(group,i),x,y,cyan if group==0 else orange)
 # Original bumper centers: terrain (320,320) and (320,832), radius 16 units.
