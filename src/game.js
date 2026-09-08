@@ -355,6 +355,23 @@ export function step(
     p.aiWait = Math.max(0, (p.aiWait || 0) - dt);
     if (p.actionTime === 0) p.action = 0;
   }
+  slowBall(b, dt);
+  const inMultiplier =
+    b.owner < 0 &&
+    (enterMultiplier(b) ? runMultiplier(s, 0) : runMultiplier(s, dt));
+  let specialContact = false;
+  if (!inMultiplier) {
+    specialContact = sideFeature(s);
+    wallBonus(s);
+    b.domeFraction = (b.domeFraction ?? 0) + dt * 25;
+    if (b.domeFraction >= 1 - 1e-9) {
+      b.domeFraction = Math.max(
+        0,
+        b.domeFraction - Math.floor(b.domeFraction + 1e-9),
+      );
+      domeBounce(s);
+    }
+  }
   selectPlayers(s);
   const catchDistances = s.players.map((p) =>
     referenceDistance(p.x - b.x, p.z - b.z),
@@ -568,27 +585,14 @@ export function step(
     b.z = p.z + p.fz * 0.5;
     b.h = 1;
     b.vx = b.vz = b.vh = 0;
-  } else if (enterMultiplier(b) ? runMultiplier(s, 0) : runMultiplier(s, dt)) {
+  } else if (inMultiplier) {
     // The original multiplier animation owns the ball position while inside.
   } else {
-    slowBall(b, dt);
-    b.x += b.vx * dt;
-    b.z += b.vz * dt;
-    if (!flightStep(b, dt)) {
-      b.h += b.vh * dt;
-      b.vh -= 18 * dt;
-      if (b.h < 0.25) {
-        b.h = 0.25;
-        b.vh = b.vh < -2 ? -b.vh * 0.5 : 0;
-      }
-    }
-    const specialContact = sideFeature(s);
     if (Math.abs(b.z) > 11.2 && !specialContact) {
       event(s, 5, b.lastTouch, -1, b.x, b.z, b.h);
-      wallBonus(s);
       b.z = Math.sign(b.z) * (22.4 - Math.abs(b.z));
       reflectBall(b, "z");
-    } else wallBonus(s);
+    }
     if (Math.abs(b.x) > 21) {
       if (
         Math.abs(b.z) < 1.85 &&
@@ -608,13 +612,15 @@ export function step(
         event(s, 5, b.lastTouch, -1, b.x, b.z, b.h);
       }
     }
-    b.domeFraction = (b.domeFraction ?? 0) + dt * 25;
-    if (b.domeFraction >= 1 - 1e-9) {
-      b.domeFraction = Math.max(
-        0,
-        b.domeFraction - Math.floor(b.domeFraction + 1e-9),
-      );
-      domeBounce(s);
+    b.x += b.vx * dt;
+    b.z += b.vz * dt;
+    if (!flightStep(b, dt)) {
+      b.h += b.vh * dt;
+      b.vh -= 18 * dt;
+      if (b.h < 0.25) {
+        b.h = 0.25;
+        b.vh = b.vh < -2 ? -b.vh * 0.5 : 0;
+      }
     }
   }
   s.previous = inputs.map((u) => ({ ...u }));

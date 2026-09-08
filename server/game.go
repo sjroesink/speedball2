@@ -299,6 +299,18 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			p.Action = 0
 		}
 	}
+	slowBall(b, dt)
+	inMultiplier := b.Owner < 0 && s.multiplierStep(dt)
+	specialContact := false
+	if !inMultiplier {
+		specialContact = s.sideFeature()
+		s.wallBonus()
+		b.DomeFraction += dt * 25
+		if b.DomeFraction >= 1-1e-9 {
+			b.DomeFraction = math.Max(0, b.DomeFraction-math.Floor(b.DomeFraction+1e-9))
+			s.domeBounce()
+		}
+	}
 	s.selectPlayers()
 	var catchDistances [18]int
 	for i, p := range s.Players {
@@ -526,32 +538,13 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		b.VX = 0
 		b.VZ = 0
 		b.VH = 0
-	} else if s.multiplierStep(dt) {
+	} else if inMultiplier {
 		// The original multiplier animation owns the ball position while inside.
 	} else {
-		slowBall(b, dt)
-		b.X += b.VX * dt
-		b.Z += b.VZ * dt
-		if !flightStep(b, dt) {
-			b.H += b.VH * dt
-			b.VH -= gravity * dt
-			if b.H < .25 {
-				b.H = .25
-				if b.VH < -2 {
-					b.VH = -b.VH * .5
-				} else {
-					b.VH = 0
-				}
-			}
-		}
-		specialContact := s.sideFeature()
 		if math.Abs(b.Z) > pitchZ && !specialContact {
 			s.event(5, b.LastTouch, -1, b.X, b.Z, b.H)
-			s.wallBonus()
 			b.Z = math.Copysign(2*pitchZ-math.Abs(b.Z), b.Z)
 			reflectBall(b, false)
-		} else {
-			s.wallBonus()
 		}
 		if math.Abs(b.X) > pitchX {
 			if math.Abs(b.Z) < goalWidth && (b.FlightKind > 0 && b.FlightStage <= 2 || b.FlightKind == 0 && b.H < goalHeight) && !s.goalBlocked(b.X) {
@@ -571,11 +564,22 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				s.event(5, b.LastTouch, -1, b.X, b.Z, b.H)
 			}
 		}
-		b.DomeFraction += dt * 25
-		if b.DomeFraction >= 1-1e-9 {
-			b.DomeFraction = math.Max(0, b.DomeFraction-math.Floor(b.DomeFraction+1e-9))
-			s.domeBounce()
+
+		b.X += b.VX * dt
+		b.Z += b.VZ * dt
+		if !flightStep(b, dt) {
+			b.H += b.VH * dt
+			b.VH -= gravity * dt
+			if b.H < .25 {
+				b.H = .25
+				if b.VH < -2 {
+					b.VH = -b.VH * .5
+				} else {
+					b.VH = 0
+				}
+			}
 		}
+
 	}
 	s.previous = inputs
 }

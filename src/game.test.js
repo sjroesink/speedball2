@@ -81,6 +81,8 @@ test("high ball clears standing player, can be caught while jumping", () => {
 test("a high throw at the goal rebounds above the crossbar", () => {
   const s = isolated();
   Object.assign(s.ball, { x: 20.9, z: 0, h: 3, vx: 24, owner: -1 });
+  // Contact is evaluated on the tick after crossing the boundary.
+  step(s, dt, {});
   step(s, dt, {});
   assert.equal(s.score[0], 0);
   assert.ok(s.ball.vx < 0);
@@ -151,6 +153,8 @@ test("AI outlet chooses an unmarked forward teammate, never a stunned one", () =
 test("shots outside the original-width goal rebound off the end wall", () => {
   const s = isolated();
   Object.assign(s.ball, { x: 20.9, z: 2.2, h: 1, vx: 24, owner: -1 });
+  // Contact is evaluated on the tick after crossing the boundary.
+  step(s, dt, {});
   step(s, dt, {});
   assert.equal(s.score[0], 0);
   assert.ok(s.ball.vx < 0);

@@ -106,12 +106,14 @@ func TestWallsGoalsAndHighGoalMiss(t *testing.T) {
 	s := isolated()
 	s.Ball = Ball{X: 4, Z: 11.1, H: 1, VZ: 24, Owner: -1, LastTouch: 7}
 	s.step(dt, [2]Input{})
+	s.step(dt, [2]Input{})
 	if s.Ball.VZ >= 0 || s.Ball.Z > pitchZ {
 		t.Fatal("side wall reflection failed")
 	}
 	for _, h := range []float64{1, 3} {
 		s = isolated()
 		s.Ball = Ball{X: 20.9, H: h, VX: 24, Owner: -1, LastTouch: 7}
+		s.step(dt, [2]Input{})
 		s.step(dt, [2]Input{})
 		if h < 2 && s.Score[0] != 10 {
 			t.Fatal("goal not counted")
@@ -126,15 +128,18 @@ func TestStarBonusExtinguishAndMultiplier(t *testing.T) {
 	s.Stars[0] = 15
 	s.Ball = Ball{X: 48 * terrainUnit, Z: -11.1, H: 1, VZ: -24, Owner: -1, LastTouch: 7}
 	s.step(dt, [2]Input{})
+	s.step(dt, [2]Input{})
 	if s.Score[0] != 2 || s.Stars[0] != 31 {
 		t.Fatal("five stars bonus")
 	}
 	s.Ball = Ball{X: 48 * terrainUnit, Z: -11.1, H: 1, VZ: -24, Owner: -1, LastTouch: 16}
 	s.step(dt, [2]Input{})
+	s.step(dt, [2]Input{})
 	if s.Score[0] != 0 || s.Stars[0] != 15 {
 		t.Fatal("opponent must extinguish star and deduct points")
 	}
 	s.Ball = Ball{X: 0, Z: 11.1, H: 1, VZ: 24, Owner: -1, LastTouch: 7}
+	s.step(dt, [2]Input{})
 	s.step(dt, [2]Input{})
 	if s.Multiplier != 0 {
 		t.Fatal("wall hit must not activate a multiplier")
@@ -221,6 +226,7 @@ func TestAIOutlet(t *testing.T) {
 func TestOriginalGoalWidth(t *testing.T) {
 	s := isolated()
 	s.Ball = Ball{X: 20.9, Z: 2.2, H: 1, VX: 24, Owner: -1, LastTouch: -1}
+	s.step(dt, [2]Input{})
 	s.step(dt, [2]Input{})
 	if s.Score[0] != 0 || s.Ball.VX >= 0 {
 		t.Fatal("wide shot must rebound off end wall")

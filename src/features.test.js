@@ -91,6 +91,8 @@ test("goal door blocks the correct goal before and after halftime", () => {
     pickup(s, 7, 9);
     const x = period === 1 ? -20.9 : 20.9;
     Object.assign(s.ball, { x, z: 0, h: 1, vx: Math.sign(x) * 24, owner: -1 });
+    // Contact is evaluated on the tick after crossing the boundary.
+    step(s, dt, {});
     step(s, dt, {});
     assert.equal(s.score[1], 0);
     assert.ok(s.ball.vx * Math.sign(x) < 0);
@@ -110,6 +112,8 @@ test("four warp entrances preserve height and travel direction; high ball reboun
         owner: -1,
         lastTouch: 7,
       });
+      // Contact is evaluated on the tick after crossing the boundary.
+      step(s, dt, {});
       step(s, dt, {});
       assert.ok(s.ball.z * sign < -10);
       assert.equal(Math.sign(s.ball.vz), sign);
@@ -117,6 +121,8 @@ test("four warp entrances preserve height and travel direction; high ball reboun
     }
   const s = isolated();
   Object.assign(s.ball, { x: 8, z: 11.1, h: 3, vz: 24, owner: -1 });
+  // Contact is evaluated on the tick after crossing the boundary.
+  step(s, dt, {});
   step(s, dt, {});
   assert.ok(s.ball.vz < 0);
   assert.ok(s.ball.z > 0);

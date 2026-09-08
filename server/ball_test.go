@@ -220,6 +220,7 @@ func TestFlightStageCatchAndGoal(t *testing.T) {
 	startFlight(&s.Ball, true)
 	flightStep(&s.Ball, 6./25)
 	s.step(dt, [2]Input{})
+	s.step(dt, [2]Input{})
 	if s.Score != [2]int{} || s.Ball.VX >= 0 {
 		t.Fatal("stage three goal")
 	}

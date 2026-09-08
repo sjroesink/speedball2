@@ -238,6 +238,8 @@ test("height stage three cannot score even though it is below the old geometric 
   });
   startFlight(s.ball, true);
   flightStep(s.ball, 6 / 25);
+  // Contact is evaluated on the tick after crossing the boundary.
+  step(s, 1 / 60, {}, [true, true]);
   step(s, 1 / 60, {}, [true, true]);
   assert.deepEqual(s.score, [0, 0]);
   assert.ok(s.ball.vx < 0);

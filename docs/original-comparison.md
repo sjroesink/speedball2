@@ -267,3 +267,12 @@ Moved catch handling out of the post-motion ball pass and into each selected pla
 Paired integration tests now distinguish a fast ball entering range during motion (caught next tick) from one already in range and moving away (caught before motion), and verify contested team-two-first order through the complete simulation. This advances within-tick fidelity but does not finish it: hardware checks remain after ball motion, timers still decrement before player thinking, and tackle/collision resolution remains a later pass. Original animation sequencing and medical/pickup logic also remain open.
 
 All 93 JavaScript tests, Go tests/vet and the production build pass. Restarted the backend and opened the updated training demo. Full original gameplay parity and listening-based audio verification remain incomplete.
+
+
+## Fidelity audit: field contacts before player updates
+
+Moved slowdown, multiplier traversal, warp/electro contacts, stars and bumpers before player selection and cached catch distances. Ball boundary/goal handling now precedes the final ball position and flight advance, so a boundary crossed by motion is evaluated on the next tick. Without this second change, post-motion reflection would prevent next-tick warp detection. Legacy boundary tests now advance through crossing and then contact; new paired tests explicitly assert that no warp/star event occurs prematurely.
+
+The side-feature helper still combines warp and electro checks before stars/bumpers; their current spatial predicates are disjoint except that a warp can feed a subsequent star check, which retains the required ordering. This is not a complete original-loop port: medical/pickup and timer ordering, action opcode advancement, player motion/constraints and later tackle/collision passes still differ. Court longitudinal bounds also retain their earlier world-scale approximation.
+
+All 94 JavaScript tests, Go tests/vet and the production build pass, including full-match completion. Restarted the backend and opened the updated training demo. Exact remaining AI/medical/action sequences and listening-based audio verification are still outstanding.

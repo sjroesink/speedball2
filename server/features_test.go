@@ -91,6 +91,7 @@ func TestDoorBothHalves(t *testing.T) {
 		}
 		s.Ball = Ball{X: x, H: 1, VX: math.Copysign(24, x), Owner: -1, LastTouch: -1}
 		s.step(dt, [2]Input{})
+		s.step(dt, [2]Input{})
 		if s.Score[1] != 0 || s.Ball.VX*x >= 0 {
 			t.Fatal("door")
 		}
@@ -105,6 +106,7 @@ func TestWarpsAndHighBounce(t *testing.T) {
 			s := isolated()
 			s.Ball = Ball{X: x, Z: 11.1 * sign, H: 1, VZ: 24 * sign, Owner: -1, LastTouch: 7}
 			s.step(dt, [2]Input{})
+			s.step(dt, [2]Input{})
 			if s.Ball.Z*sign >= -10 || s.Ball.VZ*sign <= 0 || s.Event.Kind != 12 {
 				t.Fatal("warp", s.Ball)
 			}
@@ -112,6 +114,7 @@ func TestWarpsAndHighBounce(t *testing.T) {
 	}
 	s := isolated()
 	s.Ball = Ball{X: 8, Z: 11.1, H: 3, VZ: 24, Owner: -1, LastTouch: -1}
+	s.step(dt, [2]Input{})
 	s.step(dt, [2]Input{})
 	if s.Ball.VZ >= 0 || s.Ball.Z < 0 {
 		t.Fatal("high ball warped")
