@@ -549,47 +549,7 @@ export function step(
       );
       domeBounce(s);
     }
-    if (b.lock <= 0) {
-      let best = -1,
-        dist = 0.8;
-      s.players.forEach((p, i) => {
-        if (
-          p.stun > 0 ||
-          (b.flightKind
-            ? b.flightStage > 2 && p.action !== 2
-            : b.h > 1.25 + jumpHeight(p))
-        )
-          return;
-        const d = Math.hypot(p.x - b.x, p.z - b.z);
-        if (
-          d < 0.8 &&
-          b.electric > 0 &&
-          b.lastTouch >= 0 &&
-          p.team !== s.players[b.lastTouch].team &&
-          !shielded(s, p.team)
-        ) {
-          if (damage(s, b.lastTouch, i)) {
-            b.electric--;
-            b.electricBudget = b.electric;
-            return;
-          }
-        }
-        if (d < dist) {
-          best = i;
-          dist = d;
-        }
-      });
-      if (best >= 0) {
-        b.electric = 0;
-        s.charge[s.players[best].team] = 0;
-        b.flightKind = 0;
-        b.owner = best;
-        b.lastTouch = best;
-        b.after = 0;
-        s.controlled[s.players[best].team] = best;
-        event(s, 16, best, -1, b.x, b.z, b.h);
-      }
-    }
+    catchBall(s);
   }
   s.previous = inputs.map((u) => ({ ...u }));
 }
@@ -616,4 +576,49 @@ export function matchClock(s, dt) {
       }
     }
   }
+}
+
+// get_ball is called only from control_player for the selected player of each team.
+export function catchBall(s) {
+  const b = s.ball;
+  if (b.owner >= 0 || b.multiplierPath) return;
+  for (let roster = 0; roster < 9; roster++)
+    for (const team of [1, 0]) {
+      const i = team * 9 + roster,
+        p = s.players[i];
+      if (
+        s.controlled[team] !== i ||
+        p.stun > 0 ||
+        p.health <= 0 ||
+        p.action === 3
+      )
+        continue;
+      if (
+        b.flightKind
+          ? b.flightStage > 2 && p.action !== 2
+          : b.h > 1.25 + jumpHeight(p)
+      )
+        continue;
+      if (referenceDistance(p.x - b.x, p.z - b.z) > 16) continue;
+      if (
+        b.electric > 0 &&
+        b.lastTouch >= 0 &&
+        p.team !== s.players[b.lastTouch].team &&
+        !shielded(s, p.team)
+      ) {
+        if (damage(s, b.lastTouch, i)) {
+          b.electric--;
+          b.electricBudget = b.electric;
+          continue;
+        }
+      }
+      b.electric = 0;
+      s.charge[team] = 0;
+      b.flightKind = 0;
+      b.owner = i;
+      b.lastTouch = i;
+      b.after = 0;
+      event(s, 16, i, -1, b.x, b.z, b.h);
+      return;
+    }
 }

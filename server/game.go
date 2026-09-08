@@ -525,41 +525,44 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			b.DomeFraction = math.Max(0, b.DomeFraction-math.Floor(b.DomeFraction+1e-9))
 			s.domeBounce()
 		}
-		if b.Lock <= 0 {
-			best := -1
-			distance := .8
-			for i, p := range s.Players {
-				if p.Stun > 0 {
-					continue
-				}
-				reach := 1.25 + jumpHeight(p)
-				if b.FlightKind > 0 && b.FlightStage > 2 && p.Action != 2 || b.FlightKind == 0 && b.H > reach {
-					continue
-				}
-				d := math.Hypot(p.X-b.X, p.Z-b.Z)
-				if d < .8 && b.Electric > 0 && b.LastTouch >= 0 && p.Team != s.Players[b.LastTouch].Team && !s.active(10, p.Team) {
-					if s.damage(b.LastTouch, i) {
-						b.Electric--
-						b.ElectricBudget = b.Electric
-						continue
-					}
-				}
-				if d < distance {
-					best = i
-					distance = d
-				}
-			}
-			if best >= 0 {
-				b.Electric = 0
-				s.Charge[s.Players[best].Team] = 0
-				b.FlightKind = 0
-				b.Owner = best
-				b.LastTouch = best
-				b.After = 0
-				s.Controlled[s.Players[best].Team] = best
-				s.event(16, best, -1, b.X, b.Z, b.H)
-			}
-		}
+		s.catchBall()
 	}
 	s.previous = inputs
+}
+
+func (s *State) catchBall() {
+	b := &s.Ball
+	if b.Owner >= 0 || b.MultiplierPath != 0 {
+		return
+	}
+	for roster := 0; roster < 9; roster++ {
+		for _, team := range []int{1, 0} {
+			i := team*9 + roster
+			p := &s.Players[i]
+			if s.Controlled[team] != i || p.Stun > 0 || p.Health <= 0 || p.Action == 3 {
+				continue
+			}
+			if b.FlightKind != 0 && b.FlightStage > 2 && p.Action != 2 || b.FlightKind == 0 && b.H > 1.25+jumpHeight(*p) {
+				continue
+			}
+			if referenceDistance(p.X-b.X, p.Z-b.Z) > 16 {
+				continue
+			}
+			if b.Electric > 0 && b.LastTouch >= 0 && p.Team != s.Players[b.LastTouch].Team && !s.active(10, p.Team) {
+				if s.damage(b.LastTouch, i) {
+					b.Electric--
+					b.ElectricBudget = b.Electric
+					continue
+				}
+			}
+			b.Electric = 0
+			s.Charge[team] = 0
+			b.FlightKind = 0
+			b.Owner = i
+			b.LastTouch = i
+			b.After = 0
+			s.event(16, i, -1, b.X, b.Z, b.H)
+			return
+		}
+	}
 }
