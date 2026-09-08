@@ -30,17 +30,39 @@ import {
   sideFeature,
 } from "./features.js";
 // Local training counterpart of server/game.go. Coordinates: X upfield, Z across.
-export const formation = [
-  [-19, 0],
-  [-14, -6],
-  [-14, 0],
-  [-14, 6],
-  [-8, -7],
-  [-8, 0],
-  [-8, 7],
-  [-3, -4],
-  [-3, 4],
+// Launch coordinates from the original player records (terrain X, Y).
+const launchPositions = [
+  [
+    [320, 1104],
+    [213, 992],
+    [426, 992],
+    [213, 768],
+    [426, 768],
+    [320, 800],
+    [106, 576],
+    [426, 576],
+    [320, 640],
+  ],
+  [
+    [320, 48],
+    [426, 160],
+    [213, 160],
+    [426, 384],
+    [213, 384],
+    [320, 352],
+    [533, 576],
+    [213, 576],
+    [320, 512],
+  ],
 ];
+const terrainUnit = 22.4 / 576;
+export const playerLimitX = 528 * terrainUnit;
+export const playerLimitZ = 272 * terrainUnit;
+export function launchPosition(s, i) {
+  const side = Math.floor(i / 9) ^ (s.period === 2 ? 1 : 0);
+  const [x, y] = launchPositions[side][i % 9];
+  return [(576 - y) * terrainUnit, (x - 320) * terrainUnit];
+}
 export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const norm = (x, z) => {
   const d = Math.hypot(x, z);
@@ -80,9 +102,10 @@ export function resetPitch(s) {
   s.players = Array.from({ length: 18 }, (_, i) => {
     const team = Math.floor(i / 9),
       d = direction(s, team);
+    const [x, z] = launchPosition(s, i);
     return {
-      x: formation[i % 9][0] * d,
-      z: formation[i % 9][1],
+      x,
+      z,
       team,
       fx: d,
       fz: 0,
@@ -330,8 +353,7 @@ export function step(
     if (active(s, 1, 1 - t)) continue;
     if (!human) {
       const d = direction(s, t);
-      let tx = formation[i % 9][0] * d,
-        tz = formation[i % 9][1];
+      let [tx, tz] = launchPosition(s, i);
       if (b.owner === i) {
         tx = d * 22;
         tz = clamp(p.z * 0.4, -2, 2);
@@ -436,11 +458,11 @@ export function step(
     const speed = active(s, 1, 1 - t)
       ? 0
       : movementSpeed(p, b.owner === i, keeperBlock);
-    p.x = clamp(p.x + dx * speed * dt, -20.5, 20.5);
-    p.z = clamp(p.z + dz * speed * dt, -10.7, 10.7);
+    p.x = clamp(p.x + dx * speed * dt, -playerLimitX, playerLimitX);
+    p.z = clamp(p.z + dz * speed * dt, -playerLimitZ, playerLimitZ);
     if (i % 9 === 0) {
       const d = direction(s, t);
-      p.x = d * clamp(p.x * d, -20.5, -15);
+      p.x = d * clamp(p.x * d, -playerLimitX, -15);
     }
   }
   for (let o = 0; o < 18; o++) {
@@ -465,8 +487,8 @@ export function step(
           const hadBall = s.ball.owner === j;
           if (damage(s, i, j)) {
             if (hadBall) giveBall(s, i);
-            q.x = clamp(q.x + p.fx * 0.7, -20.5, 20.5);
-            q.z = clamp(q.z + p.fz * 0.7, -10.7, 10.7);
+            q.x = clamp(q.x + p.fx * 0.7, -playerLimitX, playerLimitX);
+            q.z = clamp(q.z + p.fz * 0.7, -playerLimitZ, playerLimitZ);
           }
           return true;
         }
@@ -483,10 +505,10 @@ export function step(
         d = Math.hypot(dx, dz);
       if (d > 0.001 && d < 0.85) {
         const push = (0.85 - d) * 0.5;
-        p.x = clamp(p.x - (dx / d) * push, -20.5, 20.5);
-        p.z = clamp(p.z - (dz / d) * push, -10.7, 10.7);
-        q.x = clamp(q.x + (dx / d) * push, -20.5, 20.5);
-        q.z = clamp(q.z + (dz / d) * push, -10.7, 10.7);
+        p.x = clamp(p.x - (dx / d) * push, -playerLimitX, playerLimitX);
+        p.z = clamp(p.z - (dz / d) * push, -playerLimitZ, playerLimitZ);
+        q.x = clamp(q.x + (dx / d) * push, -playerLimitX, playerLimitX);
+        q.z = clamp(q.z + (dz / d) * push, -playerLimitZ, playerLimitZ);
       }
     }
   }

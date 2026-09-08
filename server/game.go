@@ -81,7 +81,23 @@ type Input struct {
 	Seq      int64   `json:"seq"`
 }
 
-var formation = [9][2]float64{{-19, 0}, {-14, -6}, {-14, 0}, {-14, 6}, {-8, -7}, {-8, 0}, {-8, 7}, {-3, -4}, {-3, 4}}
+// Launch coordinates from the original player records (terrain X, Y).
+var launchPositions = [2][9][2]float64{
+	{{320, 1104}, {213, 992}, {426, 992}, {213, 768}, {426, 768}, {320, 800}, {106, 576}, {426, 576}, {320, 640}},
+	{{320, 48}, {426, 160}, {213, 160}, {426, 384}, {213, 384}, {320, 352}, {533, 576}, {213, 576}, {320, 512}},
+}
+
+const playerLimitX = 528 * (22.4 / 576)
+const playerLimitZ = 272 * (22.4 / 576)
+
+func (s *State) launchPosition(i int) (float64, float64) {
+	side := i / 9
+	if s.Period == 2 {
+		side ^= 1
+	}
+	p := launchPositions[side][i%9]
+	return (576 - p[1]) * (22.4 / 576), (p[0] - 320) * (22.4 / 576)
+}
 
 func initial() State {
 	s := State{RNG: [2]uint32{0x31415926, 0x53589793}, Time: 90, Period: 1, Controlled: [2]int{7, 16}}
@@ -104,7 +120,8 @@ func (s *State) resetPitch() {
 		t := i / 9
 		d := s.direction(t)
 		old := s.Players[i]
-		s.Players[i] = Player{Stats: defaultStats(), Health: 100, X: formation[i%9][0] * d, Z: formation[i%9][1], Team: t, FX: d}
+		x, z := s.launchPosition(i)
+		s.Players[i] = Player{Stats: defaultStats(), Health: 100, X: x, Z: z, Team: t, FX: d}
 		if s.Tick > 0 {
 			s.Players[i].Health = old.Health
 			s.Players[i].Gear = old.Gear
@@ -287,7 +304,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		}
 		if !human {
 			d := s.direction(t)
-			tx, tz := formation[i%9][0]*d, formation[i%9][1]
+			tx, tz := s.launchPosition(i)
 			if b.Owner == i {
 				tx = d * 22
 				tz = clamp(p.Z*.4, -2, 2)
@@ -401,11 +418,11 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		if s.active(1, 1-t) {
 			speed = 0
 		}
-		p.X = clamp(p.X+dx*speed*dt, -20.5, 20.5)
-		p.Z = clamp(p.Z+dz*speed*dt, -10.7, 10.7)
+		p.X = clamp(p.X+dx*speed*dt, -playerLimitX, playerLimitX)
+		p.Z = clamp(p.Z+dz*speed*dt, -playerLimitZ, playerLimitZ)
 		if i%9 == 0 {
 			d := s.direction(t)
-			p.X = d * clamp(p.X*d, -20.5, -15)
+			p.X = d * clamp(p.X*d, -playerLimitX, -15)
 		}
 	}
 	// Resolve contacts in alternating order so equal teams get equal priority.
@@ -436,8 +453,8 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 						if hadBall {
 							s.giveBall(i)
 						}
-						q.X = clamp(q.X+p.FX*.7, -20.5, 20.5)
-						q.Z = clamp(q.Z+p.FZ*.7, -10.7, 10.7)
+						q.X = clamp(q.X+p.FX*.7, -playerLimitX, playerLimitX)
+						q.Z = clamp(q.Z+p.FZ*.7, -playerLimitZ, playerLimitZ)
 					}
 					break
 				}
@@ -455,10 +472,10 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			d := math.Hypot(dx, dz)
 			if d > .001 && d < .85 {
 				push := (.85 - d) * .5
-				p.X = clamp(p.X-dx/d*push, -20.5, 20.5)
-				p.Z = clamp(p.Z-dz/d*push, -10.7, 10.7)
-				q.X = clamp(q.X+dx/d*push, -20.5, 20.5)
-				q.Z = clamp(q.Z+dz/d*push, -10.7, 10.7)
+				p.X = clamp(p.X-dx/d*push, -playerLimitX, playerLimitX)
+				p.Z = clamp(p.Z-dz/d*push, -playerLimitZ, playerLimitZ)
+				q.X = clamp(q.X+dx/d*push, -playerLimitX, playerLimitX)
+				q.Z = clamp(q.Z+dz/d*push, -playerLimitZ, playerLimitZ)
 			}
 		}
 	}
