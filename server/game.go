@@ -5,9 +5,9 @@ import "math"
 const (
 	simulationRate = 25
 	simulationStep = 1.0 / simulationRate
-	pitchX         = 21.
+	pitchX         = 544 * (22.4 / 576)
 	pitchZ         = 11.2
-	goalWidth      = 1.85
+	goalWidth      = 48 * (22.4 / 576)
 	goalHeight     = 2.
 	gravity        = 18.
 )
@@ -543,11 +543,11 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 	} else {
 		if math.Abs(b.Z) > pitchZ && !specialContact {
 			s.event(5, b.LastTouch, -1, b.X, b.Z, b.H)
-			b.Z = math.Copysign(2*pitchZ-math.Abs(b.Z), b.Z)
+			b.Z = math.Copysign(pitchZ, b.Z)
 			reflectBall(b, false)
 		}
 		if math.Abs(b.X) > pitchX {
-			if math.Abs(b.Z) < goalWidth && (b.FlightKind > 0 && b.FlightStage <= 2 || b.FlightKind == 0 && b.H < goalHeight) && !s.goalBlocked(b.X) {
+			if math.Abs(b.Z) <= goalWidth && b.X*b.VX > 0 && (b.FlightKind > 0 && b.FlightStage <= 2 || b.FlightKind == 0 && b.H < goalHeight) && !s.goalBlocked(b.X) {
 				scorer := 0
 				if b.X*s.direction(0) < 0 {
 					scorer = 1
@@ -559,7 +559,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				s.previous = inputs
 				return
 			} else {
-				b.X = math.Copysign(2*pitchX-math.Abs(b.X), b.X)
+				b.X = math.Copysign(pitchX, b.X)
 				reflectBall(b, true)
 				s.event(5, b.LastTouch, -1, b.X, b.Z, b.H)
 			}

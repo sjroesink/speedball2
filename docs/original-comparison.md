@@ -276,3 +276,12 @@ Moved slowdown, multiplier traversal, warp/electro contacts, stars and bumpers b
 The side-feature helper still combines warp and electro checks before stars/bumpers; their current spatial predicates are disjoint except that a warp can feed a subsequent star check, which retains the required ordering. This is not a complete original-loop port: medical/pickup and timer ordering, action opcode advancement, player motion/constraints and later tackle/collision passes still differ. Court longitudinal bounds also retain their earlier world-scale approximation.
 
 All 94 JavaScript tests, Go tests/vet and the production build pass, including full-match completion. Restarted the backend and opened the updated training demo. Exact remaining AI/medical/action sequences and listening-based audio verification are still outstanding.
+
+
+## Fidelity audit: exact goal and ball-wall bounds
+
+Match.CheckGoal accepts transverse terrain coordinates 272..368 inclusive and requires outward velocity beyond longitudinal 32/1120. Both simulations now use the corresponding 48-unit goal half-width and 544-unit longitudinal half-length, and reject goals for stationary or inward-moving balls. Entity.MoveAndHandleWallsAndBounce / constrain_sprite clamps overshoot to the boundary before reversing velocity and applying that tick's movement; replaced the previous position-mirroring bounce on both axes. End-wall sustain reduction is retained.
+
+Paired tests cover both goalpost endpoints and their adjacent excluded terrain units, strict crossing, velocity direction and clipping before reverse movement. The earlier high-ball boundary fixture now begins near the corrected end line. All 97 JavaScript tests, Go tests/vet and the production build pass. The backend was restarted and the updated training demo opened.
+
+The Blender arena still contains rounded goal/end-wall geometry (for example scaled goal center 21.3 versus the exact simulation line around 21.156). This needs visual alignment; this checkpoint corrects gameplay bounds only. Original integer motion, action/medical/AI sequencing and listening-based audio verification remain incomplete.

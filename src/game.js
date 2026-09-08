@@ -32,6 +32,8 @@ import {
   featureStep,
   sideFeature,
 } from "./features.js";
+export const pitchLengthLimit = 544 * (22.4 / 576);
+export const goalHalfWidth = 48 * (22.4 / 576);
 export const simulationRate = 25;
 export const simulationStep = 1 / simulationRate;
 // Local training counterpart of server/game.go. Coordinates: X upfield, Z across.
@@ -590,12 +592,13 @@ export function step(
   } else {
     if (Math.abs(b.z) > 11.2 && !specialContact) {
       event(s, 5, b.lastTouch, -1, b.x, b.z, b.h);
-      b.z = Math.sign(b.z) * (22.4 - Math.abs(b.z));
+      b.z = Math.sign(b.z) * 11.2;
       reflectBall(b, "z");
     }
-    if (Math.abs(b.x) > 21) {
+    if (Math.abs(b.x) > pitchLengthLimit) {
       if (
-        Math.abs(b.z) < 1.85 &&
+        Math.abs(b.z) <= goalHalfWidth &&
+        b.x * b.vx > 0 &&
         (b.flightKind ? b.flightStage <= 2 : b.h < 2) &&
         !goalBlocked(s, b.x, direction(s, 0))
       ) {
@@ -607,7 +610,7 @@ export function step(
         s.previous = inputs.map((u) => ({ ...u }));
         return;
       } else {
-        b.x = Math.sign(b.x) * (42 - Math.abs(b.x));
+        b.x = Math.sign(b.x) * pitchLengthLimit;
         reflectBall(b, "x");
         event(s, 5, b.lastTouch, -1, b.x, b.z, b.h);
       }
