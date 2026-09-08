@@ -312,8 +312,12 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				tx = d * 22
 				tz = clamp(p.Z*.4, -2, 2)
 			} else if i%9 == 0 {
-				tx = -d * 19.5
-				tz = clamp(b.Z, -1.55, 1.55)
+				if s.Controlled[t] != i {
+					tx, tz = s.goalieTarget(i)
+				} else {
+					tx = -d * 19.5
+					tz = clamp(b.Z, -1.55, 1.55)
+				}
 			} else if s.Controlled[t] == i {
 				lead := .15
 				if p.Gear == 21 {

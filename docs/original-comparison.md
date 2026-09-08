@@ -204,3 +204,12 @@ Replaced the invented ball-relative formation shift for unselected outfield play
 Both simulations now retain movement velocity for the selected teammate's one-original-tick position prediction. This remains an adaptation to the current continuous host movement; cached velocity/update ordering and the original AI decision timer are not yet reproduced. The falling-player sprite-94 exception, aggression/visible-opponent target override, special interactions, goalkeeper AI and selected-player possession decisions remain unfinished. Out-of-table predicted coordinates safely fall back to ordinary support correction; valid original near-goal coordinates use the complete numerical lookup.
 
 All 76 JavaScript tests, Go tests/vet and the production build pass. Paired tests exercise keeper-based defender support, midfield zone correction, near-goal wing lookup and halftime reflection. Restarted the online backend and verified the training match advances without browser runtime errors. This checkpoint does not establish full AI or gameplay parity; global timing, medical sequencing and auditory mix verification remain open.
+
+
+## Fidelity audit: unselected goalkeeper positioning
+
+Ported base_goalie_set_intercept_position (Amiga 0xfb30; C# Player.E456) into both simulations for the unselected keeper. It predicts the ball or carrier's position, evaluates diagonal shot intersections, distinguishes a carrier from a released/throwing ball, and positions on the original back line within the keeper's transverse zone. The old constant depth and narrow ball-Z clamp remain only in the still-unported selected-keeper branch.
+
+Prediction follows get_predicted_ball_position_for_goalie at 0xfed0. Dump table 0x020a contains shifts 0 for intelligence 100..149, 1 for 150..199 and 2 for 200..255. Longitudinal prediction reduces that shift when the original side-dependent zone condition fails, then applies the same horizon to transverse velocity. Velocities are adapted from current simulation units; original global update ordering remains open. The dive decision, local interaction override, selected-keeper no-ball AI and block/deflection sequence are separate unfinished branches.
+
+All 79 JavaScript tests, Go tests/vet and the production build pass. Paired cases cover both side-shot angles, distant recentering, halftime, carrier versus released diagonal shots and intelligence thresholds. The backend was restarted for this demo. Full gameplay parity, original timing/injuries and listening-based audio verification are still unproven.

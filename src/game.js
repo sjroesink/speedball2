@@ -1,3 +1,4 @@
+import { goalieTarget } from "./goalie.js";
 import { supportTarget } from "./support.js";
 import { emit as event } from "./events.js";
 import { enterMultiplier, runMultiplier } from "./multiplier.js";
@@ -365,8 +366,11 @@ export function step(
         tx = d * 22;
         tz = clamp(p.z * 0.4, -2, 2);
       } else if (i % 9 === 0) {
-        tx = -d * 19.5;
-        tz = clamp(b.z, -1.55, 1.55);
+        if (s.controlled[t] !== i) [tx, tz] = goalieTarget(s, i);
+        else {
+          tx = -d * 19.5;
+          tz = clamp(b.z, -1.55, 1.55);
+        }
       } else if (s.controlled[t] === i) {
         tx = b.x + b.vx * (p.gear === 21 ? 0.3 : 0.15);
         tz = b.z + b.vz * (p.gear === 21 ? 0.3 : 0.15);
