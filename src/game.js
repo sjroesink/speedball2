@@ -1,3 +1,15 @@
+import {
+  initFeatures,
+  active,
+  strength,
+  movementFactor,
+  shielded,
+  goalBlocked,
+  damage,
+  medicalStep,
+  featureStep,
+  sideFeature,
+} from "./features.js";
 // Local training counterpart of server/game.go. Coordinates: X upfield, Z across.
 export const formation = [
   [-19, 0],
@@ -15,6 +27,11 @@ const norm = (x, z) => {
   const d = Math.hypot(x, z);
   return d < 0.001 ? [0, 0] : [x / d, z / d];
 };
+export function eightWay(x, z) {
+  if (Math.hypot(x, z) < 0.01) return [0, 0];
+  const a = (Math.round(Math.atan2(z, x) / (Math.PI / 4)) * Math.PI) / 4;
+  return [Math.cos(a), Math.sin(a)];
+}
 export const direction = (s, t) =>
   (t === 0 ? 1 : -1) * (s.period === 2 ? -1 : 1);
 export function initial() {
@@ -35,9 +52,11 @@ export function initial() {
     multiplier: 0,
   };
   resetPitch(s);
+  initFeatures(s);
   return s;
 }
 export function resetPitch(s) {
+  const old = s.players;
   s.players = Array.from({ length: 18 }, (_, i) => {
     const team = Math.floor(i / 9),
       d = direction(s, team);
@@ -47,7 +66,10 @@ export function resetPitch(s) {
       team,
       fx: d,
       fz: 0,
-      stun: 0,
+      health: s.tick > 0 ? old[i].health : 100,
+      gear: s.tick > 0 ? old[i].gear : 0,
+      injury: 0,
+      stun: s.tick > 0 && old[i].health <= 0 ? 10 : 0,
       actionTime: 0,
       cooldown: 0,
       action: 0,
@@ -64,6 +86,7 @@ export function resetPitch(s) {
     lastTouch: -1,
     lock: 0,
     after: 0,
+    electric: 0,
   };
   s.charge = [0, 0];
 }
@@ -101,7 +124,7 @@ export function selectPlayers(s) {
 export function throwBall(s, i, lob) {
   const p = s.players[i],
     b = s.ball,
-    speed = lob ? 16 : 24;
+    speed = 24 * strength(s, p) * (p.gear === 18 ? 1.25 : 1);
   Object.assign(b, {
     x: p.x + p.fx * 0.9,
     z: p.z + p.fz * 0.9,
@@ -113,10 +136,42 @@ export function throwBall(s, i, lob) {
     lastTouch: i,
     lock: 0.18,
     after: 0.45,
+    electric: 0,
   });
   p.action = 3;
   p.actionTime = 0.32;
   event(s, 3, i, -1, b.x, b.z, b.h);
+}
+// Advance the ball to a free teammate when a carrier is pressed in its own half.
+export function passTarget(s, i) {
+  const p = s.players[i],
+    d = direction(s, p.team);
+  let best = -1,
+    value = -Infinity;
+  s.players.forEach((q, j) => {
+    const advance = (q.x - p.x) * d,
+      distance = Math.hypot(q.x - p.x, q.z - p.z);
+    if (
+      j === i ||
+      q.team !== p.team ||
+      q.stun > 0 ||
+      advance < 2 ||
+      distance > 15
+    )
+      return;
+    const space = Math.min(
+      ...s.players
+        .filter((r) => r.team !== p.team && r.stun <= 0)
+        .map((r) => Math.hypot(r.x - q.x, r.z - q.z)),
+      10,
+    );
+    const score = space * 2 + advance - distance * 0.4;
+    if (space > 2.5 && score > value) {
+      value = score;
+      best = j;
+    }
+  });
+  return best;
 }
 export function points(s, t, base) {
   return (t === 0 && s.multiplier > 0) || (t === 1 && s.multiplier < 0)
@@ -185,8 +240,17 @@ export function step(
   const inputs = [input, secondInput];
   s.tick++;
   if (s.over) return;
+  if (medicalStep(s, dt)) {
+    s.previous = inputs.map((u) => ({ ...u }));
+    return;
+  }
   if (s.pause > 0) {
     s.pause = Math.max(0, s.pause - dt);
+    s.previous = inputs.map((u) => ({ ...u }));
+    return;
+  }
+  featureStep(s, dt);
+  if (s.players.some((p) => p.injury > 0)) {
     s.previous = inputs.map((u) => ({ ...u }));
     return;
   }
@@ -221,6 +285,11 @@ export function step(
     let u = inputs[t],
       dx = u.x || 0,
       dz = u.z || 0;
+    if (human && active(s, 2, 1 - t)) {
+      dx = -dx;
+      dz = -dz;
+    }
+    if (active(s, 1, 1 - t)) continue;
     if (!human) {
       const d = direction(s, t);
       let tx = formation[i % 9][0] * d,
@@ -230,14 +299,21 @@ export function step(
         tz = clamp(p.z * 0.4, -2, 2);
       } else if (i % 9 === 0) {
         tx = -d * 19.5;
-        tz = clamp(b.z, -3.3, 3.3);
+        tz = clamp(b.z, -1.55, 1.55);
       } else if (s.controlled[t] === i) {
-        tx = b.x + b.vx * 0.15;
-        tz = b.z + b.vz * 0.15;
+        tx = b.x + b.vx * (p.gear === 21 ? 0.3 : 0.15);
+        tz = b.z + b.vz * (p.gear === 21 ? 0.3 : 0.15);
       } else {
         tx += clamp(b.x * 0.35, -6, 6);
         if (b.owner >= 0 && s.players[b.owner].team === t) tx += d * 5;
         tz += b.z * 0.18;
+      }
+      if(i%9!==0 && b.owner!==i && s.controlled[t]!==i) {
+        let near=4;
+        for(const item of s.pickups) {
+          const distance=Math.hypot(item.x-p.x,item.z-p.z);
+          if(item.wait<=0&&distance<near){near=distance;tx=item.x;tz=item.z;}
+        }
       }
       [dx, dz] = norm(tx - p.x, tz - p.z);
       if (Math.hypot(tx - p.x, tz - p.z) < 0.3) {
@@ -247,23 +323,31 @@ export function step(
       u = {};
       if (
         p.cooldown <= 0 &&
-        Math.hypot(b.x - p.x, b.z - p.z) < 3 &&
+        Math.hypot(b.x - p.x, b.z - p.z) < (p.gear === 14 ? 4 : 3) &&
         b.owner !== i
       ) {
         if (b.h > 1.4) u.shoot = true;
-        else if (b.owner >= 0 && s.players[b.owner].team !== t) u.tackle = true;
+        else if (
+          (b.owner >= 0 && s.players[b.owner].team !== t) ||
+          (i % 9 === 0 && b.owner < 0 && Math.hypot(b.vx, b.vz) > 4)
+        )
+          u.tackle = true;
       }
       if (b.owner === i) {
         const danger = s.players.some(
           (q) => q.team !== t && Math.hypot(q.x - p.x, q.z - p.z) < 3,
         );
         if (p.x * d > 12 || danger || i % 9 === 0) {
-          [p.fx, p.fz] = norm(d * 23 - p.x, -p.z);
-          throwBall(s, i, danger && p.x * d < 10);
+          const receiver = p.x * d < 10 ? passTarget(s, i) : -1;
+          const target =
+            receiver >= 0 ? s.players[receiver] : { x: d * 23, z: 0 };
+          [p.fx, p.fz] = norm(target.x - p.x, target.z - p.z);
+          throwBall(s, i, receiver < 0 && danger && p.x * d < 10);
         }
       }
     }
-    if (p.action !== 1 && Math.hypot(dx, dz) > 0.01)
+    if (human) [dx, dz] = eightWay(dx, dz);
+    if (p.action !== 1 && p.action !== 3 && Math.hypot(dx, dz) > 0.01)
       [p.fx, p.fz] = norm(dx, dz);
     const prev = s.previous[t],
       pressed = human
@@ -276,13 +360,22 @@ export function step(
       if ((u.lob && !prev.lob) || (u.lobId || 0) > (prev.lobId || 0)) {
         throwBall(s, i, true);
         s.charge[t] = 0;
-      } else if ((u.fire || 0) > (prev.fire || 0) && !u.shoot) {
-        throwBall(s, i, false);
-        s.charge[t] = 0;
-      } else if (u.shoot) s.charge[t] = Math.min(1, s.charge[t] + dt);
-      else if (s.charge[t] > 0) {
-        throwBall(s, i, s.charge[t] >= 0.24);
-        s.charge[t] = 0;
+      } else {
+        const fire =
+          (u.shoot && !prev.shoot) || (u.fire || 0) > (prev.fire || 0);
+        if (fire && s.charge[t] === 0 && p.actionTime <= 0) {
+          s.charge[t] = dt;
+          p.action = 3;
+          p.actionTime = 0.32;
+          p.lowThrow = !u.shoot;
+        } else if (s.charge[t] > 0) s.charge[t] += dt;
+        if (s.charge[t] > 0) {
+          p.lowThrow ||= !u.shoot;
+          if (s.charge[t] >= 0.16) {
+            throwBall(s, i, !p.lowThrow);
+            s.charge[t] = 0;
+          }
+        }
       }
     } else if (human) s.charge[t] = 0;
     if (pressed && b.owner !== i && p.cooldown <= 0 && p.actionTime <= 0) {
@@ -305,6 +398,8 @@ export function step(
       speed = 14;
     }
     if (p.action === 2) speed = 4.5;
+    if (p.action === 3) speed = 0;
+    speed *= movementFactor(s, p);
     const n = Math.max(1, Math.hypot(dx, dz));
     p.x = clamp(p.x + (dx / n) * speed * dt, -20.5, 20.5);
     p.z = clamp(p.z + (dz / n) * speed * dt, -10.7, 10.7);
@@ -322,26 +417,14 @@ export function step(
         if (q.team === p.team || q.stun > 0) return;
         const dx = q.x - p.x,
           dz = q.z - p.z;
-        if (Math.hypot(dx, dz) < 1.15 && dx * p.fx + dz * p.fz > -0.3) {
-          q.stun = 1.35;
-          q.action = 4;
-          q.actionTime = 1.35;
-          q.x = clamp(q.x + p.fx * 0.7, -20.5, 20.5);
-          q.z = clamp(q.z + p.fz * 0.7, -10.7, 10.7);
-          if (b.owner === j)
-            Object.assign(b, {
-              x: q.x,
-              z: q.z,
-              h: 0.5,
-              vx: p.fx * 5,
-              vz: p.fz * 5,
-              vh: 3,
-              owner: -1,
-              lastTouch: i,
-              lock: 0.08,
-              after: 0,
-            });
-          event(s, 4, i, j, q.x, q.z, 0.5);
+        if (
+          Math.hypot(dx, dz) < (p.gear === 15 ? 1.4 : 1.15) &&
+          dx * p.fx + dz * p.fz > -0.3
+        ) {
+          if (damage(s, i, j, 20)) {
+            q.x = clamp(q.x + p.fx * 0.7, -20.5, 20.5);
+            q.z = clamp(q.z + p.fz * 0.7, -10.7, 10.7);
+          }
         }
       });
   }
@@ -362,6 +445,10 @@ export function step(
         q.z = clamp(q.z + (dz / d) * push, -10.7, 10.7);
       }
     }
+  }
+  if (s.players.some((p) => p.injury > 0)) {
+    s.previous = inputs.map((u) => ({ ...u }));
+    return;
   }
   if (b.owner >= 0) {
     const p = s.players[b.owner];
@@ -388,14 +475,18 @@ export function step(
       b.vx *= drag;
       b.vz *= drag;
     }
-    if (Math.abs(b.z) > 11.2) {
+    if (Math.abs(b.z) > 11.2 && !sideFeature(s)) {
       b.z = Math.sign(b.z) * (22.4 - Math.abs(b.z));
       b.vz *= -0.92;
       event(s, 5, b.lastTouch, -1, b.x, b.z, b.h);
       wallBonus(s);
     }
     if (Math.abs(b.x) > 21) {
-      if (Math.abs(b.z) < 3.8 && b.h < 2) {
+      if (
+        Math.abs(b.z) < 1.85 &&
+        b.h < 2 &&
+        !goalBlocked(s, b.x, direction(s, 0))
+      ) {
         const scorer = b.x * direction(s, 0) < 0 ? 1 : 0;
         s.score[scorer] += points(s, scorer, 10);
         event(s, 7, scorer, -1, b.x, b.z, b.h);
@@ -416,12 +507,26 @@ export function step(
       s.players.forEach((p, i) => {
         if (p.stun > 0 || b.h > 1.25 + jumpHeight(p)) return;
         const d = Math.hypot(p.x - b.x, p.z - b.z);
+        if (
+          d < 0.8 &&
+          b.electric > 0 &&
+          b.lastTouch >= 0 &&
+          p.team !== s.players[b.lastTouch].team &&
+          !shielded(s, p.team)
+        ) {
+          if (damage(s, b.lastTouch, i, 25)) {
+            b.electric--;
+            return;
+          }
+        }
         if (d < dist) {
           best = i;
           dist = d;
         }
       });
       if (best >= 0) {
+        b.electric = 0;
+        s.charge[s.players[best].team] = 0;
         b.owner = best;
         b.lastTouch = best;
         b.after = 0;

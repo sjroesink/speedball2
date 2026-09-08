@@ -1,3 +1,4 @@
+import { powerNames } from "./features.js";
 import { initial, step, direction, clamp } from "./game.js";
 import { decodeSnapshot } from "./wire.js";
 import { ArenaRenderer } from "./renderer.js";
@@ -24,7 +25,7 @@ export async function start() {
     eventLife = 0;
   $("viewport").insertAdjacentHTML(
     "beforeend",
-    `<div class="game-toolbar"><button id="gameMenu">☰ MENU</button><span id="matchRoom">TRAINING</span><button id="gameFullscreen">⛶ SCHERM</button></div><div class="game-feedback"><strong id="actionLabel">KLAAR</strong><div class="charge-meter"><i id="chargeFill"></i></div><small id="actionHint">SPATIE: ACTIE · E: HOGE WORP · SHIFT: SLIDING</small></div><div class="bonus-hud"><span id="bonus0">☆☆☆☆☆ · ×1</span><b>SCORETARGETS</b><span id="bonus1">☆☆☆☆☆ · ×1</span></div><div id="eventToast" class="event-toast hidden" role="status"></div><div class="game-instructions">WASD / PIJLTJES <b>BEWEGEN & RICHTEN</b> &nbsp; SPATIE <b>KORT: LAAG · VASTHOUDEN: HOOG</b></div><div id="pauseMenu" class="pause-menu hidden"><h2>TIME OUT</h2><p id="pauseText">De training is gepauzeerd.</p><button id="resume" class="primary">VERDER SPELEN →</button><button id="leave">TERUG NAAR LOBBY</button></div>`,
+    `<div class="game-toolbar"><button id="gameMenu">☰ MENU</button><span id="matchRoom">TRAINING</span><button id="gameFullscreen">⛶ FULL SCREEN</button></div><div class="game-feedback"><strong id="actionLabel">READY</strong><div class="charge-meter"><i id="chargeFill"></i></div><small id="actionHint">SPACE: ACTION · E: LOB · SHIFT: TACKLE</small></div><div class="power-hud"><strong id="powerStatus">NO POWER-UP</strong><span id="healthStatus"></span><span id="gearStatus"></span></div><div class="bonus-hud"><span id="bonus0">☆☆☆☆☆ · ×1</span><b>SCORE TARGETS</b><span id="bonus1">☆☆☆☆☆ · ×1</span></div><div id="eventToast" class="event-toast hidden" role="status"></div><div class="game-instructions">WASD / ARROWS <b>MOVE & AIM</b> &nbsp; SPACE <b>TAP: LOW · HOLD: HIGH</b></div><div id="pauseMenu" class="pause-menu hidden"><h2>TIME OUT</h2><p id="pauseText">Training is paused.</p><button id="resume" class="primary">RESUME →</button><button id="leave">BACK TO LOBBY</button></div>`,
   );
   const keys = new Set();
   let fire = 0,
@@ -106,8 +107,8 @@ export async function start() {
     send();
     $("pauseMenu").classList.toggle("hidden", !menu);
     $("pauseText").textContent = online
-      ? "De online wedstrijd loopt door."
-      : "De training is gepauzeerd.";
+      ? "The online match continues."
+      : "Training is paused.";
   }
   function disconnect() {
     fire = tackleId = lobId = 0;
@@ -130,8 +131,8 @@ export async function start() {
     view.setFollow(false);
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     $("mode").textContent = "ARENA PREVIEW";
-    $("connection").textContent = "LOKALE PREVIEW";
-    $("status").textContent = "KLAAR VOOR DE AFTRAP";
+    $("connection").textContent = "LOCAL PREVIEW";
+    $("status").textContent = "READY FOR KICKOFF";
     $("roomShare").classList.add("hidden");
     state = initial();
   }
@@ -143,10 +144,10 @@ export async function start() {
     lastEvent = 0;
     $("result").classList.add("hidden");
     $("mode").textContent = "TRAINING";
-    $("connection").textContent = "LOKALE TRAINING";
-    $("homeName").textContent = "JIJ";
+    $("connection").textContent = "LOCAL TRAINING";
+    $("homeName").textContent = "YOU";
     $("awayName").textContent = "AI";
-    $("matchRoom").textContent = "TRAINING / 9 TEGEN 9";
+    $("matchRoom").textContent = "TRAINING / 9 VS 9";
     $("practiceTab").classList.add("selected");
     $("onlineTab").classList.remove("selected");
     enter();
@@ -157,15 +158,15 @@ export async function start() {
     let session, timer;
     if (!("WebTransport" in window)) {
       $("notice").textContent =
-        "Gebruik een browser met WebTransport, bijvoorbeeld Chrome of Edge.";
+        "Use a WebTransport browser such as Chrome or Edge.";
       return;
     }
-    $("notice").textContent = "Verbinden…";
+    $("notice").textContent = "Connecting…";
     enter();
-    $("matchRoom").textContent = "VERBINDEN…";
+    $("matchRoom").textContent = "CONNECTING…";
     try {
       const response = await fetch("/connection.json", { cache: "no-store" });
-      if (!response.ok) throw Error("Start de Go-server met npm run server.");
+      if (!response.ok) throw Error("Start the Go server with npm run server.");
       const cfg = await response.json();
       if (id !== attempt) return;
       const url = new URL(cfg.url);
@@ -187,7 +188,7 @@ export async function start() {
         session.ready,
         new Promise((_, reject) => {
           timer = setTimeout(
-            () => reject(Error("Geen verbinding met de gameserver.")),
+            () => reject(Error("Cannot connect to the game server.")),
             8000,
           );
         }),
@@ -203,16 +204,15 @@ export async function start() {
       lastEvent = 0;
       state = initial();
       $("result").classList.add("hidden");
-      $("connection").textContent = "WEBTRANSPORT VERBONDEN";
+      $("connection").textContent = "WEBTRANSPORT CONNECTED";
       $("onlineTab").classList.add("selected");
       $("practiceTab").classList.remove("selected");
       session.closed
         .then((info) => {
-          if (id === attempt) lost(info.reason || "Verbinding gesloten.");
+          if (id === attempt) lost(info.reason || "Connection closed.");
         })
         .catch(() => {
-          if (id === attempt)
-            lost("Verbinding verloren. Maak een nieuwe arena.");
+          if (id === attempt) lost("Connection lost. Create a new arena.");
         });
       const reader = session.datagrams.readable.getReader();
       while (transport === session) {
@@ -227,13 +227,13 @@ export async function start() {
         $("homeName").textContent = msg.names[0];
         $("awayName").textContent = msg.names[1];
         $("roomShare").classList.remove("hidden");
-        $("roomShare").textContent = `KAMERCODE: ${msg.room}`;
+        $("roomShare").textContent = `ROOM CODE: ${msg.room}`;
         $("matchRoom").textContent =
-          `ARENA ${msg.room} / ${msg.started ? "LIVE" : "WACHT OP TEGENSTANDER"}`;
-        $("mode").textContent = msg.started ? "ONLINE / LIVE" : "WACHTRUIMTE";
+          `ARENA ${msg.room} / ${msg.started ? "LIVE" : "WAITING FOR OPPONENT"}`;
+        $("mode").textContent = msg.started ? "ONLINE / LIVE" : "WAITING ROOM";
         $("notice").textContent = msg.started
-          ? "Wedstrijd live."
-          : `Deel kamercode ${msg.room}.`;
+          ? "Match is live."
+          : `Share room code ${msg.room}.`;
       }
     } catch (e) {
       if (id === attempt) lost(e.message);
@@ -244,7 +244,7 @@ export async function start() {
   function lost(message) {
     disconnect();
     $("notice").textContent = message;
-    $("connection").textContent = "NIET VERBONDEN";
+    $("connection").textContent = "DISCONNECTED";
     $("matchRoom").textContent = message;
     $("status").textContent = message;
     if (inGame) {
@@ -291,29 +291,29 @@ export async function start() {
     const seconds = Math.ceil(state.time);
     $("timer").textContent =
       `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
-    $("period").textContent = `HELFT ${state.period} / 2`;
+    $("period").textContent = `HALF ${state.period} / 2`;
     $("status").textContent = state.over
-      ? "EINDE WEDSTRIJD"
-      : `${team === 0 ? "IRON VIPERS" : "STEEL JACKALS"} ${direction(state, team) > 0 ? "↑" : "↓"} / ${p.stun > 0 ? "NEERGEHAALD" : owned ? "BALBEZIT" : "VEROVER DE BAL"}`;
+      ? "FULL TIME"
+      : `${team === 0 ? "IRON VIPERS" : "STEEL JACKALS"} ${direction(state, team) > 0 ? "↑" : "↓"} / ${p.stun > 0 ? "KNOCKED DOWN" : owned ? "BALL POSSESSION" : "GET THE BALL"}`;
     $("actionLabel").textContent =
       p.stun > 0
-        ? "NEERGEHAALD"
+        ? "KNOCKED DOWN"
         : p.action === 1
           ? "SLIDING!"
           : p.action === 2
-            ? "SPRONG!"
-            : state.charge[team] >= 0.24
-              ? "HOGE WORP — LAAT LOS"
+            ? "JUMP!"
+            : state.charge[team] >= 0.12
+              ? "RELEASING"
               : state.charge[team] > 0
-                ? "WORP LADEN"
+                ? "WINDING UP"
                 : p.cooldown > 0.01
-                  ? "HERSTELLEN"
+                  ? "RECOVERING"
                   : owned
-                    ? "GOOI IN JE KIJKRICHTING"
-                    : "KLAAR VOOR TACKLE";
+                    ? "THROW WHERE YOU FACE"
+                    : "READY TO TACKLE";
     $("actionLabel").dataset.action = String(p.action);
     $("chargeFill").style.width =
-      `${clamp(state.charge[team] / 0.5, 0, 1) * 100}%`;
+      `${clamp(state.charge[team] / 0.16, 0, 1) * 100}%`;
     for (let t = 0; t < 2; t++) {
       const group = state.period === 2 ? 1 - t : t,
         mask = state.stars[group],
@@ -326,25 +326,51 @@ export async function start() {
           "",
         ) + ` · ×${mult}`;
     }
+    const medical = state.players.find((q) => q.injury > 0);
+    $("powerStatus").textContent = medical
+      ? `MEDICS · ${Math.ceil(medical.injury)}s · CLOCK STOPPED`
+      : state.effect.time > 0
+        ? `${state.effect.team === team ? "YOUR TEAM" : "OPPONENT"}: ${powerNames[state.effect.kind]} · ${Math.ceil(state.effect.time)}s`
+        : state.ball.electric > 0
+          ? `ELECTROBALL · ${state.ball.electric} HITS`
+          : "NO ACTIVE POWER-UP";
+    $("healthStatus").textContent =
+      `ENERGY ${Math.ceil(p.health)}% · RESERVES ${state.reserves[team]} · CREDITS ${state.credits[team]}`;
+    $("gearStatus").textContent = p.gear
+      ? `EQUIPMENT: ${powerNames[p.gear]}`
+      : "RUN OVER A PICKUP TO COLLECT IT";
     if (state.event.id !== lastEvent) {
       lastEvent = state.event.id;
       const e = state.event;
+      const featureText =
+        e.kind === 11
+          ? powerNames[e.target]
+          : e.kind === 12
+            ? "WARP-GATE"
+            : e.kind === 13
+              ? "BALL CHARGED"
+              : e.kind === 14
+                ? "INJURY · OPPONENT SCORES"
+                : e.kind === 15
+                  ? "SUBSTITUTE ENTERS THE COURT"
+                  : "";
       const text =
-        e.kind === 4
+        featureText ||
+        (e.kind === 4
           ? "HARD HIT"
           : e.kind === 5
-            ? "MUURKAATS"
+            ? "WALL REBOUND"
             : e.kind === 6
-              ? "RUST · WISSEL VAN SPEELHELFT"
+              ? "HALFTIME · SWITCH ENDS"
               : e.kind === 7
                 ? `GOAL! +${10 * ((e.actor === 0 && state.multiplier > 0) || (e.actor === 1 && state.multiplier < 0) ? 1 + Math.abs(state.multiplier) * 0.5 : 1)}`
                 : e.kind === 8
                   ? `BONUS +${e.target}`
                   : e.kind === 9
-                    ? "MULTIPLIER GEWIJZIGD"
+                    ? "MULTIPLIER CHANGED"
                     : e.kind === 10
-                      ? `STER UIT −${e.target}`
-                      : "";
+                      ? `STAR EXTINGUISHED −${e.target}`
+                      : "");
       if (text) {
         $("eventToast").textContent = text;
         $("eventToast").classList.remove("hidden");
@@ -359,8 +385,8 @@ export async function start() {
       $("result").classList.remove("hidden");
       $("result").textContent =
         state.score[0] === state.score[1]
-          ? "GELIJKSPEL"
-          : `${state.score[0] > state.score[1] ? "IRON VIPERS" : "STEEL JACKALS"} WINNEN`;
+          ? "DRAW"
+          : `${state.score[0] > state.score[1] ? "IRON VIPERS" : "STEEL JACKALS"} WIN`;
     }
   }
   requestAnimationFrame(frame);
@@ -374,7 +400,7 @@ export async function start() {
   $("join").onclick = () => {
     const code = $("room").value.trim().toUpperCase();
     if (!/^[A-Z0-9]{6}$/.test(code)) {
-      $("notice").textContent = "Vul een kamercode van 6 tekens in.";
+      $("notice").textContent = "Enter a six-character room code.";
       return;
     }
     connect(code);
@@ -393,7 +419,7 @@ export async function start() {
   $("fullscreen").onclick = fullscreen;
   $("sound").onclick = () => {
     sound = !sound;
-    $("sound").textContent = sound ? "GELUID AAN" : "GELUID UIT";
+    $("sound").textContent = sound ? "SOUND ON" : "SOUND OFF";
   };
   document.querySelectorAll("[data-page]").forEach(
     (b) =>
@@ -411,7 +437,7 @@ export async function start() {
     $("loading").classList.add("hidden");
   } catch (e) {
     $("loading").textContent =
-      "Arena kon niet laden. Genereer assets met npm run assets.";
+      "Arena could not load. Rebuild assets with npm run assets.";
     console.error(e);
   }
 }

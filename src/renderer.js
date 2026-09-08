@@ -1,3 +1,4 @@
+import { active } from "./features.js";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { clamp, jumpHeight } from "./game.js";
@@ -74,12 +75,41 @@ export class ArenaRenderer {
   }
   async load() {
     const loader = new GLTFLoader();
-    const [arena, cyan, orange, ball, impact] = await Promise.all(
-      ["arena", "player-cyan", "player-orange", "ball", "impact"].map((n) =>
-        loader.loadAsync(`/assets/${n}.glb`),
-      ),
-    );
+    const [arena, cyan, orange, ball, impact, pickups, medic] =
+      await Promise.all(
+        [
+          "arena",
+          "player-cyan",
+          "player-orange",
+          "ball",
+          "impact",
+          "pickups",
+          "medic",
+        ].map((n) => loader.loadAsync(`/assets/${n}.glb`)),
+      );
     this.scene.add(arena.scene);
+    this.pickupBank = pickups.scene;
+    this.pickupMeshes = Array.from({ length: 7 }, () => ({
+      kind: 0,
+      mesh: null,
+    }));
+    this.medics = Array.from({ length: 18 }, () => {
+      const m = medic.scene.clone();
+      m.visible = false;
+      this.scene.add(m);
+      return m;
+    });
+    this.goalShields = [];
+    arena.scene.traverse((o) => {
+      if (o.isMesh && o.name.startsWith("GoalShield")) {
+        o.visible = false;
+        o.material = o.material.clone();
+        o.material.transparent = true;
+        o.material.opacity = 0.45;
+        this.goalShields.push(o);
+      }
+    });
+
     arena.scene.traverse((o) => {
       if (o.isMesh) {
         o.receiveShadow = true;
@@ -114,7 +144,7 @@ export class ArenaRenderer {
         action.clampWhenFinished = true;
         clips[clip.name] = action;
       }
-      return { wrapper, model, mixer, clips, active: 0 };
+      return { wrapper, model, mixer, clips, active: -1 };
     });
     this.ball = ball.scene;
     this.scene.add(this.ball);
@@ -141,7 +171,7 @@ export class ArenaRenderer {
     if (!w || !h) return;
     this.renderer.setSize(w, h);
     this.aspect = w / h;
-    const half = this.follow ? Math.max(10.2, 12 / this.aspect) : 24;
+    const half = this.follow ? Math.max(8.3, 10.2 / this.aspect) : 24;
     this.camera.left = -half * this.aspect;
     this.camera.right = half * this.aspect;
     this.camera.top = half;
@@ -182,20 +212,56 @@ export class ArenaRenderer {
       o.position.z += dz * (Math.abs(dz) > 5 ? 1 : Math.min(1, dt * 22));
       o.position.y = jumpHeight(p);
       o.rotation.y = Math.atan2(p.fx, p.fz);
-      if (actor.active !== p.action) {
+      const moving = Math.hypot(dx, dz) > 0.045;
+      const visualAction = p.action || (moving ? 5 : 0);
+      if (actor.active !== visualAction) {
         actor.mixer.stopAllAction();
         actor.model.position.set(0, 0, 0);
         actor.model.rotation.set(0, 0, 0);
-        actor.active = p.action;
-        const name = ["", "Slide", "Jump", "Throw", "Hit"][p.action];
+        actor.active = visualAction;
+        const name = ["", "Slide", "Jump", "Throw", "Hit", "Run"][visualAction];
         const action = Object.entries(actor.clips).find(([key]) =>
           key.includes(name),
         )?.[1];
         if (name && action) {
+          action.setLoop(
+            visualAction === 5 ? THREE.LoopRepeat : THREE.LoopOnce,
+            visualAction === 5 ? Infinity : 1,
+          );
           action.reset().play();
         }
       }
       actor.mixer.update(dt);
+      o.visible = p.health > 0 || p.injury > 1;
+      actor.model.rotation.x = p.health <= 0 ? Math.PI / 2 : 0;
+      const medic = this.medics[i];
+      medic.visible = p.injury > 0;
+      if (medic.visible) {
+        const side = p.z < 0 ? -12 : 12,
+          elapsed = 6 - p.injury;
+        const z =
+          elapsed < 2
+            ? THREE.MathUtils.lerp(side, p.z, elapsed / 2)
+            : THREE.MathUtils.lerp(p.z, side, clamp((elapsed - 2) / 3, 0, 1));
+        medic.position.set(p.x, 0, z);
+        if (elapsed >= 2) {
+          o.position.z = z;
+          o.position.y = 0.7;
+        }
+      }
+      actor.model.traverse((m) => {
+        if (m.isMesh && m.material.emissive) {
+          m.material.emissive.setHex(
+            active(s, 10, p.team)
+              ? 0x0088cc
+              : active(s, 1, 1 - p.team)
+                ? 0x446688
+                : 0x000000,
+          );
+          m.material.emissiveIntensity = active(s, 10, p.team) ? 1.1 : 0.35;
+        }
+      });
+
       // Fallback posture also makes state readable if an old cached GLB has no clips.
       if (!Object.keys(actor.clips).length) {
         actor.model.rotation.x = p.stun
@@ -211,6 +277,35 @@ export class ArenaRenderer {
         o.position.y +=
           Math.sin(performance.now() * 0.023 + i) *
           Math.min(0.07, Math.hypot(dx, dz) * 0.08);
+    });
+    this.pickupMeshes.forEach((slot, i) => {
+      const item = s.pickups[i];
+      if (slot.kind !== item.kind) {
+        if (slot.mesh) this.scene.remove(slot.mesh);
+        slot.mesh = this.pickupBank
+          .getObjectByName("Pickup_" + item.kind)
+          .clone();
+        slot.kind = item.kind;
+        this.scene.add(slot.mesh);
+      }
+      slot.mesh.visible = item.wait <= 0;
+      slot.mesh.position.set(
+        item.x,
+        0.08 + Math.sin(performance.now() * 0.004 + i) * 0.07,
+        item.z,
+      );
+    });
+    this.goalShields.forEach((o) => {
+      const end = o.position.x;
+      const d = s.period === 2 ? -1 : 1;
+      const defender = end * d > 0 ? 1 : 0;
+      o.visible = active(s, 9, defender);
+    });
+    this.ball.traverse((o) => {
+      if (o.isMesh && o.material.emissive) {
+        o.material.emissive.setHex(b.electric > 0 ? 0x3388ff : 0x444444);
+        o.material.emissiveIntensity = b.electric > 0 ? 3 : 0.15;
+      }
     });
     this.ball.position.set(b.x, b.h - 0.25, b.z);
     this.ball.rotation.z += dt * 8;
@@ -261,7 +356,7 @@ export class ArenaRenderer {
     if (s.event.id !== this.lastEvent) {
       this.lastEvent = s.event.id;
       const e = s.event;
-      if ([4, 5, 8, 9, 10].includes(e.kind))
+      if ([4, 5, 8, 9, 10, 11, 12, 13, 14, 15].includes(e.kind))
         this.burst(e.x, e.z, e.h, e.kind === 4 ? 0xffbd65 : 0xa7fcff);
     }
     for (let i = this.effects.length - 1; i >= 0; i--) {
@@ -281,12 +376,12 @@ export class ArenaRenderer {
     }
     if (this.follow) {
       const target = new THREE.Vector3(
-        clamp(b.x + b.vx * 0.08, -18, 18),
+        clamp(b.x, -16.5, 16.5),
         0,
-        clamp(b.z * 0.35, -3, 3),
+        clamp(b.z, -3.8, 3.8),
       );
       this.focus.lerp(target, 1 - Math.exp(-dt * 10));
-      this.camera.position.set(this.focus.x - 7, 25, this.focus.z);
+      this.camera.position.set(this.focus.x - 16, 32, this.focus.z);
       this.camera.lookAt(this.focus.x, 0, this.focus.z);
     } else {
       this.camera.position.set(-30, 42, 22);

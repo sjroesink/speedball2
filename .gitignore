@@ -7,3 +7,8 @@ __pycache__/
 *.log
 *.blend1
 speedball-server*
+
+.reference/
+Speedball 2 - WIP 02.zip
+
+*.build.glb

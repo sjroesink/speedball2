@@ -1044,3 +1044,9 @@ footer b {
     display: none;
   }
 }
+
+.power-hud { position:absolute; left:24px; top:100px; display:flex; flex-direction:column; gap:7px; padding:12px 16px; background:#0a1624e8; border-left:3px solid #d2dfe7; color:#d2dfe7; font-size:12px; letter-spacing:.06em; pointer-events:none; }
+.power-hud strong {color:#c5ec88;font-size:14px;}
+@media(max-width:700px){.power-hud{top:85px;left:8px;padding:8px;font-size:9px;max-width:70vw}.power-hud strong{font-size:10px}}
+
+body:not(.in-game) .power-hud {display:none;}

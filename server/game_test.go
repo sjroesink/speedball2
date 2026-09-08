@@ -19,7 +19,9 @@ func TestInputPulseSurvivesShortTap(t *testing.T) {
 	s = isolated()
 	s.Players[7].X = 4
 	s.Ball.Owner = 7
-	s.step(dt, [2]Input{{Fire: 1}, {}})
+	for i := 0; i < 10; i++ {
+		s.step(dt, [2]Input{{Fire: 1}, {}})
+	}
 	if s.Ball.Owner != -1 {
 		t.Fatal("short throw tap was lost")
 	}
@@ -30,7 +32,7 @@ func isolated() State {
 	for i := range s.Players {
 		s.Players[i].Stun = 10
 	}
-	s.Players[7] = Player{X: 0, Z: 0, Team: 0, FX: 1}
+	s.Players[7] = Player{Health: 100, X: 0, Z: 0, Team: 0, FX: 1}
 	s.Controlled = [2]int{7, 16}
 	return s
 }
@@ -52,7 +54,7 @@ func TestVisibleTackleMissAndCooldown(t *testing.T) {
 }
 func TestTackleKnockdownAndLooseBall(t *testing.T) {
 	s := isolated()
-	s.Players[16] = Player{X: 1.3, Team: 1, FX: -1}
+	s.Players[16] = Player{Health: 100, X: 1.3, Team: 1, FX: -1}
 	s.Ball = Ball{X: 1.3, H: 1, Owner: 16}
 	s.step(dt, [2]Input{{Tackle: true}, {}})
 	if s.Players[16].Stun < 1 || s.Players[16].Action != 4 || s.Ball.Owner >= 0 {
@@ -64,14 +66,14 @@ func TestDirectionalLowAndHighThrow(t *testing.T) {
 		s := isolated()
 		s.Players[7].X = 4 // Keep the throw lane clear of the central dome.
 		s.Ball.Owner = 7
-		n := 1
-		if lob {
-			n = 20
+		s.step(dt, [2]Input{{Z: 1, Shoot: true}, {}})
+		if s.Ball.Owner != 7 || s.Players[7].Action != 3 {
+			t.Fatal("missing throw wind-up")
 		}
-		for i := 0; i < n; i++ {
-			s.step(dt, [2]Input{{Z: 1, Shoot: true}, {}})
+		for i := 1; i < 10; i++ {
+			s.step(dt, [2]Input{{Z: 1, Shoot: lob}, {}})
 		}
-		s.step(dt, [2]Input{{Z: 1}, {}})
+
 		if s.Ball.Owner != -1 || s.Ball.VZ < 15 || math.Abs(s.Ball.VX) > 1 {
 			t.Fatal("throw must follow facing, not autoaim at goal")
 		}
@@ -185,4 +187,43 @@ func TestFullMatchAndWireBudget(t *testing.T) {
 		t.Fatalf("datagram exceeds MTU: %d", len(b))
 	}
 	t.Logf("18-player snapshot: %d bytes", len(b))
+}
+
+func TestEightWayMovement(t *testing.T) {
+	a, b := isolated(), isolated()
+	a.Ball.X = 8
+	a.Ball.Z = 8
+	b.Ball.X = 8
+	b.Ball.Z = 8
+	a.step(dt, [2]Input{{X: 1}, {}})
+	b.step(dt, [2]Input{{X: 1, Z: .7}, {}})
+	if math.Abs(math.Hypot(b.Players[7].X, b.Players[7].Z)-a.Players[7].X) > 1e-8 || math.Abs(b.Players[7].X-b.Players[7].Z) > 1e-8 {
+		t.Fatal("unequal eight-way movement")
+	}
+}
+
+func TestAIOutlet(t *testing.T) {
+	s := isolated()
+	s.Players[6] = Player{Health: 100, X: 6, Z: 3, Team: 0}
+	if s.passTarget(7) != 6 {
+		t.Fatal("free teammate ignored")
+	}
+	s.Players[16] = Player{Health: 100, X: 6, Z: 3, Team: 1}
+	if s.passTarget(7) != -1 {
+		t.Fatal("marked teammate selected")
+	}
+	s.Players[16].Stun = 10
+	s.Players[6].Stun = 1
+	if s.passTarget(7) != -1 {
+		t.Fatal("stunned teammate selected")
+	}
+}
+
+func TestOriginalGoalWidth(t *testing.T) {
+	s := isolated()
+	s.Ball = Ball{X: 20.9, Z: 2.2, H: 1, VX: 24, Owner: -1, LastTouch: -1}
+	s.step(dt, [2]Input{})
+	if s.Score[0] != 0 || s.Ball.VX >= 0 {
+		t.Fatal("wide shot must rebound off end wall")
+	}
 }

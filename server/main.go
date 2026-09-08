@@ -58,14 +58,14 @@ func (h *Hub) connect(session *webtransport.Session, code, name string) {
 	if code == "" {
 		if len(h.Rooms) >= 256 {
 			h.Unlock()
-			session.CloseWithError(1, "Server vol")
+			session.CloseWithError(1, "Server full")
 			return
 		}
 		for {
 			raw := make([]byte, 6)
 			if _, err := rand.Read(raw); err != nil {
 				h.Unlock()
-				session.CloseWithError(1, "Serverfout")
+				session.CloseWithError(1, "Server error")
 				return
 			}
 			const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -83,7 +83,7 @@ func (h *Hub) connect(session *webtransport.Session, code, name string) {
 		room = h.Rooms[code]
 		if room == nil || room.Peers[1] != nil || room.Started {
 			h.Unlock()
-			session.CloseWithError(1, "Arena bestaat niet of is vol")
+			session.CloseWithError(1, "Arena does not exist or is full")
 			return
 		}
 		team = 1
@@ -106,7 +106,7 @@ func (h *Hub) connect(session *webtransport.Session, code, name string) {
 		}
 		h.Unlock()
 		if other != nil {
-			other.Session.CloseWithError(0, "Tegenstander heeft de arena verlaten")
+			other.Session.CloseWithError(0, "Opponent left the arena")
 		}
 	}()
 	for {
@@ -177,7 +177,7 @@ func (h *Hub) run(done <-chan os.Signal) {
 						if p == nil {
 							continue
 						}
-						names := [2]string{"Challenger", "Wacht op speler"}
+						names := [2]string{"Challenger", "Waiting for player"}
 						for i, peer := range r.Peers {
 							if peer != nil {
 								names[i] = peer.Name
@@ -190,7 +190,7 @@ func (h *Hub) run(done <-chan os.Signal) {
 			}
 			h.Unlock()
 			for _, p := range expired {
-				p.Session.CloseWithError(0, "Wachtruimte verlopen")
+				p.Session.CloseWithError(0, "Lobby expired")
 			}
 			for _, packet := range packets {
 				if err := packet.p.Session.SendDatagram(packet.data); err != nil {
@@ -261,7 +261,7 @@ func main() {
 	mux.HandleFunc("/play", func(w http.ResponseWriter, r *http.Request) {
 		code := strings.ToUpper(r.URL.Query().Get("room"))
 		if code != "" && (len(code) != 6 || strings.ContainsAny(code, " /?&")) {
-			http.Error(w, "Ongeldige code", 400)
+			http.Error(w, "Invalid room code", 400)
 			return
 		}
 		s, err := wt.Upgrade(w, r)

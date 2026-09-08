@@ -5,7 +5,7 @@ import "math"
 const (
 	pitchX     = 21.
 	pitchZ     = 11.2
-	goalWidth  = 3.8
+	goalWidth  = 1.85
 	goalHeight = 2.
 	gravity    = 18.
 )
@@ -17,11 +17,15 @@ type Player struct {
 	FX, FZ                     float64
 	Stun, ActionTime, Cooldown float64
 	Action                     int
+	lowThrow                   bool
+	Health, Injury             float64
+	Gear                       int
 }
 type Ball struct {
 	X, Z, H, VX, VZ, VH float64
 	Owner, LastTouch    int
 	Lock, After         float64
+	Electric            int
 }
 type Event struct {
 	ID            uint32
@@ -30,20 +34,24 @@ type Event struct {
 	Actor, Target int
 }
 type State struct {
-	Players    [18]Player
-	Ball       Ball
-	Score      [2]int
-	Time       float64
-	Tick       uint64
-	Over       bool
-	Period     int
-	Pause      float64
-	Controlled [2]int
-	Charge     [2]float64
-	Event      Event
-	previous   [2]Input
-	Stars      [2]uint8
-	Multiplier int
+	Players           [18]Player
+	Ball              Ball
+	Score             [2]int
+	Time              float64
+	Tick              uint64
+	Over              bool
+	Period            int
+	Pause             float64
+	Controlled        [2]int
+	Charge            [2]float64
+	Event             Event
+	previous          [2]Input
+	Stars             [2]uint8
+	Multiplier        int
+	Effect            Effect
+	Pickups           [7]Pickup
+	Credits, Reserves [2]int
+	PickupSerial      int
 }
 type Input struct {
 	Fire     uint32  `json:"fire"`
@@ -62,6 +70,7 @@ var formation = [9][2]float64{{-19, 0}, {-14, -6}, {-14, 0}, {-14, 6}, {-8, -7},
 func initial() State {
 	s := State{Time: 90, Period: 1, Controlled: [2]int{7, 16}}
 	s.resetPitch()
+	s.initFeatures()
 	return s
 }
 func (s *State) direction(team int) float64 {
@@ -78,7 +87,15 @@ func (s *State) resetPitch() {
 	for i := range s.Players {
 		t := i / 9
 		d := s.direction(t)
-		s.Players[i] = Player{X: formation[i%9][0] * d, Z: formation[i%9][1], Team: t, FX: d}
+		old := s.Players[i]
+		s.Players[i] = Player{Health: 100, X: formation[i%9][0] * d, Z: formation[i%9][1], Team: t, FX: d}
+		if s.Tick > 0 {
+			s.Players[i].Health = old.Health
+			s.Players[i].Gear = old.Gear
+			if old.Health <= 0 {
+				s.Players[i].Stun = 10
+			}
+		}
 	}
 	s.Ball = Ball{H: 3, Owner: -1, LastTouch: -1}
 	s.Charge = [2]float64{}
@@ -90,6 +107,13 @@ func normalized(x, z float64) (float64, float64) {
 		return 0, 0
 	}
 	return x / d, z / d
+}
+func eightWay(x, z float64) (float64, float64) {
+	if math.Hypot(x, z) < .01 {
+		return 0, 0
+	}
+	a := math.Round(math.Atan2(z, x)/(math.Pi/4)) * (math.Pi / 4)
+	return math.Cos(a), math.Sin(a)
 }
 func (s *State) event(kind, actor, target int, x, z, h float64) {
 	s.Event = Event{s.Event.ID + 1, kind, x, z, h, actor, target}
@@ -138,13 +162,42 @@ func (s *State) throw(i int, lob bool) {
 	b := &s.Ball
 	speed, vh := 24., 2.
 	if lob {
-		speed = 16
+		speed = 24
 		vh = 11
+	}
+	speed *= s.strength(*p)
+	if p.Gear == 18 {
+		speed *= 1.25
 	}
 	*b = Ball{X: p.X + p.FX*.9, Z: p.Z + p.FZ*.9, H: 1, VX: p.FX * speed, VZ: p.FZ * speed, VH: vh, Owner: -1, LastTouch: i, Lock: .18, After: .45}
 	p.Action = 3
 	p.ActionTime = .32
 	s.event(3, i, -1, b.X, b.Z, b.H)
+}
+func (s *State) passTarget(i int) int {
+	p := s.Players[i]
+	d := s.direction(p.Team)
+	best := -1
+	value := math.Inf(-1)
+	for j, q := range s.Players {
+		advance := (q.X - p.X) * d
+		distance := math.Hypot(q.X-p.X, q.Z-p.Z)
+		if j == i || q.Team != p.Team || q.Stun > 0 || advance < 2 || distance > 15 {
+			continue
+		}
+		space := 10.
+		for _, r := range s.Players {
+			if r.Team != p.Team && r.Stun <= 0 {
+				space = math.Min(space, math.Hypot(r.X-q.X, r.Z-q.Z))
+			}
+		}
+		score := space*2 + advance - distance*.4
+		if space > 2.5 && score > value {
+			value = score
+			best = j
+		}
+	}
+	return best
 }
 func (s *State) step(dt float64, inputs [2]Input) { s.simulate(dt, inputs, [2]bool{true, true}) }
 func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
@@ -152,8 +205,17 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 	if s.Over {
 		return
 	}
+	if s.medicalStep(dt) {
+		s.previous = inputs
+		return
+	}
 	if s.Pause > 0 {
 		s.Pause = math.Max(0, s.Pause-dt)
+		s.previous = inputs
+		return
+	}
+	s.featureStep(dt)
+	if s.hasInjury() {
 		s.previous = inputs
 		return
 	}
@@ -194,6 +256,13 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		human := humans[t] && s.Controlled[t] == i
 		u := inputs[t]
 		dx, dz := u.X, u.Z
+		if human && s.active(2, 1-t) {
+			dx = -dx
+			dz = -dz
+		}
+		if s.active(1, 1-t) {
+			continue
+		}
 		if !human {
 			d := s.direction(t)
 			tx, tz := formation[i%9][0]*d, formation[i%9][1]
@@ -202,10 +271,14 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				tz = clamp(p.Z*.4, -2, 2)
 			} else if i%9 == 0 {
 				tx = -d * 19.5
-				tz = clamp(b.Z, -3.3, 3.3)
+				tz = clamp(b.Z, -1.55, 1.55)
 			} else if s.Controlled[t] == i {
-				tx = b.X + b.VX*.15
-				tz = b.Z + b.VZ*.15
+				lead := .15
+				if p.Gear == 21 {
+					lead = .3
+				}
+				tx = b.X + b.VX*lead
+				tz = b.Z + b.VZ*lead
 			} else {
 				tx += clamp(b.X*.35, -6, 6)
 				if b.Owner >= 0 && s.Players[b.Owner].Team == t {
@@ -213,16 +286,27 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				}
 				tz += b.Z * .18
 			}
+			if i%9 != 0 && b.Owner != i && s.Controlled[t] != i {
+				near := 4.
+				for _, item := range s.Pickups {
+					distance := math.Hypot(item.X-p.X, item.Z-p.Z)
+					if item.Wait <= 0 && distance < near {
+						near = distance
+						tx = item.X
+						tz = item.Z
+					}
+				}
+			}
 			dx, dz = normalized(tx-p.X, tz-p.Z)
 			if math.Hypot(tx-p.X, tz-p.Z) < .3 {
 				dx = 0
 				dz = 0
 			}
 			u = Input{}
-			if p.Cooldown <= 0 && math.Hypot(b.X-p.X, b.Z-p.Z) < 3 && b.Owner != i {
+			if p.Cooldown <= 0 && math.Hypot(b.X-p.X, b.Z-p.Z) < gearRange(p.Gear, 14, 3, 4) && b.Owner != i {
 				if b.H > 1.4 {
 					u.Shoot = true
-				} else if b.Owner >= 0 && s.Players[b.Owner].Team != t {
+				} else if (b.Owner >= 0 && s.Players[b.Owner].Team != t) || (i%9 == 0 && b.Owner < 0 && math.Hypot(b.VX, b.VZ) > 4) {
 					u.Tackle = true
 				}
 			}
@@ -234,12 +318,24 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 					}
 				}
 				if p.X*d > 12 || danger || i%9 == 0 {
-					p.FX, p.FZ = normalized(d*23-p.X, -p.Z)
-					s.throw(i, danger && p.X*d < 10)
+					receiver := -1
+					if p.X*d < 10 {
+						receiver = s.passTarget(i)
+					}
+					tx, tz := d*23, 0.
+					if receiver >= 0 {
+						tx = s.Players[receiver].X
+						tz = s.Players[receiver].Z
+					}
+					p.FX, p.FZ = normalized(tx-p.X, tz-p.Z)
+					s.throw(i, receiver < 0 && danger && p.X*d < 10)
 				}
 			}
 		}
-		if p.Action != 1 && math.Hypot(dx, dz) > .01 {
+		if human {
+			dx, dz = eightWay(dx, dz)
+		}
+		if p.Action != 1 && p.Action != 3 && math.Hypot(dx, dz) > .01 {
 			p.FX, p.FZ = normalized(dx, dz)
 		}
 		pressed := (u.Shoot && !s.previous[t].Shoot) || (u.Tackle && !s.previous[t].Tackle) || u.Fire > s.previous[t].Fire || u.TackleID > s.previous[t].TackleID
@@ -250,14 +346,23 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			if (u.Lob && !s.previous[t].Lob) || u.LobID > s.previous[t].LobID {
 				s.throw(i, true)
 				s.Charge[t] = 0
-			} else if u.Fire > s.previous[t].Fire && !u.Shoot {
-				s.throw(i, false)
-				s.Charge[t] = 0
-			} else if u.Shoot {
-				s.Charge[t] = math.Min(1, s.Charge[t]+dt)
-			} else if s.Charge[t] > 0 {
-				s.throw(i, s.Charge[t] >= .24)
-				s.Charge[t] = 0
+			} else {
+				fire := (u.Shoot && !s.previous[t].Shoot) || u.Fire > s.previous[t].Fire
+				if fire && s.Charge[t] == 0 && p.ActionTime <= 0 {
+					s.Charge[t] = dt
+					p.Action = 3
+					p.ActionTime = .32
+					p.lowThrow = !u.Shoot
+				} else if s.Charge[t] > 0 {
+					s.Charge[t] += dt
+				}
+				if s.Charge[t] > 0 {
+					p.lowThrow = p.lowThrow || !u.Shoot
+					if s.Charge[t] >= .16 {
+						s.throw(i, !p.lowThrow)
+						s.Charge[t] = 0
+					}
+				}
 			}
 		} else if human {
 			s.Charge[t] = 0
@@ -287,6 +392,10 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		if p.Action == 2 {
 			speed = 4.5
 		}
+		if p.Action == 3 {
+			speed = 0
+		}
+		speed *= s.movementFactor(*p)
 		n := math.Max(1, math.Hypot(dx, dz))
 		p.X = clamp(p.X+dx/n*speed*dt, -20.5, 20.5)
 		p.Z = clamp(p.Z+dz/n*speed*dt, -10.7, 10.7)
@@ -312,16 +421,11 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 					continue
 				}
 				dx, dz := q.X-p.X, q.Z-p.Z
-				if math.Hypot(dx, dz) < 1.15 && dx*p.FX+dz*p.FZ > -.3 {
-					q.Stun = 1.35
-					q.Action = 4
-					q.ActionTime = 1.35
-					q.X = clamp(q.X+p.FX*.7, -20.5, 20.5)
-					q.Z = clamp(q.Z+p.FZ*.7, -10.7, 10.7)
-					if b.Owner == j {
-						*b = Ball{X: q.X, Z: q.Z, H: .5, VX: p.FX * 5, VZ: p.FZ * 5, VH: 3, Owner: -1, LastTouch: i, Lock: .08}
+				if math.Hypot(dx, dz) < gearRange(p.Gear, 15, 1.15, 1.4) && dx*p.FX+dz*p.FZ > -.3 {
+					if s.damage(i, j, 20) {
+						q.X = clamp(q.X+p.FX*.7, -20.5, 20.5)
+						q.Z = clamp(q.Z+p.FZ*.7, -10.7, 10.7)
 					}
-					s.event(4, i, j, q.X, q.Z, .5)
 				}
 			}
 		}
@@ -343,6 +447,10 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				q.Z = clamp(q.Z+dz/d*push, -10.7, 10.7)
 			}
 		}
+	}
+	if s.hasInjury() {
+		s.previous = inputs
+		return
 	}
 	if b.Owner >= 0 {
 		p := s.Players[b.Owner]
@@ -375,14 +483,14 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			b.VX *= drag
 			b.VZ *= drag
 		}
-		if math.Abs(b.Z) > pitchZ {
+		if math.Abs(b.Z) > pitchZ && !s.sideFeature() {
 			b.Z = math.Copysign(2*pitchZ-math.Abs(b.Z), b.Z)
 			b.VZ *= -.92
 			s.event(5, b.LastTouch, -1, b.X, b.Z, b.H)
 			s.wallBonus()
 		}
 		if math.Abs(b.X) > pitchX {
-			if math.Abs(b.Z) < goalWidth && b.H < goalHeight {
+			if math.Abs(b.Z) < goalWidth && b.H < goalHeight && !s.goalBlocked(b.X) {
 				scorer := 0
 				if b.X*s.direction(0) < 0 {
 					scorer = 1
@@ -412,12 +520,20 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 					continue
 				}
 				d := math.Hypot(p.X-b.X, p.Z-b.Z)
+				if d < .8 && b.Electric > 0 && b.LastTouch >= 0 && p.Team != s.Players[b.LastTouch].Team && !s.active(10, p.Team) {
+					if s.damage(b.LastTouch, i, 25) {
+						b.Electric--
+						continue
+					}
+				}
 				if d < distance {
 					best = i
 					distance = d
 				}
 			}
 			if best >= 0 {
+				b.Electric = 0
+				s.Charge[s.Players[best].Team] = 0
 				b.Owner = best
 				b.LastTouch = best
 				b.After = 0
