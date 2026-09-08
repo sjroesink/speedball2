@@ -80,6 +80,36 @@ for y in [-10,10]:
 # Larger regulation-style pitch. Keep goal height and player size in metres.
 for o in bpy.context.scene.objects:
  o.location.x*=1.5;o.location.y*=1.4;o.scale.x*=1.5;o.scale.y*=1.4
+# Align visible contact faces with the original terrain bounds after scaling.
+terrain_unit=22.4/576
+pitch_end=544*terrain_unit
+goal_half_width=48*terrain_unit
+bpy.context.view_layer.update()
+for o in bpy.context.scene.objects:
+ if o.name.startswith('Playing surface'): o.dimensions.x=2*pitch_end
+ elif o.name.startswith('Touchline'): o.dimensions.x=2*pitch_end
+ elif o.name.startswith('End line'): o.location.x=math.copysign(pitch_end,o.location.x)
+ elif o.name.startswith('Goal floor'):
+  o.location.x=math.copysign(pitch_end,o.location.x)
+  o.dimensions.y=2*goal_half_width+.56
+ elif o.name.startswith('Goal upright'):
+  o.location.x=math.copysign(pitch_end,o.location.x)
+  o.location.y=math.copysign(goal_half_width+o.dimensions.y/2,o.location.y)
+ elif o.name.startswith('Goal crossbar'):
+  o.location.x=math.copysign(pitch_end,o.location.x)
+  o.dimensions.y=2*goal_half_width+.56
+ elif o.name.startswith('End wall'):
+  o.location.x=math.copysign(pitch_end+o.dimensions.x/2,o.location.x)
+  inner=goal_half_width+.28
+  outer=11.9
+  o.location.y=math.copysign((inner+outer)/2,o.location.y)
+  o.dimensions.y=outer-inner
+ elif o.name.startswith('End rail'): o.location.x=math.copysign(pitch_end,o.location.x)
+ elif o.name.startswith('Impact barrier') or o.name.startswith('Barrier brace'):
+  o.location.y=math.copysign(11.2+o.dimensions.y/2,o.location.y)
+ elif o.name.startswith('Cyan rail'): o.location.y=math.copysign(11.55,o.location.y)
+bpy.context.view_layer.update()
+print('CONTACT GEOMETRY: end=%.6f, goal half-width=%.6f, side=11.200000' % (pitch_end,goal_half_width))
 # Five targets on the top-left and bottom-right walls in the upfield camera.
 def star(name,x,y,material):
  verts=[]
@@ -123,8 +153,8 @@ for x in [-206*22.4/576,206*22.4/576]:
 for x,y in [(304*22.4/576,-300*22.4/576),(-304*22.4/576,300*22.4/576)]:
  cube('Electro bounce',(x,y,.5),(1.25,1.0,1.0),armor,.12)
  for dx in [-.35,0,.35]: cube('Electrode',(x+dx,y,1.1),(.12,.65,.12),white,.03)
-for x in [-21.1,21.1]:
- cube('GoalShield_'+str(int(x)),(x,0,1),(.16,3.7,1.9),cyan,.03)
+for x in [-pitch_end,pitch_end]:
+ cube('GoalShield_'+str(int(x)),(x,0,1),(.16,2*goal_half_width,1.9),cyan,.03)
 export('arena')
 if '--arena-only' in sys.argv: sys.exit(0)
 for name,color in [('player-cyan',cyan),('player-orange',orange)]:

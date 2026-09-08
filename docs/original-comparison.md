@@ -285,3 +285,10 @@ Match.CheckGoal accepts transverse terrain coordinates 272..368 inclusive and re
 Paired tests cover both goalpost endpoints and their adjacent excluded terrain units, strict crossing, velocity direction and clipping before reverse movement. The earlier high-ball boundary fixture now begins near the corrected end line. All 97 JavaScript tests, Go tests/vet and the production build pass. The backend was restarted and the updated training demo opened.
 
 The Blender arena still contains rounded goal/end-wall geometry (for example scaled goal center 21.3 versus the exact simulation line around 21.156). This needs visual alignment; this checkpoint corrects gameplay bounds only. Original integer motion, action/medical/AI sequencing and listening-based audio verification remain incomplete.
+
+
+## Visual alignment: Blender contact geometry
+
+Aligned the authored arena with the exact simulation bounds after its legacy scale transform. Goal upright inner faces now sit at transverse +/-1.866667; end-wall inner faces and end-line centers at longitudinal +/-21.155556; side-wall inner faces at +/-11.2. Updated goal floors/crossbars, goal-shield width/position, playing surface and touchline lengths to fit. Rebuilt arena.blend and arena.glb through Blender only.
+
+Loaded the exported GLB with Three.js and measured actual mesh world bounding boxes: post inner faces +/-1.866666661, end-wall contact faces +/-21.155555725, side-wall contact faces +/-11.200000197 (export precision). The production build succeeds and the updated browser arena renders without reported runtime errors. This verifies contact geometry, not complete visual/gameplay parity. Full original AI/action/medical sequences and listening-based audio verification remain unfinished; narrow-viewport HUD overlap is also still visible in the browser check.
