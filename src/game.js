@@ -1,3 +1,4 @@
+import { steerToTarget } from "./steering.js";
 import { goalieTarget, deflectBall } from "./goalie.js";
 import { supportTarget } from "./support.js";
 import { emit as event } from "./events.js";
@@ -398,11 +399,10 @@ export function step(
         p.aiX = tx;
         p.aiZ = tz;
       }
-      [dx, dz] = norm(tx - p.x, tz - p.z);
-      if (Math.hypot(tx - p.x, tz - p.z) < 0.3) {
-        dx = 0;
-        dz = 0;
-      }
+      [dx, dz] =
+        p.actionTime > 0
+          ? eightWay(p.fx, p.fz)
+          : steerToTarget(p, tx, tz, decide);
       u = {};
       if (
         decide &&

@@ -347,10 +347,10 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				}
 				p.aiX, p.aiZ, p.aiTarget = tx, tz, true
 			}
-			dx, dz = normalized(tx-p.X, tz-p.Z)
-			if math.Hypot(tx-p.X, tz-p.Z) < .3 {
-				dx = 0
-				dz = 0
+			if p.ActionTime > 0 {
+				dx, dz = eightWay(p.FX, p.FZ)
+			} else {
+				dx, dz = steerToTarget(p, tx, tz, decide)
 			}
 			u = Input{}
 			if decide && p.Cooldown <= 0 && math.Hypot(b.X-p.X, b.Z-p.Z) < gearRange(p.Gear, 14, 3, 4) && b.Owner != i {

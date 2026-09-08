@@ -240,3 +240,12 @@ The original reset_player_timer reads reaction_time_table at 0x01fa: 16,16,15,15
 Intervals currently use elapsed seconds corresponding to 25 original ticks per second. Decisions are sampled by the existing 60 Hz host loop, so expiry can be delayed by up to one host frame; this is an explicit transitional adaptation, not exact original global tick scheduling. Original per-action timer overrides, pause ordering and opcode-based movement steering still require the full simulation timing port. Existing unported aggressive/possession AI decisions remain heuristic, now with the source reaction interval.
 
 All 85 JavaScript tests, Go tests/vet and the production build pass. Paired tests verify every table entry, retained targets, refresh at 8/16 original ticks and busy-action deferral. The backend was restarted and the updated training match was opened for the demo. Full gameplay parity and listening-based audio verification remain unfinished.
+
+
+## Fidelity audit: target direction and arrival
+
+Replaced the AI's nearest-angle steering and 0.3-world-unit circular stopping radius with the integer direction rules in Entity.GetDirBitsToTargetBetter and Player.EB7A/EC0C. A new movement target uses strict half-axis comparisons with integer division. Continuing movement inside the inclusive 32-unit box uses the sign of each axis. Arrival snaps each axis separately only when its absolute integer distance is below four units. Busy actions retain facing instead of steering toward a changing target.
+
+Both simulations use the same rules. This does not yet port the far-target opcode-index gate, selected-player retargeting on arrival, the original action animations or global update order. The host still integrates movement continuously and converts coordinates to original units for the direction/arrival calculation; full integer 25 Hz simulation remains outstanding.
+
+All 88 JavaScript tests, Go tests/vet and the production build pass. Paired boundary cases cover half-axis ties, the 32-unit box, initial versus continuing direction, independent arrival, and strict four-unit exclusion. Restarted the backend and opened the updated training demo. Full AI, timing, medical sequencing and listening-based audio verification remain incomplete.
