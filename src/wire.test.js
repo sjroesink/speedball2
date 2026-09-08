@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { decodeSnapshot } from "./wire.js";
-test("browser decodes actual Go protocol v3 snapshot with every new field", () => {
+test("browser decodes actual Go protocol v4 snapshot with every new field", () => {
   const r = spawnSync(
     "go",
     ["test", "./server", "-run", "^TestFeatureSnapshot$", "-v"],
@@ -26,6 +26,7 @@ test("browser decodes actual Go protocol v3 snapshot with every new field", () =
     assert.equal(p.health, 90 - i);
     assert.equal(p.injury, i / 10);
     assert.equal(p.gear, 14 + (i % 8));
+    assert.deepEqual(p.stats, Array(8).fill(100 + i));
   });
   assert.equal(s.pickups.length, 7);
   assert.equal(s.pickups[6].kind, 14);

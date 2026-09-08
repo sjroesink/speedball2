@@ -26,9 +26,9 @@ Matches fill the browser viewport and request native fullscreen. The camera foll
 - WASD / arrows: move and aim in eight directions. W moves up the screen.
 - Tap Space: low throw. Hold through the 160 ms wind-up: automatic lob. E: immediate lob.
 - Without the ball, Space slides or jumps toward a nearby high ball. Shift always slides, even on a miss.
-- Brief directional aftertouch adjusts a released throw. Jump to catch high balls; low balls can be caught from the ground.
+- During the throw wind-up, hold a perpendicular direction to angle a straight throw at release. The ball cannot be steered after release. Jump to catch high balls; low balls can be caught from the ground.
 - Goals score 10 points. Shots above the crossbar or outside the narrow goal rebound off the end wall.
-- Each wall star scores 2 points; all five award another 10. Opponents can extinguish stars and deduct points.
+- Each wall star scores 2 points. A complete bank awards another 10 at the next bonus clock pulse, then clears for reuse. Opponents can extinguish a star before that pulse to cancel the bonus; extinguishing always deducts exactly 2 points.
 - Midfield domes score 2 points. Side ramps shift the scoring multiplier to 1.5× or 2×. Stars and multipliers reset at halftime.
 
 ## Match features

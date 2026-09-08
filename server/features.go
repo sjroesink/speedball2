@@ -32,29 +32,6 @@ func (s *State) initFeatures() {
 func (s *State) active(k, t int) bool {
 	return s.Effect.Time > 0 && s.Effect.Kind == k && (t < 0 || s.Effect.Team == t)
 }
-func (s *State) strength(p Player) float64 {
-	n := .8 + .2*p.Health/100
-	if s.active(3, 1-p.Team) {
-		n *= .7
-	}
-	if s.active(4, p.Team) || s.active(5, -1) {
-		n *= 1.3
-	}
-	return n
-}
-func (s *State) movementFactor(p Player) float64 {
-	if s.active(1, 1-p.Team) {
-		return 0
-	}
-	n := s.strength(p)
-	if s.active(6, 1-p.Team) {
-		n *= .5
-	}
-	if p.Gear == 17 {
-		n *= 1.25
-	}
-	return n
-}
 func (s *State) goalBlocked(x float64) bool {
 	defender := 0
 	if x*s.direction(0) > 0 {
@@ -62,21 +39,16 @@ func (s *State) goalBlocked(x float64) bool {
 	}
 	return s.active(9, defender)
 }
-func (s *State) damage(i, j int, amount float64) bool {
+func (s *State) damage(i, j int) bool {
 	p := s.Players[i]
 	q := &s.Players[j]
 	if q.Health <= 0 || q.Stun > 0 || s.active(10, q.Team) {
 		return false
 	}
-	hit := amount * s.strength(p) / s.strength(*q)
-	if p.Gear == 19 {
-		hit *= 1.4
-	}
-	if q.Gear == 16 || q.Gear == 20 {
-		hit /= 1.3
-	}
-	q.Health = math.Max(0, q.Health-hit)
-	q.Gear = 0
+	hit := hitDamage(&s.Players[i], q)
+	// The renderer exposes energy as a percentage; original full energy is 128.
+	q.Health = math.Max(0, q.Health-float64(hit)*100/128)
+	deteriorate(q, hit)
 	q.Stun = 1.35
 	q.Action = 4
 	q.ActionTime = 1.35
@@ -111,30 +83,25 @@ func (s *State) pickup(i, k int) {
 	case k == 13:
 		s.Credits[t] += 10
 	case k >= 14:
-		p.Gear = k
+		equip(p, k)
 	case k == 7:
 		s.giveBall(i)
 	case k == 8:
-		best := -1
-		distance := math.Inf(-1)
-		for j, q := range s.Players {
-			if q.Team == t && q.Health > 0 && q.Stun <= 0 && q.X*s.direction(t) > distance {
-				best = j
-				distance = q.X * s.direction(t)
-			}
-		}
-		if best >= 0 {
-			s.giveBall(best)
-		}
+		// Token.Init_Transport targets roster slot 8, regardless of field position.
+		s.giveBall(t*9 + 8)
 	case k == 11:
 		p.Health = 100
+		p.Stats = defaultStats()
+		p.Gear = 0
 	case k == 12:
 		for j, q := range s.Players {
 			if q.Team != t {
-				s.damage(i, j, 12)
+				s.damage(i, j)
 			}
 		}
 	default:
+		s.restorePower()
+		s.applyPowerStats(k, t)
 		s.Effect = Effect{k, t, 6}
 		if k == 1 {
 			for j := range s.Players {
@@ -164,6 +131,8 @@ func (s *State) medicalStep(dt float64) bool {
 				if s.Reserves[p.Team] > 0 {
 					s.Reserves[p.Team]--
 					p.Health = 100
+					p.Stats = defaultStats()
+					p.StatBackup = [8]int{}
 					p.Stun = 0
 					p.Action = 0
 					p.Gear = 0
@@ -182,10 +151,6 @@ func (s *State) medicalStep(dt float64) bool {
 	return stopped
 }
 func (s *State) featureStep(dt float64) {
-	s.Effect.Time = math.Max(0, s.Effect.Time-dt)
-	if s.Effect.Time == 0 {
-		s.Effect.Kind = 0
-	}
 	for slot := range s.Pickups {
 		item := &s.Pickups[slot]
 		if item.Wait > 0 {
@@ -194,15 +159,18 @@ func (s *State) featureStep(dt float64) {
 		}
 		item.Life -= dt
 		who := -1
-		nearest := .85
-		for i, p := range s.Players {
-			if p.Stun > 0 || p.Health <= 0 {
+		// Entity item handlers test team 1's selected player before team 2's.
+		for _, i := range s.Controlled {
+			if i < 0 || i >= len(s.Players) {
 				continue
 			}
-			d := math.Hypot(p.X-item.X, p.Z-item.Z)
-			if d < nearest {
-				nearest = d
+			p := s.Players[i]
+			if p.Stun > 0 || p.Health <= 0 || p.Action == 2 {
+				continue
+			}
+			if math.Hypot(p.X-item.X, p.Z-item.Z) <= .85 {
 				who = i
+				break
 			}
 		}
 		if who >= 0 {
@@ -232,7 +200,13 @@ func (s *State) sideFeature() bool {
 		return false
 	}
 	if math.Abs(math.Abs(b.X)-8) < .55 {
-		b.Z = -math.Copysign(11.2-(math.Abs(b.Z)-11.2), b.Z)
+		attribute := 100
+		if b.LastTouch >= 0 && b.LastTouch < len(s.Players) {
+			p := &s.Players[b.LastTouch]
+			ensureStats(p)
+			attribute = p.Stats[4]
+		}
+		warpBall(b, attribute)
 		s.event(12, b.LastTouch, -1, b.X, b.Z, b.H)
 		return true
 	}

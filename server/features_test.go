@@ -39,13 +39,13 @@ func TestPowerMovement(t *testing.T) {
 	for _, c := range []struct {
 		k, owner int
 		factor   float64
-	}{{1, 16, 0}, {2, 16, -1}, {3, 16, .7}, {4, 7, 1.3}, {5, 16, 1.3}, {6, 16, .5}} {
+	}{{1, 16, 0}, {2, 16, -1}, {3, 16, 1}, {4, 7, 1.4}, {5, 16, 1.4}, {6, 16, 1}} {
 		s := isolated()
 		s.Ball.H = 4
 		s.pickup(c.owner, c.k)
 		x := s.Players[7].X
 		s.step(dt, [2]Input{{X: 1}, {}})
-		if math.Abs(s.Players[7].X-x-6.8*dt*c.factor) > 1e-8 {
+		if math.Abs(s.Players[7].X-x-5*velocityUnit*dt*c.factor) > 1e-8 {
 			t.Fatal("movement", c.k, s.Players[7].X)
 		}
 	}
@@ -57,18 +57,18 @@ func TestPowerExpiryShieldHeal(t *testing.T) {
 	if s.active(1, -1) || !s.active(10, 1) {
 		t.Fatal("replacement")
 	}
-	if s.damage(7, 16, 20) {
+	if s.damage(7, 16) {
 		t.Fatal("shield failed")
 	}
 	s.pickup(7, 12)
 	if s.Players[16].Health != 100 {
 		t.Fatal("shield failed against zap")
 	}
-	s.featureStep(6.1)
+	s.matchClock(6)
 	if s.Effect.Kind != 0 {
 		t.Fatal("expiry")
 	}
-	s.damage(7, 16, 20)
+	s.damage(7, 16)
 	s.pickup(16, 11)
 	if s.Players[16].Health != 100 {
 		t.Fatal("heal")
@@ -144,7 +144,7 @@ func TestElectroChargesAndShieldCatch(t *testing.T) {
 func TestInjuryMedicalAndNoReserves(t *testing.T) {
 	s := initial()
 	s.Players[16].Health = 1
-	s.damage(7, 16, 20)
+	s.damage(7, 16)
 	if s.Score[0] != 10 || s.Players[16].Injury != 6 {
 		t.Fatal("injury")
 	}
@@ -158,7 +158,7 @@ func TestInjuryMedicalAndNoReserves(t *testing.T) {
 	s.Reserves[1] = 0
 	s.Players[16].Health = 1
 	s.Players[16].Stun = 0
-	s.damage(7, 16, 20)
+	s.damage(7, 16)
 	for i := 0; i < 361; i++ {
 		s.step(dt, [2]Input{})
 	}
@@ -175,16 +175,16 @@ func TestPickupRespawnAndEquipment(t *testing.T) {
 		t.Fatal("double pickup")
 	}
 	s.pickup(7, 17)
-	if s.movementFactor(s.Players[7]) != 1.25 {
+	if movementSpeed(&s.Players[7], false, false) != 7*velocityUnit {
 		t.Fatal("boots")
 	}
 	s.pickup(7, 18)
 	s.throw(7, false)
-	if s.Ball.VX != 30 {
+	if s.Ball.VX != 8*velocityUnit || s.Ball.SpeedTimer != 125 {
 		t.Fatal("throw gear")
 	}
 	s.Players[16].Stun = 0
-	s.damage(16, 7, 20)
+	s.damage(16, 7)
 	if s.Players[7].Gear != 0 {
 		t.Fatal("gear not lost")
 	}
@@ -199,10 +199,75 @@ func TestFeatureSnapshot(t *testing.T) {
 		s.Players[i].Health = float64(90 - i)
 		s.Players[i].Injury = float64(i) / 10
 		s.Players[i].Gear = 14 + i%8
+		for j := range s.Players[i].Stats {
+			s.Players[i].Stats[j] = 100 + i
+		}
 	}
 	raw := encodeSnapshot(Snapshot{State: s, Room: "ABCDEF", Names: [2]string{"Blue", "Red"}, Started: true})
 	if len(raw) > 1200 {
 		t.Fatal("snapshot exceeds datagram", len(raw))
 	}
 	t.Log("WIRE:" + base64.StdEncoding.EncodeToString(raw))
+}
+
+func TestTransportRosterSlot(t *testing.T) {
+	for team := 0; team < 2; team++ {
+		for period := 1; period <= 2; period++ {
+			s := initial()
+			s.Period = period
+			target := team*9 + 8
+			s.Players[target].X = 0
+			s.Players[team*9+7].X = 20
+			s.pickup(team*9+7, 8)
+			if s.Ball.Owner != target {
+				t.Fatal("transport must target roster slot eight")
+			}
+			s.Ball.Owner = 1
+			s.Players[target].Stun = 1
+			s.pickup(team*9+7, 8)
+			if s.Ball.Owner != 1 {
+				t.Fatal("fallen target must not trigger fallback")
+			}
+		}
+	}
+}
+
+func TestSelectedGroundedPickup(t *testing.T) {
+	for _, kind := range []int{1, 13, 17} {
+		s := initial()
+		for i := range s.Players {
+			s.Players[i].X = 10
+			s.Players[i].Z = 10
+		}
+		s.Pickups[0] = Pickup{Kind: kind, Life: 14}
+		s.Players[6].X = 0
+		s.Players[6].Z = 0
+		s.featureStep(dt)
+		if s.Pickups[0].Wait != 0 {
+			t.Fatal("unselected pickup")
+		}
+		s.Players[7].X = 0
+		s.Players[7].Z = 0
+		s.Players[7].Action = 2
+		s.featureStep(dt)
+		if s.Pickups[0].Wait != 0 {
+			t.Fatal("jumping pickup")
+		}
+		s.Players[7].Action = 0
+		s.Players[16].X = 0
+		s.Players[16].Z = 0
+		s.featureStep(dt)
+		if s.Pickups[0].Wait <= 0 {
+			t.Fatal("selected player missed pickup")
+		}
+		if kind == 1 && s.Effect.Team != 0 {
+			t.Fatal("power priority")
+		}
+		if kind == 13 && s.Credits != [2]int{10, 0} {
+			t.Fatal("credit priority")
+		}
+		if kind == 17 && s.Players[7].Gear != 17 {
+			t.Fatal("equipment priority")
+		}
+	}
 }

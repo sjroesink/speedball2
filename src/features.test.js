@@ -1,11 +1,11 @@
+import { movementSpeed, velocityUnit } from "./attributes.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { initial, step, resetPitch, throwBall } from "./game.js";
+import { matchClock, initial, step, resetPitch, throwBall } from "./game.js";
 import {
   pickup,
   active,
   damage,
-  movementFactor,
   featureStep,
   sideFeature,
   goalBlocked,
@@ -43,17 +43,18 @@ test("freeze, reversed input, slow, boost, weaken and manic affect actual moveme
   for (const [k, owner, sign, ratio] of [
     [1, 16, 0, 0],
     [2, 16, -1, 1],
-    [3, 16, 1, 0.7],
-    [4, 7, 1, 1.3],
-    [5, 16, 1, 1.3],
-    [6, 16, 1, 0.5],
+    [3, 16, 1, 1],
+    [4, 7, 1, 1.4],
+    [5, 16, 1, 1.4],
+    [6, 16, 1, 1],
   ]) {
     const s = isolated();
     pickup(s, owner, k);
     const before = s.players[7].x;
     step(s, dt, { x: 1 });
     assert.ok(
-      Math.abs(s.players[7].x - before - sign * 6.8 * dt * ratio) < 1e-8,
+      Math.abs(s.players[7].x - before - sign * 5 * velocityUnit * dt * ratio) <
+        1e-8,
       `power ${k}`,
     );
   }
@@ -64,7 +65,7 @@ test("temporary power expires, replacement removes old effect, goal reset keeps 
   pickup(s, 16, 10);
   assert.ok(!active(s, 1));
   assert.ok(active(s, 10, 1));
-  featureStep(s, 6.1);
+  matchClock(s, 6);
   assert.equal(s.effect.kind, 0);
   s.players[7].health = 45;
   s.tick = 1;
@@ -96,7 +97,7 @@ test("goal door blocks the correct goal before and after halftime", () => {
     assert.ok(!goalBlocked(s, -x, period === 1 ? 1 : -1));
   }
 });
-test("four warp entrances preserve height and velocity; high ball rebounds normally", () => {
+test("four warp entrances preserve height and travel direction; high ball rebounds normally", () => {
   for (const x of [-8, 8])
     for (const sign of [-1, 1]) {
       const s = isolated();
@@ -194,10 +195,53 @@ test("pickups are collected once, respawn, cycle all powers and expose equipment
 test("speed/throw equipment changes performance and equipment is lost on a hit", () => {
   const s = initial();
   pickup(s, 7, 17);
-  assert.equal(movementFactor(s, s.players[7]), 1.25);
+  assert.equal(movementSpeed(s.players[7], false), 7 * velocityUnit);
   pickup(s, 7, 18);
   throwBall(s, 7, false);
-  assert.equal(s.ball.vx, 30);
+  assert.equal(s.ball.vx, 8 * velocityUnit);
+  assert.equal(s.ball.speedTimer, 125);
   damage(s, 16, 7);
   assert.equal(s.players[7].gear, 0);
+});
+
+test("transport uses roster slot eight in either half, with no fallback for a fallen target", () => {
+  for (const team of [0, 1])
+    for (const period of [1, 2]) {
+      const s = initial();
+      s.period = period;
+      const target = team * 9 + 8;
+      s.players[target].x = 0;
+      s.players[team * 9 + 7].x = 20;
+      pickup(s, team * 9 + 7, 8);
+      assert.equal(s.ball.owner, target);
+      s.ball.owner = 1;
+      s.players[target].stun = 1;
+      pickup(s, team * 9 + 7, 8);
+      assert.equal(s.ball.owner, 1);
+    }
+});
+
+test("floor items require the selected grounded player and use team-order priority", () => {
+  for (const kind of [1, 13, 17]) {
+    const s = initial();
+    s.players.forEach((p) => {
+      p.x = 10;
+      p.z = 10;
+    });
+    const item = s.pickups[0];
+    Object.assign(item, { kind, x: 0, z: 0, wait: 0, life: 14 });
+    Object.assign(s.players[6], { x: 0, z: 0 });
+    featureStep(s, dt);
+    assert.equal(item.wait, 0, "unselected player cannot collect");
+    Object.assign(s.players[7], { x: 0, z: 0, action: 2 });
+    featureStep(s, dt);
+    assert.equal(item.wait, 0, "jump cannot collect");
+    s.players[7].action = 0;
+    Object.assign(s.players[16], { x: 0, z: 0 });
+    featureStep(s, dt);
+    assert.ok(item.wait > 0);
+    if (kind === 1) assert.equal(s.effect.team, 0);
+    if (kind === 13) assert.deepEqual(s.credits, [10, 0]);
+    if (kind === 17) assert.equal(s.players[7].gear, 17);
+  }
 });

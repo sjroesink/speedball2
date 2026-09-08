@@ -1,11 +1,28 @@
 import {
+  setBallSpeed,
+  slowBall,
+  reflectBall,
+  steerRelease,
+  startFlight,
+  flightStep,
+} from "./ball.js";
+import {
+  defaultStats,
+  tackleThreshold,
+  randomByte,
+  restorePower,
+  referenceDistance,
+  movementSpeed,
+  ensureStats,
+  velocityUnit,
+} from "./attributes.js";
+import {
   initFeatures,
   active,
-  strength,
-  movementFactor,
   shielded,
   goalBlocked,
   damage,
+  giveBall,
   medicalStep,
   featureStep,
   sideFeature,
@@ -30,13 +47,14 @@ const norm = (x, z) => {
 export function eightWay(x, z) {
   if (Math.hypot(x, z) < 0.01) return [0, 0];
   const a = (Math.round(Math.atan2(z, x) / (Math.PI / 4)) * Math.PI) / 4;
-  return [Math.cos(a), Math.sin(a)];
+  return [Math.round(Math.cos(a)), Math.round(Math.sin(a))];
 }
 export const direction = (s, t) =>
   (t === 0 ? 1 : -1) * (s.period === 2 ? -1 : 1);
 export function initial() {
   const s = {
     players: [],
+    rng: [0x31415926, 0x53589793],
     ball: {},
     score: [0, 0],
     time: 90,
@@ -66,6 +84,13 @@ export function resetPitch(s) {
       team,
       fx: d,
       fz: 0,
+      stats: s.tick > 0 ? [...old[i].stats] : defaultStats(),
+      statBackup:
+        s.tick > 0
+          ? [...(old[i].statBackup ?? Array(8).fill(0))]
+          : Array(8).fill(0),
+      gearBackup: s.tick > 0 ? old[i].gearBackup : 0,
+      gearPowerBackup: s.tick > 0 ? old[i].gearPowerBackup : 0,
       health: s.tick > 0 ? old[i].health : 100,
       gear: s.tick > 0 ? old[i].gear : 0,
       injury: 0,
@@ -104,16 +129,12 @@ export function selectPlayers(s) {
       s.controlled[t] = b.owner;
       continue;
     }
-    const cur = s.controlled[t];
-    if (s.players[cur].actionTime > 0 && s.players[cur].stun <= 0) continue;
     let best = -1,
       dist = Infinity;
     s.players.forEach((p, i) => {
       if (p.team !== t || p.stun > 0) return;
-      let d = Math.hypot(p.x - b.x, p.z - b.z);
-      if (i % 9 === 0 && Math.abs(b.x) > 15) d -= 1;
-      if (i === cur) d -= 0.7;
-      if (d < dist) {
+      const d = referenceDistance(p.x - b.x, p.z - b.z);
+      if (d <= dist) {
         best = i;
         dist = d;
       }
@@ -121,23 +142,30 @@ export function selectPlayers(s) {
     if (best >= 0) s.controlled[t] = best;
   }
 }
-export function throwBall(s, i, lob) {
+export function throwBall(s, i, lob, input = {}) {
   const p = s.players[i],
     b = s.ball,
-    speed = 24 * strength(s, p) * (p.gear === 18 ? 1.25 : 1);
+    speed = 8 * velocityUnit;
+  ensureStats(p);
+  const [fx, fz] = eightWay(p.fx, p.fz);
   Object.assign(b, {
     x: p.x + p.fx * 0.9,
     z: p.z + p.fz * 0.9,
     h: 1,
-    vx: p.fx * speed,
-    vz: p.fz * speed,
+    dirX: fx,
+    dirZ: fz,
+    vx: fx * speed,
+    vz: fz * speed,
     vh: lob ? 11 : 2,
     owner: -1,
     lastTouch: i,
     lock: 0.18,
-    after: 0.45,
+    after: 0,
     electric: 0,
   });
+  steerRelease(b, input);
+  setBallSpeed(b, p.stats[4]);
+  startFlight(b, lob);
   p.action = 3;
   p.actionTime = 0.32;
   event(s, 3, i, -1, b.x, b.z, b.h);
@@ -180,9 +208,10 @@ export function points(s, t, base) {
 }
 export function wallBonus(s) {
   const b = s.ball;
-  if (b.lastTouch < 0 || b.h > 1.7) return;
+  if (b.lastTouch < 0) return;
   const t = s.players[b.lastTouch].team;
   if (Math.abs(b.x) < 1.3) {
+    if (b.h > 1.7) return;
     s.multiplier = clamp(s.multiplier + (t === 0 ? 1 : -1), -2, 2);
     event(s, 9, t, s.multiplier, b.x, b.z, b.h);
     return;
@@ -196,12 +225,12 @@ export function wallBonus(s) {
     mask = 1 << index;
   if (t === owner && !(s.stars[group] & mask)) {
     s.stars[group] |= mask;
-    const n = points(s, t, 2) + (s.stars[group] === 31 ? points(s, t, 10) : 0);
+    const n = points(s, t, 2);
     s.score[t] += n;
     event(s, 8, t, n, b.x, b.z, 1);
   } else if (t !== owner && s.stars[group] & mask) {
     s.stars[group] &= ~mask;
-    const n = points(s, owner, 2);
+    const n = 2;
     s.score[owner] = Math.max(0, s.score[owner] - n);
     event(s, 10, owner, n, b.x, b.z, 1);
   }
@@ -240,6 +269,7 @@ export function step(
   const inputs = [input, secondInput];
   s.tick++;
   if (s.over) return;
+  matchClock(s, dt);
   if (medicalStep(s, dt)) {
     s.previous = inputs.map((u) => ({ ...u }));
     return;
@@ -254,7 +284,6 @@ export function step(
     s.previous = inputs.map((u) => ({ ...u }));
     return;
   }
-  s.time = Math.max(0, s.time - dt);
   if (s.time === 0) {
     if (s.period === 1) {
       s.period = 2;
@@ -308,13 +337,6 @@ export function step(
         if (b.owner >= 0 && s.players[b.owner].team === t) tx += d * 5;
         tz += b.z * 0.18;
       }
-      if(i%9!==0 && b.owner!==i && s.controlled[t]!==i) {
-        let near=4;
-        for(const item of s.pickups) {
-          const distance=Math.hypot(item.x-p.x,item.z-p.z);
-          if(item.wait<=0&&distance<near){near=distance;tx=item.x;tz=item.z;}
-        }
-      }
       [dx, dz] = norm(tx - p.x, tz - p.z);
       if (Math.hypot(tx - p.x, tz - p.z) < 0.3) {
         dx = 0;
@@ -358,7 +380,7 @@ export function step(
         : u.shoot || u.tackle;
     if (human && b.owner === i) {
       if ((u.lob && !prev.lob) || (u.lobId || 0) > (prev.lobId || 0)) {
-        throwBall(s, i, true);
+        throwBall(s, i, true, u);
         s.charge[t] = 0;
       } else {
         const fire =
@@ -372,7 +394,7 @@ export function step(
         if (s.charge[t] > 0) {
           p.lowThrow ||= !u.shoot;
           if (s.charge[t] >= 0.16) {
-            throwBall(s, i, !p.lowThrow);
+            throwBall(s, i, !p.lowThrow, u);
             s.charge[t] = 0;
           }
         }
@@ -386,23 +408,27 @@ export function step(
         event(s, 2, i, -1, p.x, p.z, 0);
       } else {
         p.action = 1;
+        p.tackleResolved = false;
         p.actionTime = 0.38;
         p.cooldown = 0.85;
         event(s, 1, i, -1, p.x, p.z, 0);
       }
     }
-    let speed = b.owner === i ? 6.2 : 6.8;
     if (p.action === 1) {
       dx = p.fx;
       dz = p.fz;
-      speed = 14;
     }
-    if (p.action === 2) speed = 4.5;
-    if (p.action === 3) speed = 0;
-    speed *= movementFactor(s, p);
-    const n = Math.max(1, Math.hypot(dx, dz));
-    p.x = clamp(p.x + (dx / n) * speed * dt, -20.5, 20.5);
-    p.z = clamp(p.z + (dz / n) * speed * dt, -10.7, 10.7);
+    [dx, dz] = eightWay(dx, dz);
+    const keeperBlock =
+      i % 9 === 0 &&
+      b.owner < 0 &&
+      Math.hypot(b.vx, b.vz) > 0 &&
+      Math.abs(p.fz) > 0.1;
+    const speed = active(s, 1, 1 - t)
+      ? 0
+      : movementSpeed(p, b.owner === i, keeperBlock);
+    p.x = clamp(p.x + dx * speed * dt, -20.5, 20.5);
+    p.z = clamp(p.z + dz * speed * dt, -10.7, 10.7);
     if (i % 9 === 0) {
       const d = direction(s, t);
       p.x = d * clamp(p.x * d, -20.5, -15);
@@ -412,19 +438,28 @@ export function step(
     const i = s.tick % 2 === 0 ? 17 - o : o,
       p = s.players[i];
     if (p.stun > 0) continue;
-    if (p.action === 1)
-      s.players.forEach((q, j) => {
-        if (q.team === p.team || q.stun > 0) return;
+    if (p.action === 1 && !p.tackleResolved)
+      s.players.some((q, j) => {
+        if (
+          q.team === p.team ||
+          q.stun > 0 ||
+          q.health <= 0 ||
+          shielded(s, q.team)
+        )
+          return false;
         const dx = q.x - p.x,
           dz = q.z - p.z;
-        if (
-          Math.hypot(dx, dz) < (p.gear === 15 ? 1.4 : 1.15) &&
-          dx * p.fx + dz * p.fz > -0.3
-        ) {
-          if (damage(s, i, j, 20)) {
+        if (Math.hypot(dx, dz) < 1.15) {
+          // sub_ED92 switches out of contact checks at the first eligible opponent.
+          p.tackleResolved = true;
+          if (randomByte(s) > tackleThreshold(p, q, j % 9 === 0)) return true;
+          const hadBall = s.ball.owner === j;
+          if (damage(s, i, j)) {
+            if (hadBall) giveBall(s, i);
             q.x = clamp(q.x + p.fx * 0.7, -20.5, 20.5);
             q.z = clamp(q.z + p.fz * 0.7, -10.7, 10.7);
           }
+          return true;
         }
       });
   }
@@ -457,34 +492,27 @@ export function step(
     b.h = 1;
     b.vx = b.vz = b.vh = 0;
   } else {
-    if (b.after > 0 && b.lastTouch >= 0) {
-      const t = s.players[b.lastTouch].team;
-      if (humans[t]) {
-        b.vx += (inputs[t].x || 0) * 5 * dt;
-        b.vz += (inputs[t].z || 0) * 5 * dt;
-      }
-    }
+    slowBall(b, dt);
     b.x += b.vx * dt;
     b.z += b.vz * dt;
-    b.h += b.vh * dt;
-    b.vh -= 18 * dt;
-    if (b.h < 0.25) {
-      b.h = 0.25;
-      b.vh = b.vh < -2 ? -b.vh * 0.5 : 0;
-      const drag = Math.pow(0.993, dt * 60);
-      b.vx *= drag;
-      b.vz *= drag;
+    if (!flightStep(b, dt)) {
+      b.h += b.vh * dt;
+      b.vh -= 18 * dt;
+      if (b.h < 0.25) {
+        b.h = 0.25;
+        b.vh = b.vh < -2 ? -b.vh * 0.5 : 0;
+      }
     }
     if (Math.abs(b.z) > 11.2 && !sideFeature(s)) {
       b.z = Math.sign(b.z) * (22.4 - Math.abs(b.z));
-      b.vz *= -0.92;
+      reflectBall(b, "z");
       event(s, 5, b.lastTouch, -1, b.x, b.z, b.h);
       wallBonus(s);
     }
     if (Math.abs(b.x) > 21) {
       if (
         Math.abs(b.z) < 1.85 &&
-        b.h < 2 &&
+        (b.flightKind ? b.flightStage <= 2 : b.h < 2) &&
         !goalBlocked(s, b.x, direction(s, 0))
       ) {
         const scorer = b.x * direction(s, 0) < 0 ? 1 : 0;
@@ -496,7 +524,7 @@ export function step(
         return;
       } else {
         b.x = Math.sign(b.x) * (42 - Math.abs(b.x));
-        b.vx *= -0.92;
+        reflectBall(b, "x");
         event(s, 5, b.lastTouch, -1, b.x, b.z, b.h);
       }
     }
@@ -505,7 +533,13 @@ export function step(
       let best = -1,
         dist = 0.8;
       s.players.forEach((p, i) => {
-        if (p.stun > 0 || b.h > 1.25 + jumpHeight(p)) return;
+        if (
+          p.stun > 0 ||
+          (b.flightKind
+            ? b.flightStage > 2 && p.action !== 2
+            : b.h > 1.25 + jumpHeight(p))
+        )
+          return;
         const d = Math.hypot(p.x - b.x, p.z - b.z);
         if (
           d < 0.8 &&
@@ -514,7 +548,7 @@ export function step(
           p.team !== s.players[b.lastTouch].team &&
           !shielded(s, p.team)
         ) {
-          if (damage(s, b.lastTouch, i, 25)) {
+          if (damage(s, b.lastTouch, i)) {
             b.electric--;
             return;
           }
@@ -527,6 +561,7 @@ export function step(
       if (best >= 0) {
         b.electric = 0;
         s.charge[s.players[best].team] = 0;
+        b.flightKind = 0;
         b.owner = best;
         b.lastTouch = best;
         b.after = 0;
@@ -535,4 +570,28 @@ export function step(
     }
   }
   s.previous = inputs.map((u) => ({ ...u }));
+}
+
+export function matchClock(s, dt) {
+  s.matchClock = (s.matchClock ?? 0) + dt;
+  while (s.matchClock >= 1 - 1e-9) {
+    s.matchClock = Math.max(0, s.matchClock - 1);
+    s.stars.forEach((bits, group) => {
+      if (bits !== 31) return;
+      s.stars[group] = 0;
+      const owner = s.period === 2 ? 1 - group : group,
+        n = points(s, owner, 10);
+      s.score[owner] += n;
+      event(s, 8, owner, n, 0, 0, 1);
+    });
+    if (s.pause <= 0 && !s.players.some((p) => p.injury > 0))
+      s.time = Math.max(0, s.time - 1);
+    if (s.effect.kind) {
+      s.effect.time = Math.max(0, s.effect.time - 1);
+      if (s.effect.time === 0) {
+        restorePower(s);
+        s.effect.kind = 0;
+      }
+    }
+  }
 }

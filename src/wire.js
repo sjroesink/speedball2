@@ -24,7 +24,7 @@ export function decodeSnapshot(bytes) {
       return n;
     },
     q = () => i16() / 1000;
-  if (u8() !== 83 || u8() !== 66 || u8() !== 50 || u8() !== 3)
+  if (u8() !== 83 || u8() !== 66 || u8() !== 50 || u8() !== 4)
     throw new Error("Server version mismatch. Restart the game server.");
   const s = { tick: u32(), time: f(), period: u8() },
     flags = u8(),
@@ -74,6 +74,7 @@ export function decodeSnapshot(bytes) {
     p.health = u8();
     p.injury = q();
     p.gear = u8();
+    p.stats = Array.from({ length: 8 }, u8);
   }
   s.pickups = Array.from({ length: 7 }, () => ({
     kind: u8(),

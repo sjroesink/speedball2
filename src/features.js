@@ -1,3 +1,12 @@
+import { warpBall } from "./ball.js";
+import {
+  defaultStats,
+  restorePower,
+  applyPowerStats,
+  equip,
+  hitDamage,
+  deteriorate,
+} from "./attributes.js";
 // Match features shared in behavior with server/features.go.
 export const powerNames = [
   "",
@@ -43,38 +52,26 @@ export const active = (s, k, t) =>
   s.effect.time > 0 &&
   s.effect.kind === k &&
   (t === undefined || s.effect.team === t);
-export function strength(s, p) {
-  let n = 0.8 + (0.2 * p.health) / 100;
-  if (active(s, 3, 1 - p.team)) n *= 0.7;
-  if (active(s, 4, p.team) || active(s, 5)) n *= 1.3;
-  return n;
-}
-export const movementFactor = (s, p) =>
-  active(s, 1, 1 - p.team)
-    ? 0
-    : strength(s, p) *
-      (active(s, 6, 1 - p.team) ? 0.5 : 1) *
-      (p.gear === 17 ? 1.25 : 1);
 export const shielded = (s, t) => active(s, 10, t);
 export function goalBlocked(s, x, direction0) {
   const defender = x * direction0 > 0 ? 1 : 0;
   return active(s, 9, defender);
 }
-export function damage(s, i, j, amount = 20) {
+export function damage(s, i, j) {
   const p = s.players[i],
     q = s.players[j];
   if (q.health <= 0 || q.stun > 0 || shielded(s, q.team)) return false;
-  const hit =
-    (amount * strength(s, p) * (p.gear === 19 ? 1.4 : 1)) /
-    (strength(s, q) * (q.gear === 16 || q.gear === 20 ? 1.3 : 1));
-  q.health = Math.max(0, q.health - hit);
-  q.gear = 0;
+  const hit = hitDamage(p, q);
+  // The renderer exposes energy as a percentage; original full energy is 128.
+  q.health = Math.max(0, q.health - (hit * 100) / 128);
+  deteriorate(q, hit);
   q.stun = 1.35;
   q.action = 4;
   q.actionTime = 1.35;
   s.charge[q.team] = 0;
   if (s.ball.owner === j)
     Object.assign(s.ball, {
+      flightKind: 0,
       owner: -1,
       lastTouch: i,
       x: q.x,
@@ -102,11 +99,12 @@ export function damage(s, i, j, amount = 20) {
   }
   return true;
 }
-function giveBall(s, i) {
+export function giveBall(s, i) {
   if (s.players[i].health <= 0 || s.players[i].stun > 0) return;
   const p = s.players[i];
   s.charge = [0, 0];
   Object.assign(s.ball, {
+    flightKind: 0,
     owner: i,
     lastTouch: i,
     x: p.x,
@@ -124,21 +122,22 @@ export function pickup(s, i, k) {
   const p = s.players[i],
     t = p.team;
   if (k === 13) s.credits[t] += 10;
-  else if (k >= 14) p.gear = k;
+  else if (k >= 14) equip(p, k);
   else if (k === 7) giveBall(s, i);
   else if (k === 8) {
-    const candidates = s.players
-      .map((q, j) => ({ q, j }))
-      .filter(({ q }) => q.team === t && q.health > 0 && q.stun <= 0);
-    const d = (t === 0 ? 1 : -1) * (s.period === 2 ? -1 : 1);
-    candidates.sort((a, b) => (b.q.x - a.q.x) * d);
-    if (candidates[0]) giveBall(s, candidates[0].j);
-  } else if (k === 11) p.health = 100;
-  else if (k === 12)
+    // Token.Init_Transport targets roster slot 8, regardless of field position.
+    giveBall(s, t * 9 + 8);
+  } else if (k === 11) {
+    p.health = 100;
+    p.stats = defaultStats();
+    p.gear = 0;
+  } else if (k === 12)
     s.players.forEach((q, j) => {
-      if (q.team !== t) damage(s, i, j, 12);
+      if (q.team !== t) damage(s, i, j);
     });
   else {
+    restorePower(s);
+    applyPowerStats(s, k, t);
     s.effect = { kind: k, team: t, time: 6 };
     if (k === 1)
       s.players.forEach((q) => {
@@ -164,6 +163,8 @@ export function medicalStep(s, dt) {
         if (s.reserves[p.team] > 0) {
           s.reserves[p.team]--;
           p.health = 100;
+          p.stats = defaultStats();
+          p.statBackup = Array(8).fill(0);
           p.stun = 0;
           p.action = 0;
           p.gear = 0;
@@ -180,8 +181,6 @@ export function medicalStep(s, dt) {
   return stopped;
 }
 export function featureStep(s, dt) {
-  s.effect.time = Math.max(0, s.effect.time - dt);
-  if (s.effect.time === 0) s.effect.kind = 0;
   for (let slot = 0; slot < s.pickups.length; slot++) {
     const item = s.pickups[slot];
     if (item.wait > 0) {
@@ -189,16 +188,16 @@ export function featureStep(s, dt) {
       continue;
     }
     item.life -= dt;
-    let who = -1,
-      nearest = 0.85;
-    s.players.forEach((p, i) => {
-      if (p.stun > 0 || p.health <= 0) return;
-      const d = Math.hypot(p.x - item.x, p.z - item.z);
-      if (d < nearest) {
-        nearest = d;
+    let who = -1;
+    // Entity item handlers test team 1's selected player before team 2's.
+    for (const i of s.controlled) {
+      const p = s.players[i];
+      if (!p || p.stun > 0 || p.health <= 0 || p.action === 2) continue;
+      if (Math.hypot(p.x - item.x, p.z - item.z) <= 0.85) {
         who = i;
+        break;
       }
-    });
+    }
     if (who >= 0) pickup(s, who, item.kind);
     if (who >= 0 || item.life <= 0) {
       s.pickupSerial++;
@@ -217,7 +216,8 @@ export function sideFeature(s) {
   const b = s.ball;
   if (b.h > 1.4) return false;
   if (Math.abs(Math.abs(b.x) - 8) < 0.55) {
-    b.z = -Math.sign(b.z) * (11.2 - (Math.abs(b.z) - 11.2));
+    const thrower = s.players[b.lastTouch];
+    warpBall(b, thrower?.stats?.[4] ?? 100);
     emit(s, 12, b.lastTouch, -1, b.x, b.z, b.h);
     return true;
   }

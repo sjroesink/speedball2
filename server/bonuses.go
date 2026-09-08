@@ -11,11 +11,14 @@ func (s *State) points(team, base int) int {
 }
 func (s *State) wallBonus() {
 	b := &s.Ball
-	if b.LastTouch < 0 || b.H > 1.7 {
+	if b.LastTouch < 0 {
 		return
 	}
 	t := s.Players[b.LastTouch].Team
 	if math.Abs(b.X) < 1.3 {
+		if b.H > 1.7 {
+			return
+		}
 		change := 1
 		if t == 1 {
 			change = -1
@@ -44,14 +47,11 @@ func (s *State) wallBonus() {
 	if t == owner && s.Stars[group]&mask == 0 {
 		s.Stars[group] |= mask
 		points := s.points(t, 2)
-		if s.Stars[group] == 31 {
-			points += s.points(t, 10)
-		}
 		s.Score[t] += points
 		s.event(8, t, points, b.X, b.Z, 1)
 	} else if t != owner && s.Stars[group]&mask != 0 {
 		s.Stars[group] &= ^mask
-		points := s.points(owner, 2)
+		points := 2
 		s.Score[owner] = max(0, s.Score[owner]-points)
 		s.event(10, owner, points, b.X, b.Z, 1)
 	}
@@ -78,5 +78,37 @@ func (s *State) domeBounce() {
 				s.event(8, t, points, b.X, b.Z, b.H)
 			}
 		}
+	}
+}
+
+// update_match_time calls check_all_stars_lit every 25 game ticks (two PAL video frames each).
+func (s *State) matchClock(dt float64) {
+	s.ClockPhase += dt
+	for s.ClockPhase >= 1-1e-9 {
+		s.ClockPhase = math.Max(0, s.ClockPhase-1)
+		for group, bits := range s.Stars {
+			if bits != 31 {
+				continue
+			}
+			s.Stars[group] = 0
+			owner := group
+			if s.Period == 2 {
+				owner = 1 - group
+			}
+			points := s.points(owner, 10)
+			s.Score[owner] += points
+			s.event(8, owner, points, 0, 0, 1)
+		}
+		if s.Pause <= 0 && !s.hasInjury() {
+			s.Time = math.Max(0, s.Time-1)
+		}
+		if s.Effect.Kind != 0 {
+			s.Effect.Time = math.Max(0, s.Effect.Time-1)
+			if s.Effect.Time == 0 {
+				s.restorePower()
+				s.Effect.Kind = 0
+			}
+		}
+
 	}
 }

@@ -42,7 +42,7 @@ func TestVisibleTackleMissAndCooldown(t *testing.T) {
 	s.Ball.Z = 9
 	s.step(dt, [2]Input{{Tackle: true}, {}})
 	p := s.Players[7]
-	if p.Action != 1 || p.ActionTime <= 0 || p.X < .2 || p.Cooldown <= 0 {
+	if p.Action != 1 || p.ActionTime <= 0 || p.X < .075 || p.Cooldown <= 0 {
 		t.Fatal("tackle without contact must slide visibly")
 	}
 	for i := 0; i < 65; i++ {
@@ -52,13 +52,14 @@ func TestVisibleTackleMissAndCooldown(t *testing.T) {
 		t.Fatal("holding tackle must not retrigger")
 	}
 }
-func TestTackleKnockdownAndLooseBall(t *testing.T) {
+func TestTackleKnockdownAndPossession(t *testing.T) {
 	s := isolated()
-	s.Players[16] = Player{Health: 100, X: 1.3, Team: 1, FX: -1}
-	s.Ball = Ball{X: 1.3, H: 1, Owner: 16}
+	s.RNG = [2]uint32{}
+	s.Players[16] = Player{Health: 100, X: 1.1, Team: 1, FX: -1}
+	s.Ball = Ball{X: 1.1, H: 1, Owner: 16}
 	s.step(dt, [2]Input{{Tackle: true}, {}})
-	if s.Players[16].Stun < 1 || s.Players[16].Action != 4 || s.Ball.Owner >= 0 {
-		t.Fatalf("no knockdown / ball release: %+v", s.Ball)
+	if s.Players[16].Stun < 1 || s.Players[16].Action != 4 || s.Ball.Owner != 7 {
+		t.Fatalf("no knockdown / possession transfer: %+v", s.Ball)
 	}
 }
 func TestDirectionalLowAndHighThrow(t *testing.T) {
@@ -74,13 +75,13 @@ func TestDirectionalLowAndHighThrow(t *testing.T) {
 			s.step(dt, [2]Input{{Z: 1, Shoot: lob}, {}})
 		}
 
-		if s.Ball.Owner != -1 || s.Ball.VZ < 15 || math.Abs(s.Ball.VX) > 1 {
+		if s.Ball.Owner != -1 || s.Ball.VZ < 7 || math.Abs(s.Ball.VX) > 1 {
 			t.Fatal("throw must follow facing, not autoaim at goal")
 		}
-		if lob && s.Ball.VH < 9 {
+		if lob && s.Ball.FlightKind != 2 {
 			t.Fatal("held throw must be a lob")
 		}
-		if !lob && s.Ball.VH > 3 {
+		if !lob && s.Ball.FlightKind != 1 {
 			t.Fatal("tap must be a low throw")
 		}
 	}
@@ -125,12 +126,12 @@ func TestStarBonusExtinguishAndMultiplier(t *testing.T) {
 	s.Stars[0] = 15
 	s.Ball = Ball{X: 13, Z: -11.1, H: 1, VZ: -24, Owner: -1, LastTouch: 7}
 	s.step(dt, [2]Input{})
-	if s.Score[0] != 12 || s.Stars[0] != 31 {
+	if s.Score[0] != 2 || s.Stars[0] != 31 {
 		t.Fatal("five stars bonus")
 	}
 	s.Ball = Ball{X: 13, Z: -11.1, H: 1, VZ: -24, Owner: -1, LastTouch: 16}
 	s.step(dt, [2]Input{})
-	if s.Score[0] != 10 || s.Stars[0] != 15 {
+	if s.Score[0] != 0 || s.Stars[0] != 15 {
 		t.Fatal("opponent must extinguish star and deduct points")
 	}
 	s.Ball = Ball{X: 0, Z: 11.1, H: 1, VZ: 24, Owner: -1, LastTouch: 7}
@@ -154,16 +155,18 @@ func TestCentralDomePointsAndBounce(t *testing.T) {
 }
 func TestHalftimeAndMatchEnd(t *testing.T) {
 	s := isolated()
-	s.Time = dt / 2
+	s.Time = 1
+	s.ClockPhase = 1 - dt
 	s.Stars = [2]uint8{31, 31}
 	s.Multiplier = 2
 	s.Score = [2]int{25, 18}
 	s.step(dt, [2]Input{})
-	if s.Period != 2 || s.Players[0].X < 0 || s.Stars[0] != 0 || s.Score[0] != 25 {
-		t.Fatal("halftime must swap ends and clear targets, preserve score")
+	if s.Period != 2 || s.Players[0].X < 0 || s.Stars[0] != 0 || s.Score[0] != 45 || s.Score[1] != 28 {
+		t.Fatal("halftime must pay completed banks before swapping ends")
 	}
 	s.Pause = 0
-	s.Time = dt / 2
+	s.Time = 1
+	s.ClockPhase = 1 - dt
 	s.step(dt, [2]Input{})
 	if !s.Over {
 		t.Fatal("match end")
@@ -197,7 +200,7 @@ func TestEightWayMovement(t *testing.T) {
 	b.Ball.Z = 8
 	a.step(dt, [2]Input{{X: 1}, {}})
 	b.step(dt, [2]Input{{X: 1, Z: .7}, {}})
-	if math.Abs(math.Hypot(b.Players[7].X, b.Players[7].Z)-a.Players[7].X) > 1e-8 || math.Abs(b.Players[7].X-b.Players[7].Z) > 1e-8 {
+	if math.Abs(b.Players[7].X-a.Players[7].X) > 1e-8 || math.Abs(b.Players[7].X-b.Players[7].Z) > 1e-8 {
 		t.Fatal("unequal eight-way movement")
 	}
 }
@@ -225,5 +228,84 @@ func TestOriginalGoalWidth(t *testing.T) {
 	s.step(dt, [2]Input{})
 	if s.Score[0] != 0 || s.Ball.VX >= 0 {
 		t.Fatal("wide shot must rebound off end wall")
+	}
+}
+
+func TestTackleDirectPossessionSingleContact(t *testing.T) {
+	s := isolated()
+	s.RNG = [2]uint32{}
+	s.Players[16].X = .7
+	s.Players[16].Z = 0
+	s.Players[16].Stun = 0
+	s.Players[16].Cooldown = 10
+	s.Players[17].X = .8
+	s.Players[17].Z = 0
+	s.Players[17].Stun = 0
+	s.Players[17].Cooldown = 10
+	s.Ball = Ball{Owner: 16, LastTouch: 16, X: .7, H: 1}
+	s.step(dt, [2]Input{{Tackle: true}, {}})
+	if s.Ball.Owner != 7 || s.Controlled[0] != 7 {
+		t.Fatal("tackle must immediately transfer possession", s.Ball.Owner)
+	}
+	if s.Players[16].Stun <= 0 {
+		t.Fatal("first opponent not tackled")
+	}
+	if s.Players[17].Health != 100 {
+		t.Fatal("second opponent hit during same slide")
+	}
+	for n := 0; n < 4; n++ {
+		s.Players[17].X = s.Players[7].X + .3
+		s.Players[17].Z = s.Players[7].Z
+		s.step(dt, [2]Input{})
+	}
+	if s.Players[17].Health != 100 {
+		t.Fatal("slide checked contact again on a later tick")
+	}
+}
+
+func TestStarBankClockAndExtinguish(t *testing.T) {
+	for _, period := range []int{1, 2} {
+		s := initial()
+		s.Period = period
+		owner := period - 1
+		s.Multiplier = 2
+		if owner == 1 {
+			s.Multiplier = -2
+		}
+		s.Stars[0] = 30
+		s.Ball = Ball{Owner: -1, X: 5, Z: -11.2, H: 3, LastTouch: owner*9 + 7}
+		s.wallBonus()
+		if s.Score[owner] != 4 || s.Stars[0] != 31 {
+			t.Fatal("star hit")
+		}
+		s.matchClock(.99)
+		if s.Score[owner] != 4 {
+			t.Fatal("early bank bonus")
+		}
+		s.matchClock(.01)
+		if s.Score[owner] != 24 || s.Stars[0] != 0 {
+			t.Fatal("bank clear")
+		}
+		s.matchClock(1)
+		if s.Score[owner] != 24 {
+			t.Fatal("repeat bonus")
+		}
+		s.wallBonus()
+		if s.Score[owner] != 28 || s.Stars[0] != 1 {
+			t.Fatal("bank cannot restart")
+		}
+	}
+	s := initial()
+	s.Multiplier = 2
+	s.Stars[0] = 31
+	s.Score[0] = 20
+	s.Ball = Ball{Owner: -1, X: 5, Z: -11.2, H: 1, LastTouch: 16}
+	s.wallBonus()
+	if s.Score[0] != 18 || s.Stars[0] != 30 {
+		t.Fatal("extinguish penalty")
+	}
+	s.matchClock(1)
+	if s.Score[0] != 18 {
+		t.Fatal("cancelled bonus awarded")
 	}
 }
