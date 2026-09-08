@@ -15,18 +15,6 @@ func (s *State) wallBonus() {
 		return
 	}
 	t := s.Players[b.LastTouch].Team
-	if math.Abs(b.X) < 1.3 {
-		if b.H > 1.7 {
-			return
-		}
-		change := 1
-		if t == 1 {
-			change = -1
-		}
-		s.Multiplier = int(clamp(float64(s.Multiplier+change), -2, 2))
-		s.event(9, t, s.Multiplier, b.X, b.Z, b.H)
-		return
-	}
 	group := 0
 	if b.Z > 0 {
 		group = 1

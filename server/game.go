@@ -25,6 +25,8 @@ type Player struct {
 	Gear                        int
 }
 type Ball struct {
+	MultiplierPath, MultiplierIndex      int
+	MultiplierFraction                   float64
 	FlightKind, FlightIndex, FlightStage int
 	FlightFraction                       float64
 	DirX, DirZ                           float64
@@ -451,6 +453,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		return
 	}
 	if b.Owner >= 0 {
+		b.MultiplierPath = 0
 		p := s.Players[b.Owner]
 		b.X = p.X + p.FX*.5
 		b.Z = p.Z + p.FZ*.5
@@ -458,6 +461,8 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		b.VX = 0
 		b.VZ = 0
 		b.VH = 0
+	} else if s.multiplierStep(dt) {
+		// The original multiplier animation owns the ball position while inside.
 	} else {
 		slowBall(b, dt)
 		b.X += b.VX * dt

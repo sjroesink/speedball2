@@ -1,5 +1,5 @@
 """Original game meshes, authored and exported with Blender. Run with npm run assets."""
-import bpy, math, os, time
+import bpy, math, os, time, json, sys
 from mathutils import Vector
 ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT=os.path.join(ROOT,'public','assets')
@@ -52,9 +52,14 @@ for x,label in [(-7,'25'),(0,'50'),(7,'25')]:
   bpy.ops.object.text_add(location=(x,y,.084));o=bpy.context.object;o.name='Court yard marking';o.data.body=label;o.data.align_x='CENTER';o.data.align_y='CENTER';o.data.size=1.05;o.rotation_euler.z=-math.pi/2;o.data.materials.append(mark)
   bpy.ops.object.convert(target='MESH')
 for y in [-8.6,8.6]:
- cube('Impact barrier',(0,y,.55),(29,.5,1.1),steel,.1)
- cube('Cyan rail',(0,y,.99),(28.8,.12,.1),armor)
- for x in range(-13,14,2): cube('Barrier brace',(x,y,.5),(.22,.75,1),steel)
+ # Leave the multiplier loop visible through a gap in the outer barrier.
+ center=(-1 if y>0 else 1)*32*(22.4/576)/1.5
+ lo,hi=center-1.05,center+1.05
+ for start,end in [(-14.5,lo),(hi,14.5)]:
+  cube('Impact barrier',((start+end)/2,y,.55),(end-start,.5,1.1),steel,.1)
+  cube('Cyan rail',((start+end)/2,y,.99),(end-start,.12,.1),armor)
+ for x in range(-13,14,2):
+  if not lo<x<hi: cube('Barrier brace',(x,y,.5),(.22,.75,1),steel)
 for x in [-14.2,14.2]:
  for y in [-5,5]: cube('End wall',(x,y,.5),(.5,7.3,1),steel)
  c=cyan if x<0 else orange
@@ -92,9 +97,22 @@ for y in [-4,4]:
  bpy.ops.mesh.primitive_uv_sphere_add(segments=24,ring_count=12,radius=1,location=(0,y,.15));o=bpy.context.object;o.name='ScoreDome';o.scale.z=.6;o.data.materials.append(rubber)
  for face in o.data.polygons: face.use_smooth=True
  bpy.ops.mesh.primitive_torus_add(major_radius=1.04,minor_radius=.07,location=(0,y,.12));bpy.context.object.data.materials.append(armor)
-for y in [-11.2,11.2]:
- ramp=cube('Multiplier ramp',(0,y,.5),(2.5,1.7,.3),steel,.1);ramp.rotation_euler.x=math.copysign(.35,y)
- for x in [-.55,.55]:cube('Multiplier lamp',(x,y,1.1),(.32,.4,.25),white)
+# Original multiplier motion is a narrow loop beside each touchline.
+with open(os.path.join(ROOT,'assets','multiplier-paths.json')) as f: multiplier_paths=json.load(f)
+unit=22.4/576
+for side,path_index in [(0,0),(1,2)]:
+ origin_x,origin_y=(0,576) if side==0 else (640,512)
+ center_x=(576-origin_y-32)*unit
+ center_y=-(origin_x+(32 if side==0 else -32)-320)*unit
+ cube('Multiplier housing',(center_x,center_y,.16),(2.75,2.0,.26),steel,.12)
+ # Groove follows the numeric path; glTF maps Blender Y to negative game Z.
+ curve=bpy.data.curves.new('Multiplier loop groove','CURVE');curve.dimensions='3D';curve.bevel_depth=.075;curve.bevel_resolution=3
+ spline=curve.splines.new('POLY');spline.points.add(len(multiplier_paths[path_index])-1)
+ for point,(px,py) in zip(spline.points,multiplier_paths[path_index]):
+  point.co=((576-origin_y-py)*unit,-(origin_x+px-320)*unit,.32,1)
+ obj=bpy.data.objects.new('MultiplierLoop',curve);bpy.context.collection.objects.link(obj);obj.data.materials.append(armor)
+ bpy.context.view_layer.objects.active=obj;obj.select_set(True);bpy.ops.object.convert(target='MESH');obj.select_set(False)
+ for lamp in range(2): cube('Multiplier lamp',(center_x+(lamp-.5)*.5,center_y,.4),(.26,.26,.10),white,.04)
 # Side portals at the two original warp latitudes, plus two electro-bounces.
 for x in [-8,8]:
  for y in [-11.2,11.2]:
@@ -107,6 +125,7 @@ for x,y in [(16,-11.2),(-16,11.2)]:
 for x in [-21.1,21.1]:
  cube('GoalShield_'+str(int(x)),(x,0,1),(.16,3.7,1.9),cyan,.03)
 export('arena')
+if '--arena-only' in sys.argv: sys.exit(0)
 for name,color in [('player-cyan',cyan),('player-orange',orange)]:
  # Broad human silhouette: silver pads, enamel helmet, face, articulated limbs.
  cube('Hip belt',(0,0,.72),(.58,.40,.24),rubber,.09)

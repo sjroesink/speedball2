@@ -1,3 +1,4 @@
+import { enterMultiplier, runMultiplier } from "./multiplier.js";
 import {
   setBallSpeed,
   slowBall,
@@ -210,12 +211,6 @@ export function wallBonus(s) {
   const b = s.ball;
   if (b.lastTouch < 0) return;
   const t = s.players[b.lastTouch].team;
-  if (Math.abs(b.x) < 1.3) {
-    if (b.h > 1.7) return;
-    s.multiplier = clamp(s.multiplier + (t === 0 ? 1 : -1), -2, 2);
-    event(s, 9, t, s.multiplier, b.x, b.z, b.h);
-    return;
-  }
   const group = b.z > 0 ? 1 : 0,
     sign = group === 0 ? 1 : -1,
     index = Math.round((b.x * sign - 5) / 2);
@@ -486,11 +481,14 @@ export function step(
     return;
   }
   if (b.owner >= 0) {
+    b.multiplierPath = 0;
     const p = s.players[b.owner];
     b.x = p.x + p.fx * 0.5;
     b.z = p.z + p.fz * 0.5;
     b.h = 1;
     b.vx = b.vz = b.vh = 0;
+  } else if (enterMultiplier(b) ? runMultiplier(s, 0) : runMultiplier(s, dt)) {
+    // The original multiplier animation owns the ball position while inside.
   } else {
     slowBall(b, dt);
     b.x += b.vx * dt;

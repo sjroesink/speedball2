@@ -136,14 +136,10 @@ func TestStarBonusExtinguishAndMultiplier(t *testing.T) {
 	}
 	s.Ball = Ball{X: 0, Z: 11.1, H: 1, VZ: 24, Owner: -1, LastTouch: 7}
 	s.step(dt, [2]Input{})
-	if s.Multiplier != 1 || s.points(0, 2) != 3 || s.points(1, 10) != 10 {
-		t.Fatal("multiplier ownership")
+	if s.Multiplier != 0 {
+		t.Fatal("wall hit must not activate a multiplier")
 	}
-	s.Ball = Ball{X: 0, Z: 11.1, H: 1, VZ: 24, Owner: -1, LastTouch: 7}
-	s.step(dt, [2]Input{})
-	if s.points(0, 10) != 20 {
-		t.Fatal("double multiplier")
-	}
+
 }
 func TestCentralDomePointsAndBounce(t *testing.T) {
 	s := isolated()

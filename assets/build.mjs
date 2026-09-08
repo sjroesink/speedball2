@@ -6,7 +6,15 @@ const blender =
     : "blender");
 const result = spawnSync(
   blender,
-  ["--background", "--python-exit-code", "1", "--python", "assets/build.py"],
+  [
+    "--background",
+    "--python-exit-code",
+    "1",
+    "--python",
+    "assets/build.py",
+    "--",
+    ...process.argv.slice(2),
+  ],
   { stdio: "inherit" },
 );
 if (result.error) console.error(result.error.message);
