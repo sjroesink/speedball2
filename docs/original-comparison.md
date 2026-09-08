@@ -258,3 +258,12 @@ Changed both actual entry points to 25 Hz: the training accumulator calls simula
 The original PAL loop waits two video frames per gameplay tick. This change aligns runtime cadence and removes 60 Hz quantization from AI reaction decisions in normal play. It does not yet reproduce the original within-tick ordering, integer position integration, animation opcode timeline or injury/pickup sequences. Legacy small-step tests still exercise the parameterized simulation at other dt values; the runtime and full-match test now use the original rate.
 
 All 90 JavaScript tests, Go tests/vet and the production build pass. New paired tests verify 25 ticks per match second and a released fire counter producing exactly one low throw at the new cadence. The full Go AI match completes within position and wire-budget bounds at 25 Hz. Backend and both browser clients were restarted for the demo. Full gameplay and auditory parity remain unproven.
+
+
+## Fidelity audit: catches within the player update
+
+Moved catch handling out of the post-motion ball pass and into each selected player's update before its input/action/motion. Cache all player-to-ball distances before entering the player pass, then process roster indices with team two first, matching step_sprites at 0xe7ce. The same cached distance remains valid for later players even if an earlier player changes the ball state; possession, action and charge eligibility are still read when that player is processed. Direct catch helper tests retain their immediate-distance mode.
+
+Paired integration tests now distinguish a fast ball entering range during motion (caught next tick) from one already in range and moving away (caught before motion), and verify contested team-two-first order through the complete simulation. This advances within-tick fidelity but does not finish it: hardware checks remain after ball motion, timers still decrement before player thinking, and tackle/collision resolution remains a later pass. Original animation sequencing and medical/pickup logic also remain open.
+
+All 93 JavaScript tests, Go tests/vet and the production build pass. Restarted the backend and opened the updated training demo. Full original gameplay parity and listening-based audio verification remain incomplete.

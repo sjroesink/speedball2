@@ -300,8 +300,15 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		}
 	}
 	s.selectPlayers()
-	for i := range s.Players {
+	var catchDistances [18]int
+	for i, p := range s.Players {
+		catchDistances[i] = referenceDistance(p.X-b.X, p.Z-b.Z)
+	}
+	// step_sprites interleaves the teams, starting with team two.
+	for order := range s.Players {
+		i := order/2 + (1-order%2)*9
 		p := &s.Players[i]
+		s.catchBallAt(i, &catchDistances)
 		if p.Stun > 0 {
 			p.moveX, p.moveZ = 0, 0
 			continue
@@ -569,12 +576,12 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			b.DomeFraction = math.Max(0, b.DomeFraction-math.Floor(b.DomeFraction+1e-9))
 			s.domeBounce()
 		}
-		s.catchBall()
 	}
 	s.previous = inputs
 }
 
-func (s *State) catchBall() {
+func (s *State) catchBall() { s.catchBallAt(-1, nil) }
+func (s *State) catchBallAt(only int, distances *[18]int) {
 	b := &s.Ball
 	if b.Owner >= 0 || b.MultiplierPath != 0 {
 		return
@@ -582,6 +589,9 @@ func (s *State) catchBall() {
 	for roster := 0; roster < 9; roster++ {
 		for _, team := range []int{1, 0} {
 			i := team*9 + roster
+			if only >= 0 && i != only {
+				continue
+			}
 			p := &s.Players[i]
 			if s.Controlled[team] != i || p.Stun > 0 || p.Health <= 0 || p.Action == 3 {
 				continue
@@ -589,7 +599,11 @@ func (s *State) catchBall() {
 			if b.FlightKind != 0 && b.FlightStage > 2 && p.Action != 2 || b.FlightKind == 0 && b.H > 1.25+jumpHeight(*p) {
 				continue
 			}
-			if referenceDistance(p.X-b.X, p.Z-b.Z) > 16 {
+			distance := referenceDistance(p.X-b.X, p.Z-b.Z)
+			if distances != nil {
+				distance = distances[i]
+			}
+			if distance > 16 {
 				continue
 			}
 			if b.Charged && b.Electric > 0 && b.LastTouch >= 0 && p.Team != s.Players[b.LastTouch].Team && !s.active(10, p.Team) {

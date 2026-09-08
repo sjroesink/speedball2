@@ -356,8 +356,14 @@ export function step(
     if (p.actionTime === 0) p.action = 0;
   }
   selectPlayers(s);
-  for (let i = 0; i < s.players.length; i++) {
+  const catchDistances = s.players.map((p) =>
+    referenceDistance(p.x - b.x, p.z - b.z),
+  );
+  // step_sprites processes team two then team one at each roster index.
+  for (let order = 0; order < s.players.length; order++) {
+    const i = Math.floor(order / 2) + (order % 2 === 0 ? 9 : 0);
     const p = s.players[i];
+    catchBall(s, i, catchDistances);
     if (p.stun > 0) {
       p.moveX = p.moveZ = 0;
       continue;
@@ -610,7 +616,6 @@ export function step(
       );
       domeBounce(s);
     }
-    catchBall(s);
   }
   s.previous = inputs.map((u) => ({ ...u }));
 }
@@ -640,13 +645,14 @@ export function matchClock(s, dt) {
 }
 
 // get_ball is called only from control_player for the selected player of each team.
-export function catchBall(s) {
+export function catchBall(s, only = -1, distances = null) {
   const b = s.ball;
   if (b.owner >= 0 || b.multiplierPath) return;
   for (let roster = 0; roster < 9; roster++)
     for (const team of [1, 0]) {
       const i = team * 9 + roster,
         p = s.players[i];
+      if (only >= 0 && i !== only) continue;
       if (
         s.controlled[team] !== i ||
         p.stun > 0 ||
@@ -660,7 +666,11 @@ export function catchBall(s) {
           : b.h > 1.25 + jumpHeight(p)
       )
         continue;
-      if (referenceDistance(p.x - b.x, p.z - b.z) > 16) continue;
+      if (
+        (distances ? distances[i] : referenceDistance(p.x - b.x, p.z - b.z)) >
+        16
+      )
+        continue;
       if (
         b.charged &&
         b.electric > 0 &&
