@@ -12,6 +12,7 @@ const (
 
 // Actions are replicated, including misses: 1 slide, 2 jump, 3 throw, 4 hit.
 type Player struct {
+	moveX, moveZ                float64
 	Stats, StatBackup           [8]int
 	GearBackup, GearPowerBackup int
 	X, Z                        float64
@@ -289,6 +290,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 	for i := range s.Players {
 		p := &s.Players[i]
 		if p.Stun > 0 {
+			p.moveX, p.moveZ = 0, 0
 			continue
 		}
 		t := p.Team
@@ -300,6 +302,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			dz = -dz
 		}
 		if s.active(1, 1-t) {
+			p.moveX, p.moveZ = 0, 0
 			continue
 		}
 		if !human {
@@ -319,11 +322,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				tx = b.X + b.VX*lead
 				tz = b.Z + b.VZ*lead
 			} else {
-				tx += clamp(b.X*.35, -6, 6)
-				if b.Owner >= 0 && s.Players[b.Owner].Team == t {
-					tx += d * 5
-				}
-				tz += b.Z * .18
+				tx, tz = s.supportTarget(i)
 			}
 			dx, dz = normalized(tx-p.X, tz-p.Z)
 			if math.Hypot(tx-p.X, tz-p.Z) < .3 {
@@ -418,6 +417,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		if s.active(1, 1-t) {
 			speed = 0
 		}
+		p.moveX, p.moveZ = dx*speed, dz*speed
 		p.X = clamp(p.X+dx*speed*dt, -playerLimitX, playerLimitX)
 		p.Z = clamp(p.Z+dz*speed*dt, -playerLimitZ, playerLimitZ)
 		if i%9 == 0 {

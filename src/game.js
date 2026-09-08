@@ -1,3 +1,4 @@
+import { supportTarget } from "./support.js";
 import { emit as event } from "./events.js";
 import { enterMultiplier, runMultiplier } from "./multiplier.js";
 import {
@@ -340,7 +341,10 @@ export function step(
   selectPlayers(s);
   for (let i = 0; i < s.players.length; i++) {
     const p = s.players[i];
-    if (p.stun > 0) continue;
+    if (p.stun > 0) {
+      p.moveX = p.moveZ = 0;
+      continue;
+    }
     const t = p.team,
       human = humans[t] && s.controlled[t] === i;
     let u = inputs[t],
@@ -350,7 +354,10 @@ export function step(
       dx = -dx;
       dz = -dz;
     }
-    if (active(s, 1, 1 - t)) continue;
+    if (active(s, 1, 1 - t)) {
+      p.moveX = p.moveZ = 0;
+      continue;
+    }
     if (!human) {
       const d = direction(s, t);
       let [tx, tz] = launchPosition(s, i);
@@ -364,9 +371,7 @@ export function step(
         tx = b.x + b.vx * (p.gear === 21 ? 0.3 : 0.15);
         tz = b.z + b.vz * (p.gear === 21 ? 0.3 : 0.15);
       } else {
-        tx += clamp(b.x * 0.35, -6, 6);
-        if (b.owner >= 0 && s.players[b.owner].team === t) tx += d * 5;
-        tz += b.z * 0.18;
+        [tx, tz] = supportTarget(s, i);
       }
       [dx, dz] = norm(tx - p.x, tz - p.z);
       if (Math.hypot(tx - p.x, tz - p.z) < 0.3) {
@@ -458,6 +463,8 @@ export function step(
     const speed = active(s, 1, 1 - t)
       ? 0
       : movementSpeed(p, b.owner === i, keeperBlock);
+    p.moveX = dx * speed;
+    p.moveZ = dz * speed;
     p.x = clamp(p.x + dx * speed * dt, -playerLimitX, playerLimitX);
     p.z = clamp(p.z + dz * speed * dt, -playerLimitZ, playerLimitZ);
     if (i % 9 === 0) {
