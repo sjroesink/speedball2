@@ -1,3 +1,4 @@
+import { emit } from "./events.js";
 import { multiplierPaths } from "./multiplier-paths.js";
 import { velocityUnit } from "./attributes.js";
 import { setBallSpeed } from "./ball.js";
@@ -68,15 +69,7 @@ export function runMultiplier(s, dt) {
       );
       if (next !== s.multiplier) {
         s.multiplier = next;
-        s.event = {
-          id: s.event.id + 1,
-          kind: 9,
-          actor: team,
-          target: next,
-          x: b.x,
-          z: b.z,
-          h: b.h,
-        };
+        emit(s, 9, team, next, b.x, b.z, b.h);
       }
     }
   }

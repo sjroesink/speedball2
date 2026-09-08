@@ -95,6 +95,7 @@ export async function start() {
   function enter() {
     inGame = true;
     menu = false;
+    audio.setActive(!document.hidden);
     document.body.classList.add("in-game");
     $("pauseMenu").classList.add("hidden");
     view.setFollow(true);
@@ -103,6 +104,7 @@ export async function start() {
   }
   function toggleMenu() {
     menu = !menu;
+    audio.setActive(inGame && !menu && !document.hidden);
     keys.clear();
     send();
     $("pauseMenu").classList.toggle("hidden", !menu);
@@ -112,6 +114,7 @@ export async function start() {
   }
   function disconnect() {
     audio.reset();
+    audio.setActive(false);
     fire = tackleId = lobId = 0;
     attempt++;
     const old = transport;
@@ -396,6 +399,7 @@ export async function start() {
   $("gameMenu").onclick = toggleMenu;
   $("resume").onclick = () => {
     menu = false;
+    audio.setActive(inGame && !document.hidden);
     $("pauseMenu").classList.add("hidden");
     document.activeElement.blur();
   };

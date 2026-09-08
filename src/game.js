@@ -1,3 +1,4 @@
+import { emit as event } from "./events.js";
 import { enterMultiplier, runMultiplier } from "./multiplier.js";
 import {
   setBallSpeed,
@@ -115,9 +116,6 @@ export function resetPitch(s) {
     electric: 0,
   };
   s.charge = [0, 0];
-}
-function event(s, kind, actor, target, x, z, h) {
-  s.event = { id: s.event.id + 1, kind, actor, target, x, z, h };
 }
 export const jumpHeight = (p) =>
   p.action === 2 && p.actionTime > 0

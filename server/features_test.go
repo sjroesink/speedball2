@@ -203,6 +203,9 @@ func TestFeatureSnapshot(t *testing.T) {
 			s.Players[i].Stats[j] = 100 + i
 		}
 	}
+	for i := 0; i < 20; i++ {
+		s.event(3+i%3, 7, -1, float64(i), -2, 1)
+	}
 	raw := encodeSnapshot(Snapshot{State: s, Room: "ABCDEF", Names: [2]string{"Blue", "Red"}, Started: true})
 	if len(raw) > 1200 {
 		t.Fatal("snapshot exceeds datagram", len(raw))

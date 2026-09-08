@@ -124,11 +124,12 @@ export class ArenaAudio {
     if (state.over && !this.wasOver) this.play("fulltime");
     this.wasPlaying = playing;
     this.wasOver = state.over;
-    const e = state.event;
-    if (e.id <= this.lastEvent) return;
-    this.lastEvent = e.id;
-    // The camera faces along the court: transverse Z is screen left/right.
-    this.play(e.kind, Math.max(-0.8, Math.min(0.8, e.z / 14)));
+    for (const e of state.events?.length ? state.events : [state.event]) {
+      if (e.id <= this.lastEvent) continue;
+      this.lastEvent = e.id;
+      // The camera faces along the court: transverse Z is screen left/right.
+      this.play(e.kind, Math.max(-0.8, Math.min(0.8, e.z / 14)));
+    }
   }
 
   play(kind, pan = 0) {

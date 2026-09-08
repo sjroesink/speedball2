@@ -24,7 +24,7 @@ export function decodeSnapshot(bytes) {
       return n;
     },
     q = () => i16() / 1000;
-  if (u8() !== 83 || u8() !== 66 || u8() !== 50 || u8() !== 4)
+  if (u8() !== 83 || u8() !== 66 || u8() !== 50 || u8() !== 5)
     throw new Error("Server version mismatch. Restart the game server.");
   const s = { tick: u32(), time: f(), period: u8() },
     flags = u8(),
@@ -82,6 +82,17 @@ export function decodeSnapshot(bytes) {
     z: q(),
     wait: q(),
     life: q(),
+  }));
+  const eventCount = u8();
+  if (eventCount > 16) throw new Error("Invalid event history length.");
+  s.events = Array.from({ length: eventCount }, () => ({
+    id: u32(),
+    kind: u8(),
+    actor: i8(),
+    target: i8(),
+    x: f(),
+    z: f(),
+    h: f(),
   }));
   const str = () => {
     const n = u8(),

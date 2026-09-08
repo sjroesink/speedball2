@@ -1,3 +1,4 @@
+import { emit } from "./events.js";
 import { warpBall, setBallSpeed, startFlight } from "./ball.js";
 import {
   defaultStats,
@@ -33,8 +34,7 @@ export const powerNames = [
   "STAMINA",
   "INTELLIGENCE",
 ];
-const emit = (s, kind, actor, target, x = 0, z = 0, h = 0.5) =>
-  (s.event = { id: s.event.id + 1, kind, actor, target, x, z, h });
+
 const cap = (x, a, b) => Math.max(a, Math.min(b, x));
 export function initFeatures(s) {
   s.effect = { kind: 0, team: -1, time: 0 };

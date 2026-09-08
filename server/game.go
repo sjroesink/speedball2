@@ -46,6 +46,8 @@ type Event struct {
 	Actor, Target int
 }
 type State struct {
+	Events            [16]Event
+	EventCount        int
 	ClockPhase        float64
 	RNG               [2]uint32
 	Players           [18]Player
@@ -135,6 +137,12 @@ func eightWay(x, z float64) (float64, float64) {
 }
 func (s *State) event(kind, actor, target int, x, z, h float64) {
 	s.Event = Event{s.Event.ID + 1, kind, x, z, h, actor, target}
+	if s.EventCount == len(s.Events) {
+		copy(s.Events[:], s.Events[1:])
+		s.EventCount--
+	}
+	s.Events[s.EventCount] = s.Event
+	s.EventCount++
 }
 func jumpHeight(p Player) float64 {
 	if p.Action == 2 && p.ActionTime > 0 {
