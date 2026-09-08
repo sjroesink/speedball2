@@ -69,7 +69,7 @@ The launcher uses Blender 5.2's standard Windows installation path or `blender` 
 
 ## Architecture
 
-- `server/game.go`, `server/features.go`, `server/bonuses.go`: 60 Hz authoritative simulation.
+- `server/game.go`, `server/features.go`, `server/bonuses.go`: 25 Hz authoritative simulation, matching the original PAL gameplay cadence. Snapshots are sent every simulation tick; rendering remains independent.
 - `server/main.go`: rooms, sessions, origin checks and certificates.
 - `server/wire.go`, `src/wire.js`: binary protocol v3. Complete snapshots including 18 players and all match features remain below 1200 bytes.
 - Input and snapshots travel as WebTransport datagrams. Sequence numbers reject stale packets; action counters retain short button presses between ticks. The server accepts no client positions or scores and neutralizes movement after 300 ms without input.

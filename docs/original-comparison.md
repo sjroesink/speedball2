@@ -249,3 +249,12 @@ Replaced the AI's nearest-angle steering and 0.3-world-unit circular stopping ra
 Both simulations use the same rules. This does not yet port the far-target opcode-index gate, selected-player retargeting on arrival, the original action animations or global update order. The host still integrates movement continuously and converts coordinates to original units for the direction/arrival calculation; full integer 25 Hz simulation remains outstanding.
 
 All 88 JavaScript tests, Go tests/vet and the production build pass. Paired boundary cases cover half-axis ties, the 32-unit box, initial versus continuing direction, independent arrival, and strict four-unit exclusion. Restarted the backend and opened the updated training demo. Full AI, timing, medical sequencing and listening-based audio verification remain incomplete.
+
+
+## Fidelity audit: runtime simulation cadence
+
+Changed both actual entry points to 25 Hz: the training accumulator calls simulationStep = 1/25 and the Go hub ticks at the same rate. Online snapshots are now emitted each simulation tick (25 per second), replacing the old every-second-tick 30 Hz transmission on a 60 Hz simulation. Rendering remains on requestAnimationFrame. Existing monotonically increasing action counters retain short press/release inputs between simulation samples.
+
+The original PAL loop waits two video frames per gameplay tick. This change aligns runtime cadence and removes 60 Hz quantization from AI reaction decisions in normal play. It does not yet reproduce the original within-tick ordering, integer position integration, animation opcode timeline or injury/pickup sequences. Legacy small-step tests still exercise the parameterized simulation at other dt values; the runtime and full-match test now use the original rate.
+
+All 90 JavaScript tests, Go tests/vet and the production build pass. New paired tests verify 25 ticks per match second and a released fire counter producing exactly one low throw at the new cadence. The full Go AI match completes within position and wire-budget bounds at 25 Hz. Backend and both browser clients were restarted for the demo. Full gameplay and auditory parity remain unproven.

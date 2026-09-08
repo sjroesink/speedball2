@@ -132,9 +132,8 @@ func (h *Hub) connect(session *webtransport.Session, code, name string) {
 	}
 }
 func (h *Hub) run(done <-chan os.Signal) {
-	ticker := time.NewTicker(time.Second / 60)
+	ticker := time.NewTicker(time.Second / simulationRate)
 	defer ticker.Stop()
-	count := 0
 	for {
 		select {
 		case <-done:
@@ -147,7 +146,6 @@ func (h *Hub) run(done <-chan os.Signal) {
 			var packets []outbound
 			var expired []*Peer
 			h.Lock()
-			count++
 			for code, r := range h.Rooms {
 				if !r.Started && now.Sub(r.Created) > 10*time.Minute {
 					for _, p := range r.Peers {
@@ -168,25 +166,25 @@ func (h *Hub) run(done <-chan os.Signal) {
 					}
 				}
 				if r.Started {
-					r.State.step(1.0/60, inputs)
+					r.State.step(simulationStep, inputs)
 				} else {
 					r.State.Tick++
 				}
-				if count%2 == 0 {
-					for team, p := range r.Peers {
-						if p == nil {
-							continue
-						}
-						names := [2]string{"Challenger", "Waiting for player"}
-						for i, peer := range r.Peers {
-							if peer != nil {
-								names[i] = peer.Name
-							}
-						}
-						data := encodeSnapshot(Snapshot{r.State, team, code, r.Started, names})
-						packets = append(packets, outbound{p, data})
+
+				for team, p := range r.Peers {
+					if p == nil {
+						continue
 					}
+					names := [2]string{"Challenger", "Waiting for player"}
+					for i, peer := range r.Peers {
+						if peer != nil {
+							names[i] = peer.Name
+						}
+					}
+					data := encodeSnapshot(Snapshot{r.State, team, code, r.Started, names})
+					packets = append(packets, outbound{p, data})
 				}
+
 			}
 			h.Unlock()
 			for _, p := range expired {

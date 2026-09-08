@@ -32,6 +32,8 @@ import {
   featureStep,
   sideFeature,
 } from "./features.js";
+export const simulationRate = 25;
+export const simulationStep = 1 / simulationRate;
 // Local training counterpart of server/game.go. Coordinates: X upfield, Z across.
 // Launch coordinates from the original player records (terrain X, Y).
 const launchPositions = [

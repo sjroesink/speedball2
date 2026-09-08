@@ -171,7 +171,7 @@ func TestHalftimeAndMatchEnd(t *testing.T) {
 func TestFullMatchAndWireBudget(t *testing.T) {
 	s := initial()
 	for i := 0; i < 15000 && !s.Over; i++ {
-		s.simulate(dt, [2]Input{}, [2]bool{false, false})
+		s.simulate(simulationStep, [2]Input{}, [2]bool{false, false})
 		for _, p := range s.Players {
 			if math.IsNaN(p.X) || math.Abs(p.X) > playerLimitX+0.001 || math.Abs(p.Z) > playerLimitZ+0.001 {
 				t.Fatal("invalid body position")

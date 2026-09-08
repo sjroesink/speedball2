@@ -3,11 +3,13 @@ package main
 import "math"
 
 const (
-	pitchX     = 21.
-	pitchZ     = 11.2
-	goalWidth  = 1.85
-	goalHeight = 2.
-	gravity    = 18.
+	simulationRate = 25
+	simulationStep = 1.0 / simulationRate
+	pitchX         = 21.
+	pitchZ         = 11.2
+	goalWidth      = 1.85
+	goalHeight     = 2.
+	gravity        = 18.
 )
 
 // Actions are replicated, including misses: 1 slide, 2 jump, 3 throw, 4 hit.

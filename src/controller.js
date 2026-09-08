@@ -1,6 +1,6 @@
 import { ArenaAudio } from "./audio.js";
 import { powerNames } from "./features.js";
-import { initial, step, direction, clamp } from "./game.js";
+import { initial, step, direction, clamp, simulationStep } from "./game.js";
 import { decodeSnapshot } from "./wire.js";
 import { ArenaRenderer } from "./renderer.js";
 
@@ -265,10 +265,10 @@ export async function start() {
     audio.setActive(inGame && !menu && !document.hidden);
     if (playing && !online && !menu) {
       acc += dt;
-      while (acc >= 1 / 60) {
-        step(state, 1 / 60, input());
+      while (acc >= simulationStep) {
+        step(state, simulationStep, input());
         audio.observe(state, true);
-        acc -= 1 / 60;
+        acc -= simulationStep;
       }
     }
     audio.observe(state, playing);
