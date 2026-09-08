@@ -1,3 +1,4 @@
+import { ArenaAudio } from "./audio.js";
 import { powerNames } from "./features.js";
 import { initial, step, direction, clamp } from "./game.js";
 import { decodeSnapshot } from "./wire.js";
@@ -6,6 +7,7 @@ import { ArenaRenderer } from "./renderer.js";
 export async function start() {
   const $ = (id) => document.getElementById(id);
   const view = new ArenaRenderer($("viewport"));
+  const audio = new ArenaAudio();
   let state = initial(),
     playing = false,
     inGame = false,
@@ -19,13 +21,11 @@ export async function start() {
     lastTick = -1,
     previous = performance.now(),
     acc = 0,
-    sound = false,
-    audio,
     lastEvent = 0,
     eventLife = 0;
   $("viewport").insertAdjacentHTML(
     "beforeend",
-    `<div class="game-toolbar"><button id="gameMenu">☰ MENU</button><span id="matchRoom">TRAINING</span><button id="gameFullscreen">⛶ FULL SCREEN</button></div><div class="game-feedback"><strong id="actionLabel">READY</strong><div class="charge-meter"><i id="chargeFill"></i></div><small id="actionHint">SPACE: ACTION · E: LOB · SHIFT: TACKLE</small></div><div class="power-hud"><strong id="powerStatus">NO POWER-UP</strong><span id="healthStatus"></span><span id="gearStatus"></span></div><div class="bonus-hud"><span id="bonus0">☆☆☆☆☆ · ×1</span><b>SCORE TARGETS</b><span id="bonus1">☆☆☆☆☆ · ×1</span></div><div id="eventToast" class="event-toast hidden" role="status"></div><div class="game-instructions">WASD / ARROWS <b>MOVE & AIM</b> &nbsp; SPACE <b>TAP: LOW · HOLD: HIGH</b></div><div id="pauseMenu" class="pause-menu hidden"><h2>TIME OUT</h2><p id="pauseText">Training is paused.</p><button id="resume" class="primary">RESUME →</button><button id="leave">BACK TO LOBBY</button></div>`,
+    `<div class="game-toolbar"><button id="gameMenu">☰ MENU</button><span id="matchRoom">TRAINING</span><button id="gameSound" aria-pressed="false">SOUND OFF</button><button id="gameFullscreen">⛶ FULL SCREEN</button></div><div class="game-feedback"><strong id="actionLabel">READY</strong><div class="charge-meter"><i id="chargeFill"></i></div><small id="actionHint">SPACE: ACTION · E: LOB · SHIFT: TACKLE</small></div><div class="power-hud"><strong id="powerStatus">NO POWER-UP</strong><span id="healthStatus"></span><span id="gearStatus"></span></div><div class="bonus-hud"><span id="bonus0">☆☆☆☆☆ · ×1</span><b>SCORE TARGETS</b><span id="bonus1">☆☆☆☆☆ · ×1</span></div><div id="eventToast" class="event-toast hidden" role="status"></div><div class="game-instructions">WASD / ARROWS <b>MOVE & AIM</b> &nbsp; SPACE <b>TAP: LOW · HOLD: HIGH</b></div><div id="pauseMenu" class="pause-menu hidden"><h2>TIME OUT</h2><p id="pauseText">Training is paused.</p><button id="resume" class="primary">RESUME →</button><button id="leave">BACK TO LOBBY</button></div>`,
   );
   const keys = new Set();
   let fire = 0,
@@ -111,6 +111,7 @@ export async function start() {
       : "Training is paused.";
   }
   function disconnect() {
+    audio.reset();
     fire = tackleId = lobId = 0;
     attempt++;
     const old = transport;
@@ -224,6 +225,7 @@ export async function start() {
         state = msg.state;
         team = msg.team;
         playing = msg.started && !state.over;
+        audio.observe(state, playing);
         $("homeName").textContent = msg.names[0];
         $("awayName").textContent = msg.names[1];
         $("roomShare").classList.remove("hidden");
@@ -253,36 +255,20 @@ export async function start() {
       $("pauseText").textContent = message;
     }
   }
-  function tone(kind) {
-    if (!sound) return;
-    audio ??= new AudioContext();
-    const o = audio.createOscillator(),
-      g = audio.createGain();
-    o.connect(g);
-    g.connect(audio.destination);
-    o.type = kind === 4 ? "sawtooth" : "sine";
-    const freq = kind === 4 ? 95 : kind === 5 ? 430 : kind === 7 ? 740 : 560;
-    o.frequency.setValueAtTime(freq, audio.currentTime);
-    o.frequency.exponentialRampToValueAtTime(
-      freq * 0.45,
-      audio.currentTime + 0.16,
-    );
-    g.gain.setValueAtTime(0.07, audio.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.2);
-    o.start();
-    o.stop(audio.currentTime + 0.2);
-  }
   function frame(now) {
     requestAnimationFrame(frame);
     const dt = Math.min((now - previous) / 1000, 0.05);
     previous = now;
+    audio.setActive(inGame && !menu && !document.hidden);
     if (playing && !online && !menu) {
       acc += dt;
       while (acc >= 1 / 60) {
         step(state, 1 / 60, input());
+        audio.observe(state, true);
         acc -= 1 / 60;
       }
     }
+    audio.observe(state, playing);
     view.draw(state, dt, team);
     const p = state.players[state.controlled[team]],
       owned = state.ball.owner === state.controlled[team];
@@ -376,7 +362,6 @@ export async function start() {
         $("eventToast").classList.remove("hidden");
         eventLife = e.kind === 6 ? 3 : e.kind === 7 ? 1.4 : 0.7;
       }
-      tone(e.kind);
     }
     eventLife -= dt;
     if (eventLife <= 0) $("eventToast").classList.add("hidden");
@@ -417,10 +402,20 @@ export async function start() {
   $("leave").onclick = leave;
   $("gameFullscreen").onclick = fullscreen;
   $("fullscreen").onclick = fullscreen;
-  $("sound").onclick = () => {
-    sound = !sound;
-    $("sound").textContent = sound ? "SOUND ON" : "SOUND OFF";
-  };
+  async function toggleSound() {
+    if (inGame) document.activeElement.blur();
+    const enabled = await audio.enable(!audio.enabled);
+    for (const id of ["sound", "gameSound"]) {
+      $(id).textContent = enabled ? "SOUND ON" : "SOUND OFF";
+      $(id).setAttribute("aria-pressed", String(enabled));
+    }
+  }
+  $("sound").setAttribute("aria-pressed", "false");
+  $("sound").onclick = toggleSound;
+  $("gameSound").onclick = toggleSound;
+  document.addEventListener("visibilitychange", () => {
+    audio.setActive(inGame && !menu && !document.hidden);
+  });
   document.querySelectorAll("[data-page]").forEach(
     (b) =>
       (b.onclick = () => {

@@ -93,6 +93,8 @@ The Dockerfile builds the frontend and server in multiple stages. Publish `4433/
 
 ## Validation and scope
 
+Enable **SOUND ON** in the lobby or the full-screen toolbar. Original synthesized effects distinguish throws, catches, sliding, jumps, impacts, wall rebounds, scoring, pickups, warps, electric balls, injuries and substitutions. Whistles mark kickoff, halftime and full time. Effects use stereo position across the court, bounded polyphony and a compressor. Muting, opening the menu or hiding the tab stops current sounds. Audio starts only after pressing the sound button; no original commercial sound samples are included.
+
 ```powershell
 go test ./server
 go vet ./server
@@ -100,7 +102,7 @@ npm test
 npm run build
 ```
 
-Tests cover actions, throws, catches, collisions, scoring, power effects and expiry, injuries and substitutes, equipment, warp-gates, charged balls, goal locks and packet size. JavaScript tests decode an actual Go-generated protocol-v3 snapshot. Two local browser clients are used for WebTransport checks.
+Tests cover actions, throws, catches, collisions, scoring, power effects and expiry, injuries and substitutes, equipment, warp-gates, charged balls, goal locks, audio lifecycle and packet size. JavaScript tests decode an actual Go-generated protocol-v4 snapshot. Two local browser clients are used for WebTransport checks.
 
 This is an exhibition-match adaptation. Career/league management, transfers, persistent injuries between matches, ranked matchmaking, accounts, reconnect and touch controls are not included. Attribute values, damage, pickup timing and AI are tuned for this remake rather than emulated cycle for cycle. See [original-game comparison](docs/original-comparison.md) for source findings and differences.
 

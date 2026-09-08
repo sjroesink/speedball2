@@ -210,6 +210,9 @@ func TestFlightStageCatchAndGoal(t *testing.T) {
 		if s.Ball.Owner != expected {
 			t.Fatal("peak catch", jumping, s.Ball.Owner)
 		}
+		if jumping && s.Event.Kind != 16 {
+			t.Fatal("catch must emit audio event")
+		}
 	}
 	s := isolated()
 	s.Players[7].Stun = 10

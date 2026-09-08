@@ -530,6 +530,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				b.LastTouch = best
 				b.After = 0
 				s.Controlled[s.Players[best].Team] = best
+				s.event(16, best, -1, b.X, b.Z, b.H)
 			}
 		}
 	}

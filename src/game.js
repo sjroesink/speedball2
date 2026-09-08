@@ -566,6 +566,7 @@ export function step(
         b.lastTouch = best;
         b.after = 0;
         s.controlled[s.players[best].team] = best;
+        event(s, 16, best, -1, b.x, b.z, b.h);
       }
     }
   }

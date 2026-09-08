@@ -64,6 +64,9 @@ body.in-game {
   padding: 12px;
   pointer-events: auto;
 }
+#gameSound {
+  margin-left: auto;
+}
 .game-toolbar > span {
   position: absolute;
   left: 0;
