@@ -14,6 +14,11 @@ type Pickup struct {
 func (s *State) initFeatures() {
 	s.Effect = Effect{Team: -1}
 	s.Reserves = [2]int{3, 3}
+	for team := range s.Bench {
+		for i := range s.Bench[team] {
+			s.Bench[team][i] = defaultStats()
+		}
+	}
 	for i := range s.Pickups {
 		k := 13
 		if i < 2 {
@@ -128,20 +133,32 @@ func (s *State) medicalStep(dt float64) bool {
 			p.Stun = p.Injury
 			p.ActionTime = p.Injury
 			if p.Injury == 0 {
-				if s.Reserves[p.Team] > 0 {
-					s.Reserves[p.Team]--
-					p.Health = 100
-					p.Stats = defaultStats()
-					p.StatBackup = [8]int{}
-					p.Stun = 0
-					p.Action = 0
-					p.Gear = 0
-					p.Z = math.Copysign(10, p.Z)
-					s.event(15, i, s.Reserves[p.Team], p.X, p.Z, .5)
-				} else {
-					p.Stun = 10
-					p.Action = 4
+				outgoing := p.Stats
+				for j := range outgoing {
+					outgoing[j] = outgoing[j] / 10 * 10
 				}
+				bench := &s.Bench[p.Team]
+				p.Stats = bench[0]
+				bench[0] = bench[1]
+				bench[1] = bench[2]
+				bench[2] = outgoing
+				s.Reserves[p.Team] = len(bench)
+				p.Health = 100
+				p.StatBackup = [8]int{}
+				p.GearBackup, p.GearPowerBackup = 0, 0
+				p.Stun, p.ActionTime, p.Cooldown = 0, 0, 0
+				p.Action, p.Gear = 0, 0
+				p.keeperBlock, p.tackleResolved = false, false
+				p.X = -s.direction(p.Team) * 32 * (22.4 / 576)
+				side := 1.
+				if p.Z <= 0 {
+					side = -1
+				}
+				p.Z = side * 272 * (22.4 / 576)
+				p.FX, p.FZ = 0, -side
+				p.aiX, p.aiZ, p.aiWait = 0, 0, 1
+				p.aiTarget = true
+				s.event(15, i, len(bench), p.X, p.Z, .5)
 				s.Ball.Electric = 0
 				s.Ball.Charged = false
 			}

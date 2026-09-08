@@ -144,7 +144,7 @@ func TestElectroChargesAndShieldCatch(t *testing.T) {
 		t.Fatal("shield catch")
 	}
 }
-func TestInjuryMedicalAndNoReserves(t *testing.T) {
+func TestInjuryMedicalAndReserveRotation(t *testing.T) {
 	s := initial()
 	s.Players[16].Health = 1
 	s.damage(7, 16)
@@ -155,18 +155,17 @@ func TestInjuryMedicalAndNoReserves(t *testing.T) {
 	for i := 0; i < 361; i++ {
 		s.step(dt, [2]Input{})
 	}
-	if s.Time != clock || s.Reserves[1] != 2 || s.Players[16].Health != 100 {
+	if s.Time != clock || s.Reserves[1] != 3 || s.Players[16].Health != 100 {
 		t.Fatal("medical replacement")
 	}
-	s.Reserves[1] = 0
 	s.Players[16].Health = 1
 	s.Players[16].Stun = 0
 	s.damage(7, 16)
 	for i := 0; i < 361; i++ {
 		s.step(dt, [2]Input{})
 	}
-	if s.Players[16].Health != 0 || s.Score[0] != 20 || s.Reserves[1] != 0 {
-		t.Fatal("no reserves")
+	if s.Players[16].Health != 100 || s.Score[0] != 20 || s.Reserves[1] != 3 {
+		t.Fatal("reserve rotation")
 	}
 }
 func TestPickupRespawnAndEquipment(t *testing.T) {

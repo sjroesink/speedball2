@@ -163,7 +163,7 @@ test("electro-bounce gains multiplier charges and knocks an enemy down instead o
   assert.equal(s.ball.electric, 2);
   assert.equal(s.ball.charged, true);
 });
-test("injury awards points once, pauses clock, substitutes a reserve, preserves depleted reserves", () => {
+test("injury awards points once, pauses clock, rotates reserves without a substitution limit", () => {
   const s = initial();
   s.players[16].health = 1;
   damage(s, 7, 16);
@@ -173,14 +173,13 @@ test("injury awards points once, pauses clock, substitutes a reserve, preserves 
   for (let i = 0; i < 361; i++) step(s, dt, {});
   assert.equal(s.time, time);
   assert.equal(s.players[16].health, 100);
-  assert.equal(s.reserves[1], 2);
-  s.reserves[1] = 0;
+  assert.equal(s.reserves[1], 3);
   s.players[16].health = 1;
   s.players[16].stun = 0;
   damage(s, 7, 16);
   for (let i = 0; i < 361; i++) step(s, dt, {});
-  assert.equal(s.players[16].health, 0);
-  assert.equal(s.reserves[1], 0);
+  assert.equal(s.players[16].health, 100);
+  assert.equal(s.reserves[1], 3);
   assert.equal(s.score[0], 20);
 });
 test("pickups are collected once, respawn, cycle all powers and expose equipment", () => {

@@ -53,6 +53,7 @@ type Event struct {
 	Actor, Target int
 }
 type State struct {
+	Bench             [2][3][8]int
 	Events            [16]Event
 	EventCount        int
 	ClockPhase        float64
@@ -464,11 +465,15 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			speed = 0
 		}
 		p.moveX, p.moveZ = dx*speed, dz*speed
+		previousX := p.X
 		p.X = clamp(p.X+dx*speed*dt, -playerLimitX, playerLimitX)
 		p.Z = clamp(p.Z+dz*speed*dt, -playerLimitZ, playerLimitZ)
 		if i%9 == 0 {
 			d := s.direction(t)
-			p.X = d * clamp(p.X*d, -playerLimitX, -15)
+			advance := (p.X - previousX) * d
+			if advance > 0 && p.X*d > -384*(22.4/576) || advance < 0 && p.X*d < -playerLimitX {
+				p.X = previousX
+			}
 		}
 	}
 	// Resolve contacts in alternating order so equal teams get equal priority.

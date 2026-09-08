@@ -522,11 +522,17 @@ export function step(
       : movementSpeed(p, b.owner === i, keeperBlock);
     p.moveX = dx * speed;
     p.moveZ = dz * speed;
+    const previousX = p.x;
     p.x = clamp(p.x + dx * speed * dt, -playerLimitX, playerLimitX);
     p.z = clamp(p.z + dz * speed * dt, -playerLimitZ, playerLimitZ);
     if (i % 9 === 0) {
       const d = direction(s, t);
-      p.x = d * clamp(p.x * d, -playerLimitX, -15);
+      const advance = (p.x - previousX) * d;
+      if (
+        (advance > 0 && p.x * d > -384 * (22.4 / 576)) ||
+        (advance < 0 && p.x * d < -playerLimitX)
+      )
+        p.x = previousX;
     }
   }
   for (let o = 0; o < 18; o++) {

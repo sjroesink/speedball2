@@ -297,3 +297,12 @@ Loaded the exported GLB with Three.js and measured actual mesh world bounding bo
 ## Browser follow-up: narrow HUD overlap
 
 Separated toolbar controls, room status, scoreboard and power status below 850px. The scoreboard uses bounded grid columns and truncates team labels rather than overflowing. In the current 616px browser, measured rows are controls 14..54, room status 56..70.39, scoreboard 76..129 and power status 148..207; the previously observed overlap is gone. Inspected the running match screenshot and verified the production build. Other viewport sizes were not directly exercised in this check. Full original AI/action/medical sequencing and listening-based audio verification remain open.
+
+
+## Fidelity audit: rotating substitutes and entry positions
+
+Match.SubstitutePlayer and Person.CopySubstituteTo rotate bench slots 9,10,11 and put the outgoing player at the back. They copy the eight performance attributes, rounded down to tens for the outgoing player, while slot health/role remain initialized separately. Replaced the invented three-substitution limit with a three-entry attribute queue in each simulation. A fourth substitution can restore the first outgoing player's weakened attributes; reserves remain three. Bench arrays are owned by each state, including value-copy-safe Go snapshots. Actual named original rosters/identities remain unported.
+
+Medical completion now enters at terrain X 48/592, Y 576 +/-32 according to starting direction, targets center (320,576) and sets the original 25-tick AI timer. Reset gear and stale action state. Replaced the keeper's unconditional positional clamp with directional zone checks from Player.FB6C, allowing an entering keeper outside the zone to travel back instead of teleporting into it. The six-second evacuation is still an adaptation: original medic travel, pickup and return animation states remain unfinished.
+
+All 99 JavaScript tests, Go tests/vet and the production build pass. Paired tests cover four substitutions, bench order, attribute rounding, all side/half entry combinations and cleared gear backups. Restarted the backend and opened the training demo. Full original AI/action/medical sequencing and listening-based audio verification remain incomplete.

@@ -40,6 +40,9 @@ export function initFeatures(s) {
   s.effect = { kind: 0, team: -1, time: 0 };
   s.credits = [0, 0];
   s.reserves = [3, 3];
+  s.bench = Array.from({ length: 2 }, () =>
+    Array.from({ length: 3 }, () => defaultStats()),
+  );
   s.pickupSerial = 0;
   s.pickups = Array.from({ length: 7 }, (_, i) => ({
     kind: i < 2 ? i + 1 : i < 6 ? 13 : 14,
@@ -163,20 +166,25 @@ export function medicalStep(s, dt) {
       p.stun = p.injury;
       p.actionTime = p.injury;
       if (p.injury === 0) {
-        if (s.reserves[p.team] > 0) {
-          s.reserves[p.team]--;
-          p.health = 100;
-          p.stats = defaultStats();
-          p.statBackup = Array(8).fill(0);
-          p.stun = 0;
-          p.action = 0;
-          p.gear = 0;
-          p.z = p.z < 0 ? -10 : 10;
-          emit(s, 15, i, s.reserves[p.team], p.x, p.z);
-        } else {
-          p.stun = 10;
-          p.action = 4;
-        }
+        const bench = s.bench[p.team];
+        const outgoing = p.stats.map((value) => Math.floor(value / 10) * 10);
+        p.stats = bench.shift();
+        bench.push(outgoing);
+        s.reserves[p.team] = bench.length;
+        p.health = 100;
+        p.statBackup = Array(8).fill(0);
+        p.gearBackup = p.gearPowerBackup = 0;
+        p.stun = p.action = p.actionTime = p.cooldown = p.gear = 0;
+        p.keeperBlock = false;
+        p.tackleResolved = false;
+        const direction = (p.team === 0 ? 1 : -1) * (s.period === 2 ? -1 : 1);
+        p.x = -direction * 32 * (22.4 / 576);
+        p.z = (p.z <= 0 ? -1 : 1) * 272 * (22.4 / 576);
+        p.fx = 0;
+        p.fz = -Math.sign(p.z);
+        p.aiX = p.aiZ = 0;
+        p.aiWait = 1;
+        emit(s, 15, i, bench.length, p.x, p.z);
         s.ball.electric = 0;
         s.ball.charged = false;
       }
