@@ -231,3 +231,12 @@ Separated the ball's charged flag from its remaining electric hit count. The ori
 Protocol v6 packs the flag into bit 7 of the existing electric byte, with remaining hits in the low bits. Packet length stays unchanged and old clients are rejected by the version check. The real Go snapshot decoding test verifies both fields. Paired lifecycle tests exercise hit exhaustion, friendly recovery, throw reset and moving versus stationary opposing catches; an older stationary-catch assertion was corrected to the source behavior.
 
 All 83 JavaScript tests, Go tests/vet and the production build pass. The backend and both browser clients were restarted for the protocol change. Full original AI/timing, medical and pickup sequencing, and listening-based audio verification remain unfinished.
+
+
+## Fidelity audit: AI reaction intervals
+
+The original reset_player_timer reads reaction_time_table at 0x01fa: 16,16,15,15,14,14,13,13,12,12,11,11,10,10,9,8 ticks for successive intelligence decades 100..250. Both simulations now retain a chosen movement target between decisions and gate new AI action/throw choices on this interval. Busy actions defer a new decision. Human control sets the short one-tick handoff timer as in user_controlled_player. This replaces unconditional retargeting every host frame.
+
+Intervals currently use elapsed seconds corresponding to 25 original ticks per second. Decisions are sampled by the existing 60 Hz host loop, so expiry can be delayed by up to one host frame; this is an explicit transitional adaptation, not exact original global tick scheduling. Original per-action timer overrides, pause ordering and opcode-based movement steering still require the full simulation timing port. Existing unported aggressive/possession AI decisions remain heuristic, now with the source reaction interval.
+
+All 85 JavaScript tests, Go tests/vet and the production build pass. Paired tests verify every table entry, retained targets, refresh at 8/16 original ticks and busy-action deferral. The backend was restarted and the updated training match was opened for the demo. Full gameplay parity and listening-based audio verification remain unfinished.

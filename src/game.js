@@ -65,6 +65,16 @@ export function launchPosition(s, i) {
   const [x, y] = launchPositions[side][i % 9];
   return [(576 - y) * terrainUnit, (x - 320) * terrainUnit];
 }
+// reset_player_timer, Amiga reaction_time_table at 0x01fa.
+export function aiReactionTime(intelligence) {
+  const index = Math.max(
+    0,
+    Math.min(15, Math.floor((intelligence - 100) / 10)),
+  );
+  return (
+    [16, 16, 15, 15, 14, 14, 13, 13, 12, 12, 11, 11, 10, 10, 9, 8][index] / 25
+  );
+}
 export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const norm = (x, z) => {
   const d = Math.hypot(x, z);
@@ -339,6 +349,7 @@ export function step(
     p.stun = Math.max(0, p.stun - dt);
     p.actionTime = Math.max(0, p.actionTime - dt);
     p.cooldown = Math.max(0, p.cooldown - dt);
+    p.aiWait = Math.max(0, (p.aiWait || 0) - dt);
     if (p.actionTime === 0) p.action = 0;
   }
   selectPlayers(s);
@@ -363,21 +374,29 @@ export function step(
     }
     if (!human) {
       const d = direction(s, t);
-      let [tx, tz] = launchPosition(s, i);
-      if (b.owner === i) {
-        tx = d * 22;
-        tz = clamp(p.z * 0.4, -2, 2);
-      } else if (i % 9 === 0) {
-        if (s.controlled[t] !== i) [tx, tz] = goalieTarget(s, i);
-        else {
-          tx = -d * 19.5;
-          tz = clamp(b.z, -1.55, 1.55);
+      const decide = p.aiWait < 1e-9 && p.actionTime <= 0;
+      let tx = p.aiX ?? p.x,
+        tz = p.aiZ ?? p.z;
+      if (decide) {
+        p.aiWait = aiReactionTime(p.stats[7]);
+
+        if (b.owner === i) {
+          tx = d * 22;
+          tz = clamp(p.z * 0.4, -2, 2);
+        } else if (i % 9 === 0) {
+          if (s.controlled[t] !== i) [tx, tz] = goalieTarget(s, i);
+          else {
+            tx = -d * 19.5;
+            tz = clamp(b.z, -1.55, 1.55);
+          }
+        } else if (s.controlled[t] === i) {
+          tx = b.x + b.vx * (p.gear === 21 ? 0.3 : 0.15);
+          tz = b.z + b.vz * (p.gear === 21 ? 0.3 : 0.15);
+        } else {
+          [tx, tz] = supportTarget(s, i);
         }
-      } else if (s.controlled[t] === i) {
-        tx = b.x + b.vx * (p.gear === 21 ? 0.3 : 0.15);
-        tz = b.z + b.vz * (p.gear === 21 ? 0.3 : 0.15);
-      } else {
-        [tx, tz] = supportTarget(s, i);
+        p.aiX = tx;
+        p.aiZ = tz;
       }
       [dx, dz] = norm(tx - p.x, tz - p.z);
       if (Math.hypot(tx - p.x, tz - p.z) < 0.3) {
@@ -386,6 +405,7 @@ export function step(
       }
       u = {};
       if (
+        decide &&
         p.cooldown <= 0 &&
         Math.hypot(b.x - p.x, b.z - p.z) < (p.gear === 14 ? 4 : 3) &&
         b.owner !== i
@@ -397,7 +417,7 @@ export function step(
         )
           u.tackle = true;
       }
-      if (b.owner === i) {
+      if (decide && b.owner === i) {
         const danger = s.players.some(
           (q) => q.team !== t && Math.hypot(q.x - p.x, q.z - p.z) < 3,
         );
@@ -410,7 +430,10 @@ export function step(
         }
       }
     }
-    if (human) [dx, dz] = eightWay(dx, dz);
+    if (human) {
+      p.aiWait = 1 / 25;
+      [dx, dz] = eightWay(dx, dz);
+    }
     if (p.action !== 1 && p.action !== 3 && Math.hypot(dx, dz) > 0.01)
       [p.fx, p.fz] = norm(dx, dz);
     const prev = s.previous[t],

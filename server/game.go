@@ -12,6 +12,8 @@ const (
 
 // Actions are replicated, including misses: 1 slide, 2 jump, 3 throw, 4 hit.
 type Player struct {
+	aiWait, aiX, aiZ            float64
+	aiTarget                    bool
 	keeperBlock                 bool
 	moveX, moveZ                float64
 	Stats, StatBackup           [8]int
@@ -100,6 +102,12 @@ func (s *State) launchPosition(i int) (float64, float64) {
 	}
 	p := launchPositions[side][i%9]
 	return (576 - p[1]) * (22.4 / 576), (p[0] - 320) * (22.4 / 576)
+}
+
+// reset_player_timer, reaction_time_table at 0x01fa.
+func aiReactionTime(intelligence int) float64 {
+	index := max(0, min(15, (intelligence-100)/10))
+	return float64([16]int{16, 16, 15, 15, 14, 14, 13, 13, 12, 12, 11, 11, 10, 10, 9, 8}[index]) / 25
 }
 
 func initial() State {
@@ -284,6 +292,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		p.Stun = math.Max(0, p.Stun-dt)
 		p.ActionTime = math.Max(0, p.ActionTime-dt)
 		p.Cooldown = math.Max(0, p.Cooldown-dt)
+		p.aiWait = math.Max(0, p.aiWait-dt)
 		if p.ActionTime == 0 {
 			p.Action = 0
 		}
@@ -309,26 +318,34 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		}
 		if !human {
 			d := s.direction(t)
-			tx, tz := s.launchPosition(i)
-			if b.Owner == i {
-				tx = d * 22
-				tz = clamp(p.Z*.4, -2, 2)
-			} else if i%9 == 0 {
-				if s.Controlled[t] != i {
-					tx, tz = s.goalieTarget(i)
+			decide := p.aiWait < 1e-9 && p.ActionTime <= 0
+			tx, tz := p.aiX, p.aiZ
+			if !p.aiTarget {
+				tx, tz = p.X, p.Z
+			}
+			if decide {
+				p.aiWait = aiReactionTime(p.Stats[7])
+				if b.Owner == i {
+					tx = d * 22
+					tz = clamp(p.Z*.4, -2, 2)
+				} else if i%9 == 0 {
+					if s.Controlled[t] != i {
+						tx, tz = s.goalieTarget(i)
+					} else {
+						tx = -d * 19.5
+						tz = clamp(b.Z, -1.55, 1.55)
+					}
+				} else if s.Controlled[t] == i {
+					lead := .15
+					if p.Gear == 21 {
+						lead = .3
+					}
+					tx = b.X + b.VX*lead
+					tz = b.Z + b.VZ*lead
 				} else {
-					tx = -d * 19.5
-					tz = clamp(b.Z, -1.55, 1.55)
+					tx, tz = s.supportTarget(i)
 				}
-			} else if s.Controlled[t] == i {
-				lead := .15
-				if p.Gear == 21 {
-					lead = .3
-				}
-				tx = b.X + b.VX*lead
-				tz = b.Z + b.VZ*lead
-			} else {
-				tx, tz = s.supportTarget(i)
+				p.aiX, p.aiZ, p.aiTarget = tx, tz, true
 			}
 			dx, dz = normalized(tx-p.X, tz-p.Z)
 			if math.Hypot(tx-p.X, tz-p.Z) < .3 {
@@ -336,14 +353,14 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				dz = 0
 			}
 			u = Input{}
-			if p.Cooldown <= 0 && math.Hypot(b.X-p.X, b.Z-p.Z) < gearRange(p.Gear, 14, 3, 4) && b.Owner != i {
+			if decide && p.Cooldown <= 0 && math.Hypot(b.X-p.X, b.Z-p.Z) < gearRange(p.Gear, 14, 3, 4) && b.Owner != i {
 				if b.H > 1.4 {
 					u.Shoot = true
 				} else if (b.Owner >= 0 && s.Players[b.Owner].Team != t) || (i%9 == 0 && b.Owner < 0 && math.Hypot(b.VX, b.VZ) > 4) {
 					u.Tackle = true
 				}
 			}
-			if b.Owner == i {
+			if decide && b.Owner == i {
 				danger := false
 				for _, q := range s.Players {
 					if q.Team != t && math.Hypot(q.X-p.X, q.Z-p.Z) < 3 {
@@ -366,6 +383,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			}
 		}
 		if human {
+			p.aiWait = 1. / 25
 			dx, dz = eightWay(dx, dz)
 		}
 		if p.Action != 1 && p.Action != 3 && math.Hypot(dx, dz) > .01 {
