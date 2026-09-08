@@ -46,25 +46,41 @@ func (s *State) wallBonus() {
 }
 func (s *State) domeBounce() {
 	b := &s.Ball
-	if b.H > 1.4 {
+	if b.Owner >= 0 || b.FlightKind != 0 && b.FlightStage > 2 || b.FlightKind == 0 && b.H > 1.25 {
 		return
 	}
-	for _, z := range []float64{-4, 4} {
-		dx, dz := b.X, b.Z-z
-		d := math.Hypot(dx, dz)
-		if d > .001 && d < 1.1 && b.VX*dx+b.VZ*dz < 0 {
-			nx, nz := dx/d, dz/d
-			dot := b.VX*nx + b.VZ*nz
-			b.VX -= 2 * dot * nx
-			b.VZ -= 2 * dot * nz
-			b.X = nx * 1.12
-			b.Z = z + nz*1.12
-			if b.LastTouch >= 0 {
-				t := s.Players[b.LastTouch].Team
-				points := s.points(t, 2)
-				s.Score[t] += points
-				s.event(8, t, points, b.X, b.Z, b.H)
-			}
+	for _, center := range []float64{256 * terrainUnit, -256 * terrainUnit} {
+		dx, dz := int(math.Round((b.X-center)/terrainUnit)), int(math.Round(b.Z/terrainUnit))
+		ax, az := int(math.Abs(float64(dx))), int(math.Abs(float64(dz)))
+		if ax > 16 || az > 16 || referenceDistance(float64(dx)*terrainUnit, float64(dz)*terrainUnit) > 16 {
+			continue
+		}
+		fx, fz := 0., 0.
+		if ax > az>>1 {
+			fx = math.Copysign(1, float64(dx))
+		}
+		if az > ax>>1 {
+			fz = math.Copysign(1, float64(dz))
+		}
+		if fx == 0 && fz == 0 {
+			continue
+		}
+		b.DirX, b.DirZ = fx, fz
+		b.VX, b.VZ = fx*8*velocityUnit, fz*8*velocityUnit
+		if b.FlightKind != 0 {
+			startFlight(b, b.FlightKind == 2)
+		}
+		attribute := 100
+		if b.LastTouch >= 0 {
+			ensureStats(&s.Players[b.LastTouch])
+			attribute = s.Players[b.LastTouch].Stats[4]
+		}
+		setBallSpeed(b, attribute)
+		if b.LastTouch >= 0 {
+			team := s.Players[b.LastTouch].Team
+			points := s.points(team, 2)
+			s.Score[team] += points
+			s.event(8, team, points, b.X, b.Z, b.H)
 		}
 	}
 }

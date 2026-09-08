@@ -231,26 +231,33 @@ export function wallBonus(s) {
   }
 }
 export function domeBounce(s) {
-  const b = s.ball;
-  if (b.h > 1.4) return;
-  for (const z of [-4, 4]) {
-    const dx = b.x,
-      dz = b.z - z,
-      d = Math.hypot(dx, dz);
-    if (d > 0.001 && d < 1.1 && b.vx * dx + b.vz * dz < 0) {
-      const nx = dx / d,
-        nz = dz / d,
-        dot = b.vx * nx + b.vz * nz;
-      b.vx -= 2 * dot * nx;
-      b.vz -= 2 * dot * nz;
-      b.x = nx * 1.12;
-      b.z = z + nz * 1.12;
-      if (b.lastTouch >= 0) {
-        const t = s.players[b.lastTouch].team,
-          n = points(s, t, 2);
-        s.score[t] += n;
-        event(s, 8, t, n, b.x, b.z, b.h);
-      }
+  const b = s.ball,
+    unit = 22.4 / 576;
+  if (b.owner >= 0 || (b.flightKind ? b.flightStage > 2 : b.h > 1.25)) return;
+  for (const center of [256 * unit, -256 * unit]) {
+    const dx = Math.round((b.x - center) / unit),
+      dz = Math.round(b.z / unit);
+    if (
+      Math.abs(dx) > 16 ||
+      Math.abs(dz) > 16 ||
+      referenceDistance(dx * unit, dz * unit) > 16
+    )
+      continue;
+    // get_object_to_point_direction uses strict half-axis tests, not atan2.
+    const fx = Math.abs(dx) > Math.abs(dz) >> 1 ? Math.sign(dx) : 0;
+    const fz = Math.abs(dz) > Math.abs(dx) >> 1 ? Math.sign(dz) : 0;
+    if (!fx && !fz) continue;
+    b.dirX = fx;
+    b.dirZ = fz;
+    b.vx = fx * 8 * velocityUnit;
+    b.vz = fz * 8 * velocityUnit;
+    if (b.flightKind) startFlight(b, b.flightKind === 2);
+    setBallSpeed(b, s.players[b.lastTouch]?.stats?.[4] ?? 100);
+    if (b.lastTouch >= 0) {
+      const t = s.players[b.lastTouch].team,
+        n = points(s, t, 2);
+      s.score[t] += n;
+      event(s, 8, t, n, b.x, b.z, b.h);
     }
   }
 }
@@ -526,7 +533,14 @@ export function step(
         event(s, 5, b.lastTouch, -1, b.x, b.z, b.h);
       }
     }
-    domeBounce(s);
+    b.domeFraction = (b.domeFraction ?? 0) + dt * 25;
+    if (b.domeFraction >= 1 - 1e-9) {
+      b.domeFraction = Math.max(
+        0,
+        b.domeFraction - Math.floor(b.domeFraction + 1e-9),
+      );
+      domeBounce(s);
+    }
     if (b.lock <= 0) {
       let best = -1,
         dist = 0.8;

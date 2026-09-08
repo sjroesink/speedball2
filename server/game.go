@@ -25,6 +25,7 @@ type Player struct {
 	Gear                        int
 }
 type Ball struct {
+	DomeFraction                         float64
 	MultiplierPath, MultiplierIndex      int
 	MultiplierFraction                   float64
 	FlightKind, FlightIndex, FlightStage int
@@ -503,7 +504,11 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				s.event(5, b.LastTouch, -1, b.X, b.Z, b.H)
 			}
 		}
-		s.domeBounce()
+		b.DomeFraction += dt * 25
+		if b.DomeFraction >= 1-1e-9 {
+			b.DomeFraction = math.Max(0, b.DomeFraction-math.Floor(b.DomeFraction+1e-9))
+			s.domeBounce()
+		}
 		if b.Lock <= 0 {
 			best := -1
 			distance := .8

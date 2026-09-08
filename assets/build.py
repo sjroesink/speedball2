@@ -93,10 +93,11 @@ for group in range(2):
   x=(5+i*2)*(1 if group==0 else -1); y=11.2 if group==0 else -11.2
   cube('Target housing',(x,y,.6),(1.15,1.1,1.2),steel,.12)
   star('Star_%d_%d'%(group,i),x,y,cyan if group==0 else orange)
-for y in [-4,4]:
- bpy.ops.mesh.primitive_uv_sphere_add(segments=24,ring_count=12,radius=1,location=(0,y,.15));o=bpy.context.object;o.name='ScoreDome';o.scale.z=.6;o.data.materials.append(rubber)
+# Original bumper centers: terrain (320,320) and (320,832), radius 16 units.
+for x in [-256*22.4/576,256*22.4/576]:
+ bpy.ops.mesh.primitive_uv_sphere_add(segments=24,ring_count=12,radius=16*22.4/576,location=(x,0,.12));o=bpy.context.object;o.name='ScoreDome';o.scale.z=.6;o.data.materials.append(rubber)
  for face in o.data.polygons: face.use_smooth=True
- bpy.ops.mesh.primitive_torus_add(major_radius=1.04,minor_radius=.07,location=(0,y,.12));bpy.context.object.data.materials.append(armor)
+ bpy.ops.mesh.primitive_torus_add(major_radius=16*22.4/576,minor_radius=.04,location=(x,0,.12));bpy.context.object.data.materials.append(armor)
 # Original multiplier motion is a narrow loop beside each touchline.
 with open(os.path.join(ROOT,'assets','multiplier-paths.json')) as f: multiplier_paths=json.load(f)
 unit=22.4/576

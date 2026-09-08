@@ -94,7 +94,14 @@ test("five stars bonus, enemy extinguish, and dome score", () => {
   s.ball.lastTouch = 16;
   wallBonus(s);
   assert.equal(s.score[0], 0);
-  Object.assign(s.ball, { x: 1, z: 4, h: 0.5, vx: -12, vz: 0, lastTouch: 7 });
+  Object.assign(s.ball, {
+    x: (256 * 22.4) / 576 + 0.4,
+    z: 0,
+    h: 0.5,
+    vx: -12,
+    vz: 0,
+    lastTouch: 7,
+  });
   domeBounce(s);
   assert.equal(s.score[0], 2);
   assert.ok(s.ball.vx > 0);

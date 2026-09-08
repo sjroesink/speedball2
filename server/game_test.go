@@ -143,8 +143,8 @@ func TestStarBonusExtinguishAndMultiplier(t *testing.T) {
 }
 func TestCentralDomePointsAndBounce(t *testing.T) {
 	s := isolated()
-	s.Ball = Ball{X: 1.2, Z: 4, H: .6, VX: -12, Owner: -1, LastTouch: 7}
-	s.step(dt, [2]Input{})
+	s.Ball = Ball{X: 256*terrainUnit + .4, Z: 0, H: .6, VX: -12, Owner: -1, LastTouch: 7}
+	s.domeBounce()
 	if s.Score[0] != 2 || s.Ball.VX <= 0 {
 		t.Fatal("dome must reflect and award two points")
 	}
