@@ -53,7 +53,7 @@ Eight equipment categories improve aggression (earlier AI tackles), attack (tack
 
 Energy loss reduces performance. At zero energy the player is injured: the opponent scores 10 points with any multiplier, the clock stops for a six-second medical evacuation, and a substitute enters. Teams have three reserves. Once exhausted, injured positions remain empty. Damage persists after goals.
 
-Four warp-gates at X = ±8 on both side walls move low balls to the opposite wall while preserving direction. High balls rebound normally. Two electro-bounces opposite the star banks charge the ball for one to three hits according to the multiplier. Charged balls knock opponents down instead of being caught; shields protect the catcher. A catch or new throw clears the charge.
+Four warp-gates at the original latitudes (approximately X = +/-8.01) on both side walls move low balls to the opposite wall while preserving direction. High balls rebound normally. Two electro-bounces opposite the star banks charge the ball for one to three hits according to the multiplier. Charged balls knock opponents down instead of being caught; shields protect the catcher. A catch or new throw clears the charge.
 
 The HUD displays energy, equipment, reserves, credits, active effects and remaining duration, charged-ball hits and medical stoppages.
 

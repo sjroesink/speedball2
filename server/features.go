@@ -196,10 +196,11 @@ func (s *State) featureStep(dt float64) {
 }
 func (s *State) sideFeature() bool {
 	b := &s.Ball
-	if b.H > 1.4 {
+	if b.FlightKind != 0 && b.FlightStage > 2 || b.FlightKind == 0 && b.H > 1.25 {
 		return false
 	}
-	if math.Abs(math.Abs(b.X)-8) < .55 {
+	terrainX, terrainY := int(math.Round(320+b.Z/terrainUnit)), int(math.Round(576-b.X/terrainUnit))
+	if b.Owner < 0 && (terrainX < 32 || terrainX > 608) && ((terrainY >= 355 && terrainY <= 385) || (terrainY >= 767 && terrainY <= 797)) {
 		attribute := 100
 		if b.LastTouch >= 0 && b.LastTouch < len(s.Players) {
 			p := &s.Players[b.LastTouch]

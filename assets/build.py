@@ -115,7 +115,7 @@ for side,path_index in [(0,0),(1,2)]:
  bpy.context.view_layer.objects.active=obj;obj.select_set(True);bpy.ops.object.convert(target='MESH');obj.select_set(False)
  for lamp in range(2): cube('Multiplier lamp',(center_x+(lamp-.5)*.5,center_y,.4),(.26,.26,.10),white,.04)
 # Side portals at the two original warp latitudes, plus two electro-bounces.
-for x in [-8,8]:
+for x in [-206*22.4/576,206*22.4/576]:
  for y in [-11.2,11.2]:
   cube('Warp tunnel housing',(x,y,.55),(1.3,1.1,1.1),steel,.12)
   bpy.ops.mesh.primitive_torus_add(major_radius=.40,minor_radius=.09,location=(x,y,1.5));o=bpy.context.object;o.name='WarpRing';o.data.materials.append(cyan)

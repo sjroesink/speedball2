@@ -214,8 +214,16 @@ export function featureStep(s, dt) {
 // Four low-ball tunnels. Preserve direction through the opposite side wall.
 export function sideFeature(s) {
   const b = s.ball;
-  if (b.h > 1.4) return false;
-  if (Math.abs(Math.abs(b.x) - 8) < 0.55) {
+  if (b.flightKind ? b.flightStage > 2 : b.h > 1.25) return false;
+  const unit = 22.4 / 576;
+  const terrainX = Math.round(320 + b.z / unit),
+    terrainY = Math.round(576 - b.x / unit);
+  if (
+    b.owner < 0 &&
+    (terrainX < 32 || terrainX > 608) &&
+    ((terrainY >= 355 && terrainY <= 385) ||
+      (terrainY >= 767 && terrainY <= 797))
+  ) {
     const thrower = s.players[b.lastTouch];
     warpBall(b, thrower?.stats?.[4] ?? 100);
     emit(s, 12, b.lastTouch, -1, b.x, b.z, b.h);
