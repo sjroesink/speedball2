@@ -579,3 +579,19 @@ Paired tests cover duration, stationary recovery, one event and delayed contact
 with the correct victim velocity. Existing slide fixtures now explicitly provide
 movement input. AI standing-attack decisions remain heuristic; fallen-player
 retaliation and other original action-function details are still outstanding.
+
+
+### Local interaction for supporting AI players
+
+Unselected AI players now use `sub_E854`'s first eligible opposing roster entry
+within cached distance 30. A keeper, an opponent carrying the ball, or aggression
+strictly greater than the sampled random byte chooses a standing punch; otherwise
+the player moves away using the opposite integer half-axis direction. This
+interaction takes priority over positional support and uses the original random
+generator on each unselected AI decision. Avoidance direction persists until the
+next decision. Selected-player pursuit/action choices remain separate heuristics.
+Paired tests cover strict aggression equality, inclusive distance, first-opponent
+priority, keeper/carrier rules and falling exclusions. The single-contact tackle
+fixture now delays its bystander's AI so a legitimate counter-punch does not
+obscure its one-attacker assertion. Offscreen checks and the original avoidance
+of the selected teammate remain unported.

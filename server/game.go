@@ -14,6 +14,7 @@ const (
 
 // Actions are replicated, including misses: 1 slide, 2 jump, 3 throw, 4 hit.
 type Player struct {
+	aiAvoid                     bool
 	fallX, fallZ                float64
 	slideEnding                 bool
 	throwMode                   int
@@ -383,7 +384,23 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			}
 			if decide {
 				p.aiWait = aiReactionTime(p.Stats[7])
-				if b.Owner == i {
+				p.aiAvoid = false
+				var nearby *interaction
+				if s.Controlled[t] != i {
+					nearby = s.localInteraction(i, &contacts[i], s.randomByte())
+				}
+				if nearby != nil {
+					p.FX, p.FZ = nearby.x, nearby.z
+					if nearby.attack {
+						p.Action = 7
+						p.ActionTime = 4. / 25
+						p.Cooldown = p.ActionTime
+						p.tackleResolved = false
+						s.event(20, i, -1, p.X, p.Z, 0)
+					} else {
+						p.aiAvoid = true
+					}
+				} else if b.Owner == i {
 					tx = d * 22
 					tz = clamp(p.Z*.4, -2, 2)
 				} else if i%9 == 0 {
@@ -405,13 +422,13 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				}
 				p.aiX, p.aiZ, p.aiTarget = tx, tz, true
 			}
-			if p.ActionTime > 0 {
+			if p.ActionTime > 0 || p.aiAvoid {
 				dx, dz = eightWay(p.FX, p.FZ)
 			} else {
 				dx, dz = steerToTarget(p, tx, tz, decide)
 			}
 			u = Input{}
-			if decide && p.Cooldown <= 0 && math.Hypot(b.X-p.X, b.Z-p.Z) < gearRange(p.Gear, 14, 3, 4) && b.Owner != i {
+			if decide && s.Controlled[t] == i && p.Cooldown <= 0 && math.Hypot(b.X-p.X, b.Z-p.Z) < gearRange(p.Gear, 14, 3, 4) && b.Owner != i {
 				if b.H > 1.4 {
 					u.Shoot = true
 				} else if (b.Owner >= 0 && s.Players[b.Owner].Team != t) || (i%9 == 0 && b.Owner < 0 && math.Hypot(b.VX, b.VZ) > 4) {

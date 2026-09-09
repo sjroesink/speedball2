@@ -1,3 +1,4 @@
+import { localInteraction } from "./interaction.js";
 import { contactDistances, blockPlayerMovement } from "./collision.js";
 import { steerToTarget } from "./steering.js";
 import { goalieTarget, deflectBall } from "./goalie.js";
@@ -445,7 +446,22 @@ export function step(
       if (decide) {
         p.aiWait = aiReactionTime(p.stats[7]);
 
-        if (b.owner === i) {
+        p.aiAvoid = false;
+        const nearby =
+          s.controlled[t] !== i
+            ? localInteraction(s, i, contacts[i], randomByte(s))
+            : null;
+        if (nearby) {
+          p.fx = nearby.x;
+          p.fz = nearby.z;
+          if (nearby.attack) {
+            p.action = 7;
+            p.actionTime = 4 / 25;
+            p.cooldown = p.actionTime;
+            p.tackleResolved = false;
+            event(s, 20, i, -1, p.x, p.z, 0);
+          } else p.aiAvoid = true;
+        } else if (b.owner === i) {
           tx = d * 22;
           tz = clamp(p.z * 0.4, -2, 2);
         } else if (i % 9 === 0) {
@@ -464,12 +480,13 @@ export function step(
         p.aiZ = tz;
       }
       [dx, dz] =
-        p.actionTime > 0
+        p.actionTime > 0 || p.aiAvoid
           ? eightWay(p.fx, p.fz)
           : steerToTarget(p, tx, tz, decide);
       u = {};
       if (
         decide &&
+        s.controlled[t] === i &&
         p.cooldown <= 0 &&
         Math.hypot(b.x - p.x, b.z - p.z) < (p.gear === 14 ? 4 : 3) &&
         b.owner !== i

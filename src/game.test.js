@@ -164,7 +164,13 @@ test("tackle wins possession directly and resolves only one opponent per slide",
   const s = isolated();
   s.rng = [0, 0];
   Object.assign(s.players[16], { x: 0.7, z: 0, stun: 0, cooldown: 10 });
-  Object.assign(s.players[17], { x: 0.8, z: 0, stun: 0, cooldown: 10 });
+  Object.assign(s.players[17], {
+    x: 0.8,
+    z: 0,
+    stun: 0,
+    cooldown: 10,
+    aiWait: 100,
+  });
   Object.assign(s.ball, { owner: 16, lastTouch: 16, x: 0.7, z: 0, h: 1 });
   step(s, dt, { tackle: true, x: 1 }, [true, true]);
   assert.equal(

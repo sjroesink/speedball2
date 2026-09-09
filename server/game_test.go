@@ -246,6 +246,7 @@ func TestTackleDirectPossessionSingleContact(t *testing.T) {
 	s.Players[17].Z = 0
 	s.Players[17].Stun = 0
 	s.Players[17].Cooldown = 10
+	s.Players[17].aiWait = 100
 	s.Ball = Ball{Owner: 16, LastTouch: 16, X: .7, H: 1}
 	s.step(dt, [2]Input{{Tackle: true, X: 1}, {}})
 	if s.Ball.Owner != 16 {
