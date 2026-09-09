@@ -264,12 +264,12 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		s.previous = inputs
 		return
 	}
-	if s.restartStep(dt) {
+	if s.Pause > 0 {
+		s.Pause = math.Max(0, s.Pause-dt)
 		s.previous = inputs
 		return
 	}
-	if s.Pause > 0 {
-		s.Pause = math.Max(0, s.Pause-dt)
+	if s.restartStep(dt) {
 		s.previous = inputs
 		return
 	}
@@ -284,8 +284,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			s.Time = 90
 			s.Stars = [2]uint8{}
 			s.Multiplier = 0
-			s.Pause = 3
-			s.resetPitch()
+			s.beginRestart(3)
 			s.event(6, -1, -1, 0, 0, 0)
 		} else {
 			s.Over = true
@@ -630,8 +629,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				}
 				s.Score[scorer] += s.points(scorer, 10)
 				s.event(7, scorer, -1, b.X, b.Z, b.H)
-				s.resetPitch()
-				s.Pause = 1.4
+				s.beginRestart(1.4)
 				s.previous = inputs
 				return
 			} else {

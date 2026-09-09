@@ -1,4 +1,4 @@
-import { restartStep } from "./restart.js";
+import { beginRestart, restartStep } from "./restart.js";
 import { forwardDecision } from "./forward-ai.js";
 import { carrierMove } from "./carrier-move.js";
 import { hardwareThrow } from "./hardware-ai.js";
@@ -330,12 +330,12 @@ function simulateStep(
     s.previous = inputs.map((u) => ({ ...u }));
     return;
   }
-  if (restartStep(s, dt, launchPosition)) {
+  if (s.pause > 0) {
+    s.pause = Math.max(0, s.pause - dt);
     s.previous = inputs.map((u) => ({ ...u }));
     return;
   }
-  if (s.pause > 0) {
-    s.pause = Math.max(0, s.pause - dt);
+  if (restartStep(s, dt, launchPosition)) {
     s.previous = inputs.map((u) => ({ ...u }));
     return;
   }
@@ -350,8 +350,7 @@ function simulateStep(
       s.time = 90;
       s.stars = [0, 0];
       s.multiplier = 0;
-      s.pause = 3;
-      resetPitch(s);
+      beginRestart(s, 3);
       event(s, 6, -1, -1, 0, 0, 0);
     } else s.over = true;
     return;
@@ -685,8 +684,7 @@ function simulateStep(
         const scorer = b.x * direction(s, 0) < 0 ? 1 : 0;
         s.score[scorer] += points(s, scorer, 10);
         event(s, 7, scorer, -1, b.x, b.z, b.h);
-        resetPitch(s);
-        s.pause = 1.4;
+        beginRestart(s, 1.4);
         s.previous = inputs.map((u) => ({ ...u }));
         return;
       } else {

@@ -1,3 +1,4 @@
+import { beginRestart } from "./restart.js";
 import { createMedical, advanceMedical } from "./medical.js";
 import { emit } from "./events.js";
 import { warpBall, setBallSpeed, startFlight } from "./ball.js";
@@ -232,9 +233,7 @@ export function medicalStep(s, dt) {
     s.ball.electric = 0;
     s.ball.charged = false;
     s.medical = null;
-    s.restartPhase = 1;
-    s.ball.x = s.ball.z = 0;
-    s.ball.h = 0.25;
+    beginRestart(s);
   }
   return true;
 }

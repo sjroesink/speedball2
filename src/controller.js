@@ -1,3 +1,4 @@
+import { beginRestart } from "./restart.js";
 import { ArenaAudio } from "./audio.js";
 import { notificationEvent, notificationPriority } from "./events.js";
 import { powerNames } from "./features.js";
@@ -145,6 +146,7 @@ export async function start() {
   function practice() {
     disconnect();
     state = initial();
+    beginRestart(state);
     team = 0;
     playing = true;
     lastEvent = 0;
@@ -327,8 +329,8 @@ export async function start() {
     $("powerStatus").textContent =
       state.restartPhase && !medical
         ? state.restartPhase === 1
-          ? "RETURNING TO FORMATION � CLOCK STOPPED"
-          : "BALL LAUNCH � CLOCK STOPPED"
+          ? "RETURNING TO FORMATION · CLOCK STOPPED"
+          : "BALL LAUNCH · CLOCK STOPPED"
         : medical
           ? `MEDICS · ${["APPROACHING", "POSITIONING", "LIFTING", "EXITING"][medical.phase]} · CLOCK STOPPED`
           : state.effect.time > 0

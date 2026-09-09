@@ -1086,3 +1086,23 @@ finite, non-silent, below digital full scale and released all voices. Measured
 peaks: body hit 0.0467, steel contact 0.0265, stress mix 0.2187. This is objective
 signal/lifecycle validation; subjective listening and loudness balance remain
 unverified. Playback controls are available in .reference/audio-preview.html.
+
+
+## Unified match restarts (2026-09-09)
+
+Connected the formation/launcher sequence to the actual training entry point,
+new server rooms, goals and halftime. Goals retain player positions and damage;
+after the existing celebration pause, teams walk back to their launch positions.
+At halftime they walk across to the opposite formation instead of teleporting.
+Medical completion enters the same restart function. Input is consumed and the
+clock is held through the pause, formation and launcher. The state factory still
+returns a plain ready simulation state for fixtures and lobby previews; actual
+match entry points explicitly start the launcher sequence.
+
+178 JavaScript tests, Go tests/vet and production build pass. Added actual goal
+transition and kickoff lockout regressions and updated halftime tests to require
+walking across the pitch before release. The browser training button displayed
+BALL LAUNCH and clock 01:30. Corrected two invalid UTF-8 separator bytes in the
+restart HUD. Existing celebration durations and the modern launcher height curve
+remain adaptations; original goal-pose/frame-order and camera-gate timing still
+need a deeper comparison. No full original-game parity is claimed.

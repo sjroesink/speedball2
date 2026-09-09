@@ -2,6 +2,13 @@ package main
 
 import "math"
 
+func (s *State) beginRestart(pause float64) {
+	s.RestartPhase, s.RestartTicks = 1, 0
+	s.Pause = pause
+	s.Charge = [2]float64{}
+	s.Ball = Ball{H: .25, Owner: -1, LastTouch: -1}
+}
+
 // prepare_ball_launch waits for formation; deck frame 19 plus ball frame 21.
 func (s *State) restartStep(dt float64) bool {
 	if s.RestartPhase == 0 {

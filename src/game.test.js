@@ -115,8 +115,13 @@ test("halftime swaps ends and resets targets", () => {
   s.stars = [31, 31];
   step(s, dt);
   assert.equal(s.period, 2);
-  assert.ok(s.players[0].x > 0);
+  assert.ok(s.players[0].x < 0, "players do not teleport across the pitch");
   assert.deepEqual(s.stars, [0, 0]);
+  for (let i = 0; s.restartPhase && i < 1500; i++)
+    step(s, 1 / 25, {}, [false, false]);
+  assert.equal(s.restartPhase, 0);
+  assert.ok(s.players[0].x > 0);
+  assert.equal(s.time, 90);
 });
 
 test("a held button launches automatically and cannot charge indefinitely", () => {

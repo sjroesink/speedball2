@@ -166,8 +166,14 @@ func TestHalftimeAndMatchEnd(t *testing.T) {
 	s.Multiplier = 2
 	s.Score = [2]int{25, 18}
 	s.step(dt, [2]Input{})
-	if s.Period != 2 || s.Players[0].X < 0 || s.Stars[0] != 0 || s.Score[0] != 45 || s.Score[1] != 28 {
+	if s.Period != 2 || s.Players[0].X > 0 || s.Stars[0] != 0 || s.Score[0] != 45 || s.Score[1] != 28 {
 		t.Fatal("halftime must pay completed banks before swapping ends")
+	}
+	for i := 0; s.RestartPhase != 0 && i < 1500; i++ {
+		s.simulate(simulationStep, [2]Input{}, [2]bool{})
+	}
+	if s.RestartPhase != 0 || s.Players[0].X < 0 || s.Time != 90 {
+		t.Fatal("halftime formation did not finish")
 	}
 	s.Pause = 0
 	s.Time = 1

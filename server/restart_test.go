@@ -41,3 +41,43 @@ func TestMedicalRestartFormationAndLaunch(t *testing.T) {
 		t.Fatal("launch completion")
 	}
 }
+
+func TestKickoffLaunchLockout(t *testing.T) {
+	s := initial()
+	s.beginRestart(0)
+	for i := 0; i < 40; i++ {
+		s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
+	}
+	if s.RestartPhase != 2 || s.Time != 90 || s.Ball.Owner != -1 {
+		t.Fatal("premature kickoff")
+	}
+	s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
+	if s.RestartPhase != 0 || s.Time != 90 {
+		t.Fatal("kickoff release")
+	}
+}
+func TestGoalReturnPreservesPlayers(t *testing.T) {
+	s := initial()
+	for i := range s.Players {
+		s.Players[i].Stun = 100
+	}
+	p := &s.Players[7]
+	p.X, p.Z, p.Health = 3, 2, 41
+	s.Ball = Ball{X: pitchX + .01, H: .5, VX: 8, Owner: -1, LastTouch: -1}
+	s.simulate(simulationStep, [2]Input{}, [2]bool{})
+	if s.Score[0] != 10 || s.RestartPhase != 1 || s.Pause != 1.4 || p.X != 3 || p.Z != 2 || p.Health != 41 {
+		t.Fatal("goal reset players")
+	}
+	for i := 0; i < 34; i++ {
+		s.simulate(simulationStep, [2]Input{}, [2]bool{})
+	}
+	if p.X != 3 || p.Z != 2 {
+		t.Fatal("celebration skipped")
+	}
+	for i := 0; s.RestartPhase != 0 && i < 1500; i++ {
+		s.simulate(simulationStep, [2]Input{}, [2]bool{})
+	}
+	if s.RestartPhase != 0 || s.Time != 90 || p.Health != 41 || s.Ball.Owner != -1 || s.Ball.H != 3 {
+		t.Fatal("restart completion")
+	}
+}

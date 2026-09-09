@@ -2,7 +2,28 @@ import { movementSpeed } from "./attributes.js";
 import { advanceSteering } from "./steering.js";
 import { startInjury } from "./features.js";
 
-// Medical restart: prepare_ball_launch waits for every player, then the deck
+export function beginRestart(s, pause = 0) {
+  s.restartPhase = 1;
+  s.restartTicks = 0;
+  s.pause = pause;
+  s.charge = [0, 0];
+  s.ball = {
+    x: 0,
+    z: 0,
+    h: 0.25,
+    vx: 0,
+    vz: 0,
+    vh: 0,
+    owner: -1,
+    lastTouch: -1,
+    lock: 0,
+    after: 0,
+    electric: 0,
+    charged: false,
+  };
+}
+
+// Match restart: prepare_ball_launch waits for every player, then the deck
 // reaches frame 19 and the ball reaches frame 21 before the clock resumes.
 export function restartStep(s, dt, launchPosition) {
   if (!s.restartPhase) return false;
