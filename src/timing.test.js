@@ -80,3 +80,32 @@ test("possession loss cancels a pending lob", () => {
   assert.equal((s.events ?? []).filter((e) => e.kind === 3).length, 0);
   assert.equal(s.charge[0], 0);
 });
+
+test("landing and slide recovery emit one sound on their original action frame", () => {
+  for (const [action, frames, kind, eventFrame] of [
+    [1, 8, 19, 7],
+    [2, 12, 18, 10],
+  ]) {
+    const s = initial();
+    for (const p of s.players) p.stun = 100;
+    Object.assign(s.players[7], {
+      x: 4,
+      z: 0,
+      stun: 0,
+      action,
+      actionTime: frames / 25,
+      jumping: action === 2,
+    });
+    Object.assign(s.ball, { owner: -1, x: 10, z: 10 });
+    for (let frame = 1; frame <= frames + 2; frame++) {
+      step(s, simulationStep, {}, [true, true]);
+      const events = (s.events ?? []).filter((e) => e.kind === kind);
+      assert.equal(
+        events.length,
+        frame < eventFrame ? 0 : 1,
+        `${kind} frame ${frame}`,
+      );
+      if (events.length) assert.equal(events[0].actor, 7);
+    }
+  }
+});

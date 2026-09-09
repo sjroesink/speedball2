@@ -403,7 +403,14 @@ export function step(
     const p = s.players[i];
     catchBall(s, i, catchDistances);
     // Catching precedes jumping_action_fn, which clears jumping on landing.
-    if (p.action === 2 && p.actionTime <= 2 / 25 + 1e-9) p.jumping = false;
+    if (p.action === 2 && p.jumping && p.actionTime <= 2 / 25 + 1e-9) {
+      p.jumping = false;
+      event(s, 18, i, -1, p.x, p.z, 0);
+    }
+    if (p.action === 1 && !p.slideEnding && p.actionTime <= 1 / 25 + 1e-9) {
+      p.slideEnding = true;
+      event(s, 19, i, -1, p.x, p.z, 0);
+    }
     if (p.stun > 0) {
       p.moveX = p.moveZ = 0;
       continue;
@@ -526,6 +533,7 @@ export function step(
       } else {
         p.action = 1;
         p.tackleResolved = false;
+        p.slideEnding = false;
         p.keeperBlock =
           i % 9 === 0 &&
           b.owner < 0 &&

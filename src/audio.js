@@ -1,6 +1,12 @@
 // Original synthesized effects: no samples from the commercial game are used.
 // Each layer is [waveform, start Hz, end Hz, seconds, gain, delay seconds].
 export const cues = {
+  // Landing and slide recovery: original event timing, newly synthesized timbres.
+  18: [
+    ["noise", 650, 160, 0.09, 0.1, 0],
+    ["sine", 125, 55, 0.1, 0.14, 0],
+  ],
+  19: [["noise", 1100, 280, 0.1, 0.08, 0]],
   17: [
     ["noise", 1100, 250, 0.1, 0.18, 0],
     ["triangle", 750, 320, 0.14, 0.12, 0],

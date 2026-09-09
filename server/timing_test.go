@@ -136,3 +136,37 @@ func TestPossessionLossCancelsLob(t *testing.T) {
 		t.Fatal("stale windup")
 	}
 }
+
+func TestActionRecoverySoundFrames(t *testing.T) {
+	for _, tc := range [][4]int{{1, 8, 19, 7}, {2, 12, 18, 10}} {
+		s := initial()
+		for i := range s.Players {
+			s.Players[i].Stun = 100
+		}
+		p := &s.Players[7]
+		p.X, p.Z, p.Stun = 4, 0, 0
+		p.Action = tc[0]
+		p.ActionTime = float64(tc[1]) / 25
+		p.jumping = tc[0] == 2
+		s.Ball.Owner, s.Ball.X, s.Ball.Z = -1, 10, 10
+		for frame := 1; frame <= tc[1]+2; frame++ {
+			s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
+			count := 0
+			for _, e := range s.Events[:s.EventCount] {
+				if e.Kind == tc[2] {
+					count++
+					if e.Actor != 7 {
+						t.Fatal("sound actor")
+					}
+				}
+			}
+			expected := 0
+			if frame >= tc[3] {
+				expected = 1
+			}
+			if count != expected {
+				t.Fatal("sound timing", tc, frame, count)
+			}
+		}
+	}
+}

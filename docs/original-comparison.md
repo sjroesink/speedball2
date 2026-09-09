@@ -404,3 +404,17 @@ release helper remains directly callable by physics tests; runtime decisions use
 preparation. Paired tests cover AI low/high flight, shortcut preparation and
 possession-loss cancellation. AI choice of target and flight type remains heuristic;
 this change aligns execution timing, not the remaining tactical decisions.
+
+
+### Action recovery sound events
+
+`jumping_action_fn` calls sound 0x24 when clearing the airborne flag;
+`complete_action_fn` calls sound 0x2b when selecting the slide's final frame.
+Both simulations now emit distinct landing (18) and slide-recovery (19)
+events at those transitions. Per-action guards prevent repeated sounds during
+remaining recovery ticks. Newly synthesized thud/scrape cues provide feedback
+without using commercial samples. They use the existing bounded event history,
+stereo positioning, mute/pause handling and duplicate suppression. Paired
+simulation tests assert the exact emission frame and single occurrence;
+audio tests validate all 19 numeric cues. This verifies event scheduling and
+cue parameters, not an auditory comparison with the original soundtrack.

@@ -14,6 +14,7 @@ const (
 
 // Actions are replicated, including misses: 1 slide, 2 jump, 3 throw, 4 hit.
 type Player struct {
+	slideEnding                 bool
 	throwMode                   int
 	jumping                     bool
 	aiWait, aiX, aiZ            float64
@@ -339,8 +340,13 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		p := &s.Players[i]
 		s.catchBallAt(i, &catchDistances)
 		// Catching precedes jumping_action_fn clearing the airborne flag.
-		if p.Action == 2 && p.ActionTime <= 2./25+1e-9 {
+		if p.Action == 2 && p.jumping && p.ActionTime <= 2./25+1e-9 {
 			p.jumping = false
+			s.event(18, i, -1, p.X, p.Z, 0)
+		}
+		if p.Action == 1 && !p.slideEnding && p.ActionTime <= 1./25+1e-9 {
+			p.slideEnding = true
+			s.event(19, i, -1, p.X, p.Z, 0)
 		}
 		if p.Stun > 0 {
 			p.moveX, p.moveZ = 0, 0
@@ -474,6 +480,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			} else {
 				p.Action = 1
 				p.tackleResolved = false
+				p.slideEnding = false
 				p.keeperBlock = i%9 == 0 && b.Owner < 0 && (b.VX != 0 || b.VZ != 0) && math.Abs(p.FZ) > .1
 				p.ActionTime = actionDuration(1, p.Stats[3])
 				p.Cooldown = p.ActionTime
