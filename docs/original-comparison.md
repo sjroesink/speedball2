@@ -2733,3 +2733,19 @@ production build passes. Browser checks used Home/ArrowRight to reach 1%,
 End to reach 100%, and reopening the pause menu after Resume retained 100%.
 The fullscreen menu and slider were visually inspected. This verifies controls
 and routing; subjective sound balance remains an open requirement.
+
+### Offline volume lifecycle verification
+
+The real-browser OfflineAudioContext tool now includes volume-zero and
+volume-resume cases alongside every cue and the stress/pause/mute/reset
+cases. It starts a fulltime cue, sets volume zero at 0.1 s and attempts another
+cue while silent. The resume case restores level at 0.4 s without emitting a
+cue, then emits a coin at 0.7 s. It requires exact measured silence from
+0.2 through 0.68 s and nonzero energy after the new cue.
+
+All 40 cases passed in the browser. Volume-zero measured tail RMS zero and
+zero remaining voices. Volume-resume measured silent-window RMS zero, zero
+remaining voices, and a nonzero new-cue segment (overall peak 0.1188). Stress
+peak was 0.2274; all samples were finite and below clipping. The diagnostic
+renders playable WAVs for perceptual review; signal tests do not replace that
+review or prove a final sound mix suitable for every output device.
