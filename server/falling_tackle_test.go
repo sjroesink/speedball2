@@ -12,6 +12,7 @@ func fallingEncounter(action int, resolved bool) State {
 	q.X, q.Z, q.FX, q.FZ, q.Stun, q.Action, q.ActionTime = 0, 0, 1, 0, 0, action, .3
 	q.tackleResolved = resolved
 	s.Ball.Owner, s.Ball.X, s.Ball.Z, s.Ball.H = 7, 0, 0, 1
+	s.Ball.LastTouch = 7
 	s.RNG = [2]uint32{}
 	return s
 }
@@ -31,7 +32,7 @@ func TestFallingTackleRelease(t *testing.T) {
 		if len(hits) != 2 || hits[0] != 16 || hits[1] != 7 {
 			t.Fatal("counter order", hits)
 		}
-		if s.Ball.Owner != -1 || s.Ball.LastTouch != 16 || s.Ball.VX != 0 || s.Ball.VZ != 0 || s.Ball.X != .5 || s.Ball.VH > 0 {
+		if s.Ball.Owner != -1 || s.Ball.LastTouch != 7 || s.Ball.VX != 0 || s.Ball.VZ != 0 || s.Ball.X != 0 || s.Ball.VH > 0 {
 			t.Fatal("released ball", s.Ball)
 		}
 		speed := 3 * velocityUnit
@@ -87,5 +88,16 @@ func TestRetainedFallRecoveryTail(t *testing.T) {
 		if p.Stun != 0 || p.Action == 4 {
 			t.Fatal("still falling", attack)
 		}
+	}
+}
+
+func TestStealPreservesBallState(t *testing.T) {
+	s := fallingEncounter(0, false)
+	s.Ball.Charged = true
+	s.Ball.Electric = 3
+	s.Ball.ElectricBudget = 3
+	s.simulate(.04, [2]Input{}, [2]bool{true, true})
+	if s.Ball.Owner != 16 || s.Ball.LastTouch != 7 || !s.Ball.Charged || s.Ball.Electric != 3 || s.Ball.ElectricBudget != 3 {
+		t.Fatal("steal reset ball", s.Ball)
 	}
 }

@@ -889,7 +889,11 @@ func (s *State) resolveTackle(i int, distances *[18]int, visible *[18]bool) {
 			if falling && hadBall {
 				s.Ball.Owner = -1
 			} else if hadBall {
-				s.giveBall(i)
+				// do_tackle preserves charge, thrower identity and ball velocity.
+				s.Ball.Owner = i
+				s.Ball.FlightKind, s.Ball.FlightIndex = 0, 0
+				s.Ball.FlightFraction = 0
+				s.Ball.heldJump = false
 				kind := 24
 				if p.Team == 1 {
 					kind = 25

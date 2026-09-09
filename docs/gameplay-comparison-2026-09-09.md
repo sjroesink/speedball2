@@ -165,3 +165,20 @@ frame if both players enter the area before the animation finishes. Regressions
 cover either participant outside, no damage/no steal on that frame, and contact
 after the logical camera admits both players. All 270 JS tests, six long parity
 scenarios, Go tests, vet and build pass.
+
+### Tackle possession transfer
+
+Amiga do_tackle at 0x10566..0x10572 changes owner and held animation/cursor;
+it does not reconstruct the ball, clear electric state, change the last thrower,
+or immediately replace the selected player. Both implementations previously used
+the power-up giveBall helper, which reset all those fields and ball coordinates.
+Tackle transfer now preserves the existing ball state until normal held-ball
+placement later in the step. A retained counter-tackle can therefore drop the
+ball at its original position before that placement runs. Regression fixtures
+cover this two-contact ordering and retention of charge, hit budget and last
+thrower. All 271 JS tests, long parity scenarios, Go tests, vet and build pass.
+
+Follow-up required: the older documented claim that throwing always clears the
+charged flag is not substantiated by throwing_action_fn 0x107be..0x108de or WIP
+sub_F078. Entity.UpdateBallVelocity clears it for a stationary loose ball.
+Audit the complete flight/held update ordering before changing that lifecycle.

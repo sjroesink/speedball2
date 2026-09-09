@@ -41,7 +41,6 @@ import {
   shielded,
   goalBlocked,
   damage,
-  giveBall,
   medicalStep,
   startInjury,
   featureStep,
@@ -927,7 +926,9 @@ function resolveTackle(s, i, distances, visible) {
       q.fallAttackTime = counter ? counterTime : 0;
       if (falling && hadBall) s.ball.owner = -1;
       else if (hadBall) {
-        giveBall(s, i);
+        // do_tackle 0x10566 changes owner and held animation only.
+        Object.assign(s.ball, {owner: i, flightKind: 0, flightIndex: 0,
+          flightFraction: 0, heldJump: false});
         event(s, p.team === 0 ? 24 : 25, i, j, q.x, q.z, 0);
       }
       [q.fx, q.fz] = eightWay(p.fx * (falling ? -1 : 1), p.fz * (falling ? -1 : 1));

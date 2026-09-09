@@ -6,7 +6,7 @@ function encounter(action, resolved=false) {
  const s=initial();for(const p of s.players)p.stun=100;
  Object.assign(s.players[16],{x:.5,z:0,fx:1,fz:0,stun:0,action:1,actionTime:.3});
  Object.assign(s.players[7],{x:0,z:0,fx:1,fz:0,stun:0,action,actionTime:.3,tackleResolved:resolved});
- Object.assign(s.ball,{owner:7,x:0,z:0,h:1,vx:0,vz:0,vh:0});s.rng=[0,0];
+ Object.assign(s.ball,{owner:7,lastTouch:7,x:0,z:0,h:1,vx:0,vz:0,vh:0});s.rng=[0,0];
  return s;
 }
 test("unresolved slides and punches survive being hit and knock possession loose",()=>{
@@ -15,9 +15,9 @@ test("unresolved slides and punches survive being hit and knock possession loose
   step(s,.04,{},[true,true],{});
   assert.deepEqual(s.events.filter(e=>e.kind===4).map(e=>[e.actor,e.target]),[[16,7],[7,16]]);
   assert.equal(s.ball.owner,-1);
-  assert.equal(s.ball.lastTouch,16);
+  assert.equal(s.ball.lastTouch,7);
   assert.equal(s.ball.vx,0);assert.equal(s.ball.vz,0);
-  assert.equal(s.ball.x,.5);assert.ok(s.ball.vh<=0);
+  assert.equal(s.ball.x,0);assert.ok(s.ball.vh<=0);
   assert.equal(s.players[16].fx,-1);
   assert.equal(s.players[16].fallX,-(action===1?4:3)*velocityUnit);
   assert.deepEqual(s.events.filter(e=>e.kind===24||e.kind===25).map(e=>e.actor),[16]);
@@ -54,4 +54,15 @@ test('an unresolved punch fall runs normally while a late completed contact exte
  assert.ok(Math.abs(p.actionTime-.72)<1e-9);
  const late=recovering(7,true,.16),q=late.players[7];q.fallAttackTime=0;
  step(late,.04,{},[true,true],{});assert.ok(Math.abs(q.actionTime-.44)<1e-9);
+});
+
+test('a tackle steal preserves electric state and last thrower',()=>{
+ const s=encounter(0);
+ Object.assign(s.ball,{charged:true,electric:3,electricBudget:3});
+ step(s,.04,{},[true,true],{});
+ assert.equal(s.ball.owner,16);
+ assert.equal(s.ball.lastTouch,7);
+ assert.equal(s.ball.charged,true);
+ assert.equal(s.ball.electric,3);
+ assert.equal(s.ball.electricBudget,3);
 });
