@@ -70,3 +70,31 @@ This proves the measured integer helper cases only: sign normalization,
 sprite-origin adjustments, world-coordinate rounding and caller/update order
 are outside this routine and remain separate comparison targets. No production
 code needed changing as a result of this measurement.
+
+## Point distance with physical pose origin
+
+`CompareOriginalPointDistance.java` executes distance_to_point at 0xdaca,
+including its actual BSR/RTS call to vector_length, stopping before the outer
+RTS at 0xdaf4. A synthetic stack is initialized through the compiler spec's
+stack register. D0/D3 are explicitly initialized in full before each case.
+Each run has a 64-instruction limit. The querying position is terrain (320,576).
+Signed target deltas are -64/-32/-16/-1/0/1/16/32/64 on both axes.
+
+For all 117 sprites represented by physical-pose-data.json, the Y origin is
+read directly from the reference program's table at 0x40e2, independently of
+the remake's exported table. It is placed at the original player offset 0x26.
+The reference table has 120 entries; its three additional entries are outside
+the remake's player-pose set and are not claimed as compared here.
+
+```text
+node tools/compare-original-point-distance.mjs docs/original-point-distance.csv
+```
+
+Result: 9,477 measured cases, zero differences against playerPointDistance.
+The comparison also verifies every Y origin and the complete input ordering.
+This extends evidence to sign handling and pose-origin application at integer
+terrain coordinates. It does not cover fractional-coordinate quantization,
+when physical sprites are updated, or selection/contact call ordering. The
+initial stack-register naming issue and undefined upper-word warnings were
+resolved before generating the retained measurements. No production change
+was necessary.
