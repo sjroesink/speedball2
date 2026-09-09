@@ -2061,3 +2061,15 @@ hand-to-ball offset. Ground clearance is baked again for the changed legs.
 Inspected standing and running poses for both teams in the browser. All thirteen
 animation tests and the production build pass. This remains a stylized character
 study; it is not user acceptance of the final proportions or art direction.
+
+### Fitted breastplates and closed fists
+
+Blender breastplates now use a curved shell with a narrower waist and shaped
+chest. Team breast markings follow the front curvature. Rounded closed-fist
+meshes, thumb forms and small finger creases replace spherical hands. The hand
+origin and grip offset are preserved for throwing and carrying.
+
+Inspected the exported models in the browser and corrected a team stripe that
+initially intersected the new chest contour. Thirteen animation tests pass with
+the final exports; production build passed for the code in this pass. This is
+an incremental anatomical refinement, not final character art acceptance.

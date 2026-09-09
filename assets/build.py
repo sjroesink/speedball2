@@ -101,8 +101,12 @@ def build_players():
   # Compact helmet, athletic torso and separate armor plates read at court scale.
   cube('Hip belt',(0,0,.72),(.54,.38,.22),rubber,.045)
   tapered_plate('Tapered torso',(0,.015,1.10),.46,.72,.39,.68,rubber)
-  tapered_plate('Breastplate',(0,-.09,1.22),.53,.75,.34,.40,athlete_steel)
-  cube('Team breast stripe',(0,-.272,1.27),(.47,.025,.075),color,.01)
+  contoured_shell('Breastplate',(0,-.045,1.22),[(-.20,.50,.33),(-.12,.62,.43),(.08,.76,.49),(.20,.67,.37)],athlete_steel)
+  for band in range(-3,4):
+   x=band*.062
+   y=-.045-.245*math.sqrt(1-(x/.38)**2)-.016
+   stripe=cube('Team breast stripe',(x,y,1.27),(.066,.025,.075),color,.01)
+   stripe.rotation_euler.z=math.atan(.245*x/(.38*.38*math.sqrt(1-(x/.38)**2)))
   tapered_plate('Upper back plate',(0,.21,1.22),.51,.68,.09,.38,athlete_steel)
   cube('Back team stripe',(0,.262,1.28),(.38,.02,.075),color,.01)
   for z,w in [(.90,.37),(1.01,.43)]:
@@ -133,7 +137,10 @@ def build_players():
    bicep=sphere('Bicep',(side*.49,0,1.13),.16,athlete_skin);bicep.scale.z=1.35
    forearm_start=set(bpy.context.scene.objects)
    contoured_shell('Forearm armor',(side*.49,-.06,.98),[(-.165,.18,.21),(-.10,.23,.27),(.07,.28,.30),(.165,.23,.25)],athlete_steel)
-   sphere('Hand',(side*.49,-.12,.78),.13,athlete_skin)
+   cube('Hand fist',(side*.49,-.12,.78),(.21,.22,.23),athlete_skin,.055)
+   thumb=sphere('Thumb',(side*.40,-.16,.81),.055,athlete_skin);thumb.scale=(.8,1,1.3)
+   for finger in range(3):
+    cube('Finger crease',(side*.49,-.233,.73+finger*.045),(.12,.006,.006),skin,.002)
    forearm_parts=set(bpy.context.scene.objects)-forearm_start
    bpy.ops.object.empty_add(location=(side*.49,0,1.10));elbow=bpy.context.object;elbow.name='Elbow_'+str(side)
    for part in forearm_parts: part.parent=elbow;part.matrix_parent_inverse=elbow.matrix_world.inverted()
