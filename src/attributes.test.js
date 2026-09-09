@@ -57,7 +57,8 @@ test("failed tackle consumes its contact without a retry on later frames", () =>
     fz: 0,
   });
   Object.assign(s.ball, { owner: 16, x: 0.7, z: 0, h: 1 });
-  step(s, 1 / 60, { tackle: true }, [true, true]); // First reference random byte is 223, threshold 136.
+  step(s, 1 / 60, { tackle: true }, [true, true]);
+  step(s, 1 / 60, {}, [true, true]); // First action-thinking tick rolls 223 against 136.
   assert.equal(s.ball.owner, 16);
   assert.equal(s.players[16].health, 100);
   const rng = [...s.rng];

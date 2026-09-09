@@ -353,6 +353,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			p.moveX, p.moveZ = 0, 0
 			continue
 		}
+		s.resolveTackle(i, &contacts[i])
 		t := p.Team
 		human := humans[t] && s.Controlled[t] == i
 		u := inputs[t]
@@ -510,38 +511,6 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			}
 		}
 	}
-	// Original roster order interleaves team two then team one.
-	for offset := range s.Players {
-		i := offset/2 + (1-offset%2)*9
-		p := &s.Players[i]
-		if p.Stun > 0 {
-			continue
-		}
-		if p.Action == 1 && !p.tackleResolved {
-			for j := range s.Players {
-				q := &s.Players[j]
-				if q.Team == p.Team || q.Stun > 0 || q.Health <= 0 || s.active(10, q.Team) {
-					continue
-				}
-				if contacts[i][j] <= 30 {
-					// sub_ED92 switches out of contact checks at the first eligible opponent.
-					p.tackleResolved = true
-					if s.randomByte() > tackleThreshold(p, q, j%9 == 0) {
-						break
-					}
-					hadBall := s.Ball.Owner == j
-					if s.damage(i, j) {
-						if hadBall {
-							s.giveBall(i)
-						}
-						q.X = clamp(q.X+p.FX*.7, -playerLimitX, playerLimitX)
-						q.Z = clamp(q.Z+p.FZ*.7, -playerLimitZ, playerLimitZ)
-					}
-					break
-				}
-			}
-		}
-	}
 	if s.hasInjury() {
 		s.previous = inputs
 		return
@@ -651,5 +620,32 @@ func (s *State) catchBallAt(only int, distances *[18]int) {
 			s.event(16, i, -1, b.X, b.Z, b.H)
 			return
 		}
+	}
+}
+
+// Existing slides resolve contact during thinking, before later players act.
+func (s *State) resolveTackle(i int, distances *[18]int) {
+	p := &s.Players[i]
+	if p.Action != 1 || p.tackleResolved {
+		return
+	}
+	for j := range s.Players {
+		q := &s.Players[j]
+		if q.Team == p.Team || q.Stun > 0 || q.Health <= 0 || s.active(10, q.Team) || distances[j] > 30 {
+			continue
+		}
+		p.tackleResolved = true
+		if s.randomByte() > tackleThreshold(p, q, j%9 == 0) {
+			return
+		}
+		hadBall := s.Ball.Owner == j
+		if s.damage(i, j) {
+			if hadBall {
+				s.giveBall(i)
+			}
+			q.X = clamp(q.X+p.FX*.7, -playerLimitX, playerLimitX)
+			q.Z = clamp(q.Z+p.FZ*.7, -playerLimitZ, playerLimitZ)
+		}
+		return
 	}
 }

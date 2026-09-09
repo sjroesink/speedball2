@@ -94,3 +94,24 @@ func TestTackleRosterOrder(t *testing.T) {
 		}
 	}
 }
+
+func TestTacklePreemptsLaterThrow(t *testing.T) {
+	s := tackleFixture(20)
+	s.RNG = [2]uint32{}
+	p, q := &s.Players[7], &s.Players[16]
+	p.Action = 3
+	p.ActionTime = 5. / 25
+	p.throwMode = 1
+	q.Action = 1
+	q.ActionTime = .3
+	s.Ball.Owner, s.Ball.X, s.Ball.Z = 7, 0, 0
+	s.simulate(simulationStep, [2]Input{{Shoot: true}, {}}, [2]bool{true, true})
+	if p.Stun <= 0 || s.Ball.Owner != 16 {
+		t.Fatal("late throw escaped tackle")
+	}
+	for _, e := range s.Events[:s.EventCount] {
+		if e.Kind == 3 {
+			t.Fatal("throw executed after tackle")
+		}
+	}
+}

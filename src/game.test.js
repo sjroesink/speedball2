@@ -169,6 +169,12 @@ test("tackle wins possession directly and resolves only one opponent per slide",
   step(s, dt, { tackle: true }, [true, true]);
   assert.equal(
     s.ball.owner,
+    16,
+    "new slide does not hit until its next thinking tick",
+  );
+  step(s, dt, {}, [true, true]);
+  assert.equal(
+    s.ball.owner,
     7,
     "successful tackle must give possession immediately",
   );

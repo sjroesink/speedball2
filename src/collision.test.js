@@ -83,3 +83,18 @@ test("simultaneous tackles use roster order independently of tick parity", () =>
     assert.ok(s.players[7].stun > 0);
   }
 });
+
+test("earlier tackle cancels a later player's release on the same tick", () => {
+  const s = tackleFixture(20);
+  s.rng = [0, 0];
+  Object.assign(s.players[7], { action: 3, actionTime: 5 / 25, throwMode: 1 });
+  Object.assign(s.players[16], { action: 1, actionTime: 0.3 });
+  Object.assign(s.ball, { owner: 7, x: 0, z: 0 });
+  step(s, simulationStep, { shoot: true }, [true, true]);
+  assert.ok(s.players[7].stun > 0);
+  assert.equal(s.ball.owner, 16);
+  assert.equal(
+    (s.events ?? []).some((e) => e.kind === 3),
+    false,
+  );
+});

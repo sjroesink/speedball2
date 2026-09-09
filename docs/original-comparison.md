@@ -449,3 +449,17 @@ range from 31 units, and identical simultaneous-tackle priority on both tick
 parities. The contact pass still runs after player thinking/movement; original
 per-player hit processing, offscreen guards and falling-action continuation
 remain to be ported before complete collision-order equivalence can be claimed.
+
+
+### Tackles within per-player thinking
+
+Existing slide contact checks now run after that player's catch check and
+before its movement/input decisions, rather than in a separate pass after
+all players have acted. A newly initiated slide first checks contact on the
+following thinking tick, matching installation of `sub_F33C` by the input
+routine. Earlier roster attackers can now interrupt later players' scheduled
+throws in the same tick. Paired tests cover that interruption and retain the
+first-contact/no-reroll and direct-possession assertions after the initial
+slide tick. Remaining differences include action functions retained while
+falling, original fall velocity/animation, offscreen guards and the global
+movement phase; this is not yet a complete original player interpreter.

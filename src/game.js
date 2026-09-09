@@ -417,6 +417,7 @@ export function step(
       p.moveX = p.moveZ = 0;
       continue;
     }
+    resolveTackle(s, i, contacts[i]);
     const t = p.team,
       human = humans[t] && s.controlled[t] === i;
     let u = inputs[t],
@@ -571,33 +572,6 @@ export function step(
         p.x = previousX;
     }
   }
-  for (let o = 0; o < 18; o++) {
-    const i = Math.floor(o / 2) + (o % 2 === 0 ? 9 : 0),
-      p = s.players[i];
-    if (p.stun > 0) continue;
-    if (p.action === 1 && !p.tackleResolved)
-      s.players.some((q, j) => {
-        if (
-          q.team === p.team ||
-          q.stun > 0 ||
-          q.health <= 0 ||
-          shielded(s, q.team)
-        )
-          return false;
-        if (contacts[i][j] <= 30) {
-          // sub_ED92 switches out of contact checks at the first eligible opponent.
-          p.tackleResolved = true;
-          if (randomByte(s) > tackleThreshold(p, q, j % 9 === 0)) return true;
-          const hadBall = s.ball.owner === j;
-          if (damage(s, i, j)) {
-            if (hadBall) giveBall(s, i);
-            q.x = clamp(q.x + p.fx * 0.7, -playerLimitX, playerLimitX);
-            q.z = clamp(q.z + p.fz * 0.7, -playerLimitZ, playerLimitZ);
-          }
-          return true;
-        }
-      });
-  }
   if (s.players.some((p) => p.injury > 0)) {
     s.previous = inputs.map((u) => ({ ...u }));
     return;
@@ -736,4 +710,30 @@ export function catchBall(s, only = -1, distances = null) {
       event(s, 16, i, -1, b.x, b.z, b.h);
       return;
     }
+}
+
+// Invoked during the existing slide's thinking, before later players act.
+function resolveTackle(s, i, distances) {
+  const p = s.players[i];
+  if (p.action !== 1 || p.tackleResolved) return;
+  for (let j = 0; j < s.players.length; j++) {
+    const q = s.players[j];
+    if (
+      q.team === p.team ||
+      q.stun > 0 ||
+      q.health <= 0 ||
+      shielded(s, q.team) ||
+      distances[j] > 30
+    )
+      continue;
+    p.tackleResolved = true;
+    if (randomByte(s) > tackleThreshold(p, q, j % 9 === 0)) return;
+    const hadBall = s.ball.owner === j;
+    if (damage(s, i, j)) {
+      if (hadBall) giveBall(s, i);
+      q.x = clamp(q.x + p.fx * 0.7, -playerLimitX, playerLimitX);
+      q.z = clamp(q.z + p.fz * 0.7, -playerLimitZ, playerLimitZ);
+    }
+    return;
+  }
 }

@@ -86,6 +86,7 @@ func TestFailedTackleDoesNotReroll(t *testing.T) {
 	s.Players[16] = Player{Stats: defaultStats(), Health: 100, Team: 1, X: .7, FX: -1, Cooldown: 10}
 	s.Ball = Ball{Owner: 16, X: .7, H: 1}
 	s.step(dt, [2]Input{{Tackle: true}, {}})
+	s.step(dt, [2]Input{})
 	if s.Ball.Owner != 16 || s.Players[16].Health != 100 {
 		t.Fatal("failed roll took possession")
 	}

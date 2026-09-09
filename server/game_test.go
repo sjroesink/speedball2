@@ -58,6 +58,7 @@ func TestTackleKnockdownAndPossession(t *testing.T) {
 	s.Players[16] = Player{Health: 100, X: 1.1, Team: 1, FX: -1}
 	s.Ball = Ball{X: 1.1, H: 1, Owner: 16}
 	s.step(dt, [2]Input{{Tackle: true}, {}})
+	s.step(dt, [2]Input{})
 	if s.Players[16].Stun < 1 || s.Players[16].Action != 4 || s.Ball.Owner != 7 {
 		t.Fatalf("no knockdown / possession transfer: %+v", s.Ball)
 	}
@@ -247,6 +248,10 @@ func TestTackleDirectPossessionSingleContact(t *testing.T) {
 	s.Players[17].Cooldown = 10
 	s.Ball = Ball{Owner: 16, LastTouch: 16, X: .7, H: 1}
 	s.step(dt, [2]Input{{Tackle: true}, {}})
+	if s.Ball.Owner != 16 {
+		t.Fatal("slide hit before first thinking tick")
+	}
+	s.step(dt, [2]Input{})
 	if s.Ball.Owner != 7 || s.Controlled[0] != 7 {
 		t.Fatal("tackle must immediately transfer possession", s.Ball.Owner)
 	}
