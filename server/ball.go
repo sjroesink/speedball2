@@ -12,7 +12,8 @@ func slowBallFrame(b *Ball) {
 	if b.Owner >= 0 || (b.VX == 0 && b.VZ == 0) {
 		return
 	}
-	if b.VX != 0 && math.Abs(b.X) > 528*22.4/576 {
+	terrainY := int(math.Round(576 - b.X/(22.4/576)))
+	if b.VX != 0 && (terrainY < 48 || terrainY > 1104) {
 		return
 	}
 	if b.SpeedTimer == 0 || b.NextSlowdown > b.SpeedTimer {

@@ -246,3 +246,14 @@ test("height stage three cannot score even though it is below the old geometric 
   assert.deepEqual(s.score, [0, 0]);
   assert.ok(s.ball.vx < 0);
 });
+
+test("slowdown bounds use integer terrain coordinates despite float conversion noise", () => {
+ const u=22.4/576;
+ for(const y of [47,48,1104,1105]) for(const error of [-1e-12,0,1e-12]) {
+  const b={...ball(),x:(576-y)*u+error,vx:8*velocityUnit,speedTimer:40,nextSlowdown:50,h:.25};
+  slowBallFrame(b);
+  const inside=y>=48&&y<=1104;
+  assert.equal(b.speedTimer,inside?39:40);
+  assert.ok(Math.abs(b.vx-(inside?7:8)*velocityUnit)<1e-9);
+ }
+});

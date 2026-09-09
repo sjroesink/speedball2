@@ -9,7 +9,8 @@ export function setBallSpeed(ball, attribute) {
 export function slowBallFrame(ball) {
   if (ball.owner >= 0 || (!ball.vx && !ball.vz)) return;
   // Original longitudinal coordinates 48..1104, centered at 576.
-  if (ball.vx && Math.abs(ball.x) > (528 * 22.4) / 576) return;
+  const terrainY = Math.round(576 - ball.x / (22.4 / 576));
+  if (ball.vx && (terrainY < 48 || terrainY > 1104)) return;
   const timer = ball.speedTimer ?? 0;
   const next = ball.nextSlowdown ?? 0;
   if (timer === 0 || next > timer) {

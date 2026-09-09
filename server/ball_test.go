@@ -227,3 +227,20 @@ func TestFlightStageCatchAndGoal(t *testing.T) {
 		t.Fatal("stage three goal")
 	}
 }
+
+func TestSlowdownTerrainBoundary(t *testing.T) {
+	const u = 22.4 / 576
+	for _, y := range []int{47, 48, 1104, 1105} {
+		for _, error := range []float64{-1e-12, 0, 1e-12} {
+			b := Ball{Owner: -1, X: float64(576-y)*u + error, VX: 8 * velocityUnit, SpeedTimer: 40, NextSlowdown: 50, H: .25}
+			slowBallFrame(&b)
+			timer, speed := 40, 8.
+			if y >= 48 && y <= 1104 {
+				timer, speed = 39, 7
+			}
+			if b.SpeedTimer != timer || math.Abs(b.VX-speed*velocityUnit) > 1e-9 {
+				t.Fatal("terrain boundary", y, error, b)
+			}
+		}
+	}
+}

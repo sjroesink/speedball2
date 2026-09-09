@@ -1357,3 +1357,24 @@ Training remains a modern AI exhibition, deliberately using the online roster
 pace. It is not a recreation of Amiga game_practice, which hides the second
 team. Existing solo pickup/cash behavior remains in this warm-up. League/team
 management and other original mode-specific initialization are still absent.
+
+
+## Extended browser/server simulation comparison (2026-09-09)
+
+Added a shared seeded 5000-tick AI scenario started through the real match
+constructors. The JS test executes a Go trace and compares once per 25 ticks:
+clock, period, scores, RNG words, ball position/height/owner/velocity and active
+flight state, restart phase, and all player positions/health/actions/facing.
+Unused flight indices and held-ball slowdown counters are excluded because
+one implementation clears them while the other leaves inert values.
+
+The scenario exposed divergence at tick 1305. A floating-point world-coordinate
+boundary made JS skip ball slowdown where Go applied it, changing velocity and
+all later ball positions. step_slow_ball compares integer terrain Y to 48..1104
+in the source. Both implementations now convert to integer terrain coordinates
+before testing that interval. Boundary tests cover both ends, just outside,
+and tiny positive/negative floating-point noise.
+
+197 JS tests, Go tests/vet and production build pass. The full 5000-tick seeded
+scenario now matches at every sampled checkpoint. This establishes parity for
+that scenario, not exhaustive JS/Go equivalence or original-game frame parity.
