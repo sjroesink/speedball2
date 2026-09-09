@@ -17,11 +17,11 @@ func TestKeeperActionReach(t *testing.T) {
 	if a == nil || !a.attack {
 		t.Fatal("inclusive reach")
 	}
-	a, _, _ = s.keeperAction(0, 65, 255)
+	a, _, _ = s.keeperAction(0, 65, 49)
 	if a != nil {
 		t.Fatal("outside reach")
 	}
-	a, x, _ := s.keeperAction(0, 65, 49)
+	a, x, _ := s.keeperAction(0, 65, 51)
 	if a == nil || a.attack || x != -400*u {
 		t.Fatal("stationary chase")
 	}
@@ -34,7 +34,7 @@ func TestKeeperActionReach(t *testing.T) {
 	if a == nil || !a.attack {
 		t.Fatal("boosted reach")
 	}
-	a, _, _ = s.keeperAction(0, 97, 255)
+	a, _, _ = s.keeperAction(0, 97, 49)
 	if a != nil {
 		t.Fatal("outside boosted reach")
 	}
@@ -54,5 +54,30 @@ func TestSelectedKeeperAction(t *testing.T) {
 	s.simulate(simulationStep, [2]Input{}, [2]bool{})
 	if s.Controlled[0] != 0 || s.Players[0].Action != 1 {
 		t.Fatal("keeper initiation")
+	}
+}
+
+func TestKeeperStationaryPursuitUnsignedBranch(t *testing.T) {
+	for team := 0; team < 2; team++ {
+		for period := 1; period <= 2; period++ {
+			for _, aggression := range []int{100, 101, 200, 250} {
+				s := keeperActionSetup()
+				i := team * 9
+				s.Period = period
+				s.Players[i].Stats[0] = aggression
+				for random := 0; random < 256; random++ {
+					a, _, _ := s.keeperAction(i, 999, random)
+					// CMP.B half-aggression, random followed by BLS at 0xfd4c/0xfd50.
+					difference := random - (aggression >> 1)
+					if (a != nil) != (difference > 0) || (a != nil && a.attack) {
+						t.Fatalf("team %d period %d aggression %d random %d", team, period, aggression, random)
+					}
+				}
+				s.Ball.VX = 1
+				if a, _, _ := s.keeperAction(i, 999, 255); a != nil {
+					t.Fatal("moving target must use normal positioning")
+				}
+			}
+		}
 	}
 }

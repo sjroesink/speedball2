@@ -296,3 +296,23 @@ held grip error remained zero. No medical sequence or recovery seek occurred.
 This local transport run does not establish WAN behavior or exercise a midair
 stat change; dedicated simulation, wire and exported-clip tests cover that case.
 Final full JS suite: 277 passed. Go tests and go vet also pass.
+
+### Correct unsigned stationary-keeper pursuit branch
+
+The selected keeper's stationary-target decision was inverted in both hosts.
+At 0xfd46..0xfd4a the original loads aggression and halves it. CMP.B D0,
+(0x43,A5) at 0xfd4c compares the stored random byte against that half; BLS at
+0xfd50 branches to normal positioning when random <= half-aggression. Direct
+stationary pursuit at 0xfd54 therefore requires random > half-aggression.
+The previous code required random < half-aggression. This supersedes the older
+stationary pursuit description in original-comparison.md around line 710.
+
+At aggression 100, the corrected branch pursues for decision bytes 51..255,
+retaining ordinary positioning for 0..50. Previously it pursued for 0..49.
+Reach-triggered attacks still take precedence; moving targets still fall back
+to normal positioning outside attack reach. Browser and Go now agree with the
+unsigned source branch. Regressions enumerate all 256 bytes for aggression
+100/101/200/250, both teams and both halves, with an additional moving-target
+check. Existing reach, equality and simulation initiation tests also pass.
+Full validation: 278 JS tests, Go tests, go vet and production build pass.
+This establishes this branch, not exhaustive keeper or match fidelity.
