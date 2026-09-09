@@ -1917,3 +1917,18 @@ Gameplay recovery work is deferred in Git stash
 request. Do not resume it ahead of the visual direction work. The art remains a
 prototype: character anatomy, material wear, stadium dressing and user visual
 acceptance are still outstanding.
+
+
+### Industrial court dressing
+
+The Blender arena now has a hollow plum midfield star stencil, wall service
+panels with recessed vents and fasteners, and continuous terrace risers with
+seat pads and backs. The stencil is decorative; the ten score stars, two score
+domes and four warp rings retain their separate exported names and behavior.
+Static dressing is joined into five mesh groups before export. The GLB is now
+3,867,264 bytes; this adds download size and is not an FPS improvement claim.
+
+Inspected the exported court in the orbitable art study and fullscreen training
+at 3456x1408 using the higher ball-follow camera. The study has a wider court
+framing and separate fog range so the entire arena can be reviewed. Production
+build passes. Character anatomy and surface wear remain unfinished.

@@ -205,12 +205,29 @@ cube('Halfway line',(0,0,.074),(.065,16,.012),line,0)
 for y in [-8,8]: cube('Touchline',(0,y,.075),(27,.05,.012),line,0)
 for x in [-13.5,13.5]: cube('End line',(x,0,.075),(.05,16,.012),line,0)
 bpy.ops.mesh.primitive_torus_add(major_radius=2.6,minor_radius=.032,major_segments=96,minor_segments=6,location=(0,0,.09));bpy.context.object.data.materials.append(line)
+# Large painted star echoes the classic court emblem; it is not a score target.
+emblem=mat('Worn plum court stencil',(.23,.115,.15),.05)
+emblem.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value=.82
+verts=[]
+for radius_scale in [1,.88]:
+ for i in range(10):
+  angle=i*math.pi/5;radius=(2.25 if i%2==0 else 1.0)*radius_scale
+  verts.append((math.cos(angle)*radius,math.sin(angle)*radius,.086))
+faces=[(i,(i+1)%10,(i+1)%10+10,i+10) for i in range(10)]
+mesh=bpy.data.meshes.new('Center star stencil');mesh.from_pydata(verts,[],faces);mesh.materials.append(emblem)
+obj=bpy.data.objects.new('Center star stencil',mesh);bpy.context.collection.objects.link(obj)
+
 for x in [-10.5,10.5]:
  cube('Goal box',(x,0,.08),(.045,8,.012),line,0)
  for y in [-4,4]: cube('Goal box',(x+(-1.5 if x<0 else 1.5),y,.08),(3,.045,.012),line,0)
+# Continuous terraces support the seats instead of isolated floating blocks.
 for y in [-10,10]:
  for row in range(3):
-  for x in range(-14,15): cube('Grandstand',(x,y+math.copysign(row*.65,y),.2+row*.4),(.75,.5,.3),steel)
+  tier_y=y+math.copysign(row*.65,y)
+  cube('Terrace riser',(0,tier_y,-.12+row*.2),(29,.65,.50+row*.4),steel,.025)
+  for x in range(-14,15):
+   cube('Grandstand seat',(x,tier_y,.20+row*.4),(.75,.46,.12),rubber,.025)
+   cube('Grandstand seat back',(x,tier_y+math.copysign(.20,y),.37+row*.4),(.75,.10,.31),steel,.025)
 # Larger regulation-style pitch. Keep goal height and player size in metres.
 for o in bpy.context.scene.objects:
  o.location.x*=1.5;o.location.y*=1.4;o.scale.x*=1.5;o.scale.y*=1.4
@@ -244,6 +261,22 @@ for o in bpy.context.scene.objects:
  elif o.name.startswith('Cyan rail'): o.location.y=math.copysign(11.55,o.location.y)
 bpy.context.view_layer.update()
 print('CONTACT GEOMETRY: end=%.6f, goal half-width=%.6f, side=11.200000' % (pitch_end,goal_half_width))
+# Wall service cassettes use world coordinates after court alignment.
+wall_plate=mat('Barrier service plate',(.18,.21,.19),.65)
+wall_plate.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value=.6
+for side in [-1,1]:
+ for x in [-19.6,-16.8,-14,-11.2,-8.4,-5.6,-2.8,0,2.8,5.6,8.4,11.2,14,16.8,19.6]:
+  if abs(x+side*32*terrain_unit)<1.7 or abs(abs(x)-206*terrain_unit)<1.15: continue
+  if side==1 and 1.3<x<7.5 or side==-1 and -7.5<x<-1.3: continue
+  y=side*11.57
+  cube('Wall service cassette',(x,y,1.10),(2.45,.62,.08),wall_plate,.025)
+  for dx in [-.42,-.21,0,.21,.42]:
+   cube('Recessed vent slot',(x+dx,y,1.147),(.075,.36,.012),rubber,.006)
+  for dx in [-1.05,1.05]:
+   for dy in [-.20,.20]:
+    bpy.ops.mesh.primitive_cylinder_add(vertices=8,radius=.04,depth=.015,location=(x+dx,y+dy,1.15))
+    o=bpy.context.object;o.name='Cassette bolt';o.data.materials.append(fastener)
+
 # Five targets on the top-left and bottom-right walls in the upfield camera.
 def star(name,x,y,material):
  verts=[]
@@ -289,6 +322,16 @@ for x,y in [(304*22.4/576,-300*22.4/576),(-304*22.4/576,300*22.4/576)]:
  for dx in [-.35,0,.35]: cube('Electrode',(x+dx,y,1.1),(.12,.65,.12),white,.03)
 for x in [-pitch_end,pitch_end]:
  cube('GoalShield_'+str(int(x)),(x,0,1),(.16,2*goal_half_width,1.9),cyan,.03)
+# Batch only static decoration; animated score targets retain separate names.
+for prefixes,label in [(['Wall service cassette'],'Wall service panels'),(['Recessed vent slot'],'Wall ventilation'),(['Cassette bolt'],'Wall fasteners'),(['Terrace riser','Grandstand seat back'],'Terrace steelwork'),(['Grandstand seat'],'Terrace seating')]:
+ objects=[o for o in bpy.context.scene.objects if o.type=='MESH' and any(o.name.startswith(p) for p in prefixes)]
+ bpy.ops.object.select_all(action='DESELECT')
+ for o in objects:
+  bpy.context.view_layer.objects.active=o
+  for modifier in list(o.modifiers): bpy.ops.object.modifier_apply(modifier=modifier.name)
+  o.select_set(True)
+ if objects:
+  bpy.context.view_layer.objects.active=objects[0];bpy.ops.object.join();bpy.context.object.name=label
 export('arena')
 if '--arena-only' in sys.argv: sys.exit(0)
 build_players()
