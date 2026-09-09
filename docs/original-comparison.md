@@ -637,3 +637,10 @@ Regression tests cover bonus-plus-landing, injury-plus-impact/punch, cursor dedu
 WIP `Match` lines 485–497 copy the carrier terrain position and velocity to the held ball, then apply offsets from the current player sprite. Both simulations now give the held ball the carrier movement velocity instead of zero, so the existing AI position prediction can account for a moving carrier. The 3D ball height follows the player jump height and returns to its normal carry height on landing. This height is an adaptation to the current Blender player and smooth jump curve; it does not claim a direct port of the original per-sprite hand-offset tables.
 
 Simulation tests verify elevated carry height during ascent and apex, normal height on landing, preserved ownership, shared horizontal velocity and zero velocity after stopping. All 132 JavaScript tests, Go tests, Go vet and the production build pass. Original per-frame carry offsets and exact visual jump timing remain pending.
+
+
+### Rules text and current multiplayer smoke check
+
+The in-game rules and README now describe stationary punches, moving slides, the E-lob wind-up and the rotating three-player bench consistently with the simulation. README equipment descriptions distinguish tackle success from reach and defence from damage reduction, and list the Catch/Punch Blender clips.
+
+The local Go service was restarted from gameplay commit 6a4eebd. Two browser tabs joined fresh arena P6CZFD, both reported ONLINE / LIVE and WEBTRANSPORT CONNECTED, and both displayed 01:19 at the same observation. Neither tab reported browser errors. The production build passes. This confirms basic online operation of the accumulated changes, not frame-exact original gameplay or network stress behaviour.

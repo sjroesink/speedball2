@@ -24,8 +24,8 @@ Matches fill the browser viewport and request native fullscreen. The camera foll
 ## Controls and scoring
 
 - WASD / arrows: move and aim in eight directions. W moves up the screen.
-- Tap Space: low throw. Hold through the 160 ms wind-up: automatic lob. E: immediate lob.
-- Without the ball, Space slides or jumps toward a nearby high ball. Shift always slides, even on a miss.
+- Tap Space: low throw. Hold through the 160 ms wind-up: automatic lob. E: lob with the same 160 ms wind-up.
+- Without the ball, Space jumps for a nearby high ball; otherwise it punches when stationary or slides when moving. Shift punches when stationary and slides when moving. Missed attacks still play their animation.
 - During the throw wind-up, hold a perpendicular direction to angle a straight throw at release. The ball cannot be steered after release. Jump to catch high balls; low balls can be caught from the ground.
 - Goals score 10 points. Shots above the crossbar or outside the narrow goal rebound off the end wall.
 - Each wall star scores 2 points. A complete bank awards another 10 at the next bonus clock pulse, then clears for reuse. Opponents can extinguish a star before that pulse to cancel the bonus; extinguishing always deducts exactly 2 points.
@@ -49,7 +49,7 @@ Matches fill the browser viewport and request native fullscreen. The camera foll
 
 One temporary effect is active at a time; a new temporary effect replaces the old one. Instant pickups do not clear temporary effects. Seven pickup slots rotate two power tokens, four credit pickups and one equipment token. Pickups are collected automatically and respawn. Credits are recorded for the current exhibition match; there is no transfer shop.
 
-Eight equipment categories improve aggression (earlier AI tackles), attack (tackle reach), defence (damage resistance), speed, throw strength, power (damage), stamina (damage resistance) or intelligence (ball anticipation). Equipment is lost on a hit.
+Eight equipment categories improve aggression (AI attack decisions), attack (tackle success), defence (resisting tackles), speed, throw strength, power (damage), stamina (damage resistance) or intelligence (ball anticipation). Equipment is lost on a hit.
 
 Energy loss reduces performance. At zero energy the player is injured: the opponent scores 10 points with any multiplier, the clock stops for a six-second medical evacuation, and a substitute enters. The three bench players rotate: the first enters and the outgoing player joins the back with weakened attributes rounded down to tens. Substitutions do not exhaust the bench. Damage persists after goals.
 
@@ -59,7 +59,7 @@ The HUD displays energy, equipment, reserves, credits, active effects and remain
 
 ## Blender assets
 
-`assets/build.py` authors all arena, player, ball, pickup, gate, target, impact and medic meshes in Blender 5.2. No original game sprites or disk images are shipped. Editable sources are in `assets/*.blend`; exports are in `public/assets/*.glb`. Players include Run, Slide, Jump, Throw and Hit animation clips. `speedball.blend` contains the arena/player composition; `pickups.blend` and `medic.blend` contain the additional models.
+`assets/build.py` authors all arena, player, ball, pickup, gate, target, impact and medic meshes in Blender 5.2. No original game sprites or disk images are shipped. Editable sources are in `assets/*.blend`; exports are in `public/assets/*.glb`. Players include Run, Slide, Jump, Throw, Hit, Catch and Punch animation clips. `speedball.blend` contains the arena/player composition; `pickups.blend` and `medic.blend` contain the additional models.
 
 ```powershell
 npm run assets
