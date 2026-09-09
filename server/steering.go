@@ -27,7 +27,7 @@ func steerToTarget(p *Player, x, z float64, fresh bool) (float64, float64) {
 	const unit = 22.4 / 576
 	dx, dz := int(math.Round(x/unit))-int(math.Round(p.X/unit)), int(math.Round(z/unit))-int(math.Round(p.Z/unit))
 	ax, az := int(math.Abs(float64(dx))), int(math.Abs(float64(dz)))
-	near := !fresh && ax <= 32 && az <= 32
+	near := !fresh && absInt(dx+physicalPoseData.Origins[p.physicalSprite][1]) <= 32 && az <= 32
 	sign := func(v int) float64 {
 		if v < 0 {
 			return -1
@@ -58,7 +58,7 @@ func steerToTarget(p *Player, x, z float64, fresh bool) (float64, float64) {
 // sub_EC0C: hold distant heading through the run cycle; correct near arrival.
 func advanceSteering(p *Player, x, z float64, fresh bool) (float64, float64) {
 	const unit = 22.4 / 576
-	dx := math.Abs(math.Round(x/unit) - math.Round(p.X/unit))
+	dx := math.Abs(math.Round(x/unit) - math.Round(p.X/unit) + float64(physicalPoseData.Origins[p.physicalSprite][1]))
 	dz := math.Abs(math.Round(z/unit) - math.Round(p.Z/unit))
 	changed := !p.steerValid || p.steerTargetX != x || p.steerTargetZ != z
 	frame := p.steerFrame

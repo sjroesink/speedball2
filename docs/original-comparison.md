@@ -2643,3 +2643,19 @@ it verifies retaining direction at physical phase three and correcting at
 phase zero. All 256 JS tests, including six 10,000-tick parity scenarios,
 Go tests, vet and production build pass. This also covers the prior formation
 pose update in the complete JS suite. No additional push was made this cycle.
+
+### Near-target steering uses the query origin
+
+player_moving_action_fn 0x102ea-0x102f2 calls distance_check with a 32-pixel
+axis limit. distance_check at 0x10044-0x1004a subtracts both terrain Y and
+vertical sprite origin. The previous steering implementation applied this
+near-target box only to ground coordinates. JS/Go now include the vertical
+origin for that decision and for deciding whether the distant phase gate can
+be bypassed. Direction selection and the below-four-pixel arrival snap retain
+raw terrain coordinates, as the separate direction routines do.
+
+The boundary regression uses sprite 73's -12 vertical origin: a target at
+44/20 terrain pixels is in the corrected box, while 45/20 is outside. Standing
+at the same ground position remains outside. Steering tests, six 10,000-tick
+parity scenarios, Go tests/vet and production build pass. No claim of complete
+AI or visual movement equivalence follows from these focused cases.

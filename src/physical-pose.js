@@ -5,6 +5,9 @@ import {
   referenceDistance,
 } from "./attributes.js";
 const unit = 22.4 / 576;
+export function playerVerticalOrigin(p) {
+  return data.origins[p.physicalSprite ?? 0][1];
+}
 export function playerTargetDelta(p, target) {
   const a = data.origins[p.physicalSprite ?? 0];
   const b = data.origins[target.physicalSprite ?? 0];

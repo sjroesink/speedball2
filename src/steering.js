@@ -1,3 +1,4 @@
+import { playerVerticalOrigin } from "./physical-pose.js";
 const unit = 22.4 / 576;
 
 // target_predicted_position (0x10aaa), lookahead table 0x020a.
@@ -21,7 +22,7 @@ export function steerToTarget(p, x, z, fresh = false) {
   const dz = Math.round(z / unit) - Math.round(p.z / unit);
   const ax = Math.abs(dx),
     az = Math.abs(dz);
-  const near = !fresh && ax <= 32 && az <= 32;
+  const near = !fresh && Math.abs(dx + playerVerticalOrigin(p)) <= 32 && az <= 32;
   let vx = near || ax > Math.floor(az / 2) ? Math.sign(dx) : 0;
   let vz = near || az > Math.floor(ax / 2) ? Math.sign(dz) : 0;
   if (ax < 4) {
@@ -38,7 +39,7 @@ export function steerToTarget(p, x, z, fresh = false) {
 // sub_EC0C recalculates distant steering only at the run-cycle boundary.
 // Within the 32-unit arrival box it corrects direction every reference tick.
 export function advanceSteering(p, x, z, fresh = false) {
-  const dx = Math.abs(Math.round(x / unit) - Math.round(p.x / unit));
+  const dx = Math.abs(Math.round(x / unit) - Math.round(p.x / unit) + playerVerticalOrigin(p));
   const dz = Math.abs(Math.round(z / unit) - Math.round(p.z / unit));
   // 0x102fe checks the sprite cursor, including its retained action phase.
   const frame = p.physicalPoseValid ? p.poseCursor : p.steerFrame ?? 0;

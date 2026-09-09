@@ -2,6 +2,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { steerToTarget, predictedTarget, advanceSteering } from "./steering.js";
 
+test("near-target box includes vertical origin while direction uses terrain position", () => {
+  const airborne={x:0,z:0,physicalSprite:73};
+  assert.deepEqual(steerToTarget(airborne,44*u,20*u),[1,1]);
+  assert.deepEqual(steerToTarget({x:0,z:0},44*u,20*u),[1,0]);
+  assert.deepEqual(steerToTarget({x:0,z:0,physicalSprite:73},45*u,20*u),[1,0]);
+});
+
 test("live steering waits for the retained physical animation cursor", () => {
   const p={x:0,z:0,physicalPoseValid:true,poseCursor:3};
   advanceSteering(p,200*u,100*u,true);
