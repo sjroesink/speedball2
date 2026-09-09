@@ -81,3 +81,29 @@ func TestGoalReturnPreservesPlayers(t *testing.T) {
 		t.Fatal("restart completion")
 	}
 }
+
+func TestRestartClearsPowerPreservesEquipment(t *testing.T) {
+	for _, kind := range []int{1, 2, 3, 4, 5, 6, 9, 10} {
+		s := initial()
+		p := &s.Players[7]
+		p.Health = 42
+		p.Stats[0] = 170
+		s.pickup(7, 17)
+		s.pickup(7, kind)
+		s.beginRestart(0)
+		s.restartStep(.04)
+		if s.Effect.Kind != 0 || s.Effect.Time != 0 || s.Effect.Team != -1 {
+			t.Fatal("active restart power", kind, s.Effect)
+		}
+		if p.Gear != 17 || p.Stats[3] != 250 || p.Stats[0] != 170 || p.Health != 42 {
+			t.Fatal("persistent player attributes changed", kind)
+		}
+		for _, q := range s.Players {
+			for _, v := range q.StatBackup {
+				if v != 0 {
+					t.Fatal("temporary backup retained")
+				}
+			}
+		}
+	}
+}

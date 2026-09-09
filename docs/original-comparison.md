@@ -1212,3 +1212,19 @@ sound deduplication. Real browser OfflineAudioContext rendering passed all cues;
 the appearance chime measured peak 0.0161, RMS 0.00088 over the three-second
 render, with zero remaining voices. Subjective listening/mix balance remains
 unverified; this is newly synthesized audio, not original commercial samples.
+
+
+## Temporary powers at restart preparation (2026-09-09)
+
+Amiga step_prepare_ball_launch calls clear_powerup at 0xd770 during restart
+preparation. Previously temporary effects could survive formation and continue
+into the next possession. Both simulations now restore temporary stat backups
+and clear the active effect when formation processing begins, after the existing
+celebration pause. Equipment and its stat boost, damage, and permanent attributes
+remain intact. This uses the modern formation phase as the boundary; precise
+original overlay/camera gating remains unverified.
+
+188 JS tests, Go tests/vet and production build pass. Regressions cover all eight
+timed effect kinds and equipment/stat/energy preservation. The JS test also
+exercises the real simulation pause before formation rather than invoking only
+the restart helper. English game rules describe termination on a new ball launch.

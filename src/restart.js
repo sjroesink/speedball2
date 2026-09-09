@@ -1,4 +1,4 @@
-import { movementSpeed } from "./attributes.js";
+import { movementSpeed, restorePower } from "./attributes.js";
 import { advanceSteering } from "./steering.js";
 import { startInjury } from "./features.js";
 
@@ -28,6 +28,11 @@ export function beginRestart(s, pause = 0) {
 export function restartStep(s, dt, launchPosition) {
   if (!s.restartPhase) return false;
   if (s.restartPhase === 1) {
+    // step_prepare_ball_launch clears temporary powers before formation.
+    if (s.effect.kind) {
+      restorePower(s);
+      s.effect = { kind: 0, team: -1, time: 0 };
+    }
     let ready = true;
     for (let slot = 0; slot < 9; slot++)
       for (const team of [1, 0]) {

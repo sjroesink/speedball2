@@ -15,6 +15,11 @@ func (s *State) restartStep(dt float64) bool {
 		return false
 	}
 	if s.RestartPhase == 1 {
+		// step_prepare_ball_launch clears temporary powers before formation.
+		if s.Effect.Kind != 0 {
+			s.restorePower()
+			s.Effect = Effect{Team: -1}
+		}
 		ready := true
 		for slot := 0; slot < 9; slot++ {
 			for _, team := range []int{1, 0} {

@@ -1,3 +1,4 @@
+import { pickup } from "./features.js";
 import { beginRestart } from "./restart.js";
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -76,4 +77,21 @@ test("goal celebration precedes formation without teleporting or healing players
   assert.equal(s.players[7].health, 41);
   assert.equal(s.ball.owner, -1);
   assert.equal(s.ball.h, 3);
+});
+
+test("formation clears temporary powers while retaining equipment, energy and base attributes", () => {
+ for(const kind of [1,2,3,4,5,6,9,10]) {
+  const s=initial(),p=s.players[7];
+  p.health=42;p.stats[0]=170;
+  pickup(s,7,17); // Equipment survives expiration of a temporary power.
+  pickup(s,7,kind);
+  beginRestart(s,.2);
+  step(s,simulationStep,{},[true,true]);
+  assert.equal(s.effect.kind,kind); // Still in celebration pause.
+  for(let i=0;i<10;i++)step(s,simulationStep,{},[true,true]);
+  assert.deepEqual(s.effect,{kind:0,team:-1,time:0});
+  assert.equal(p.gear,17);assert.equal(p.stats[3],250);
+  assert.equal(p.stats[0],170);assert.equal(p.health,42);
+  assert.ok(s.players.every(q=>q.statBackup.every(v=>v===0)));
+ }
 });
