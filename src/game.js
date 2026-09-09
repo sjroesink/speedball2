@@ -1,3 +1,4 @@
+import { contactDistances, blockPlayerMovement } from "./collision.js";
 import { steerToTarget } from "./steering.js";
 import { goalieTarget, deflectBall } from "./goalie.js";
 import { supportTarget } from "./support.js";
@@ -394,6 +395,7 @@ export function step(
     }
   }
   selectPlayers(s);
+  const contacts = contactDistances(s.players);
   const catchDistances = s.players.map((p) =>
     referenceDistance(p.x - b.x, p.z - b.z),
   );
@@ -555,6 +557,7 @@ export function step(
       : movementSpeed(p, b.owner === i, keeperBlock);
     p.moveX = dx * speed;
     p.moveZ = dz * speed;
+    blockPlayerMovement(s.players, i, contacts[i], dt);
     const previousX = p.x;
     p.x = clamp(p.x + dx * speed * dt, -playerLimitX, playerLimitX);
     p.z = clamp(p.z + dz * speed * dt, -playerLimitZ, playerLimitZ);
@@ -596,24 +599,6 @@ export function step(
           return true;
         }
       });
-  }
-  for (let i = 0; i < 18; i++) {
-    const p = s.players[i];
-    for (let j = i + 1; j < 18; j++) {
-      const q = s.players[j];
-      if (p.stun > 0 || q.stun > 0 || p.action === 1 || q.action === 1)
-        continue;
-      const dx = q.x - p.x,
-        dz = q.z - p.z,
-        d = Math.hypot(dx, dz);
-      if (d > 0.001 && d < 0.85) {
-        const push = (0.85 - d) * 0.5;
-        p.x = clamp(p.x - (dx / d) * push, -playerLimitX, playerLimitX);
-        p.z = clamp(p.z - (dz / d) * push, -playerLimitZ, playerLimitZ);
-        q.x = clamp(q.x + (dx / d) * push, -playerLimitX, playerLimitX);
-        q.z = clamp(q.z + (dz / d) * push, -playerLimitZ, playerLimitZ);
-      }
-    }
   }
   if (s.players.some((p) => p.injury > 0)) {
     s.previous = inputs.map((u) => ({ ...u }));

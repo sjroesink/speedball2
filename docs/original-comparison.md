@@ -418,3 +418,20 @@ stereo positioning, mute/pause handling and duplicate suppression. Paired
 simulation tests assert the exact emission frame and single occurrence;
 audio tests validate all 19 numeric cues. This verifies event scheduling and
 cue parameters, not an auditory comparison with the original soundtrack.
+
+
+### Opponent movement blocking
+
+`sub_D448`/`sub_D4AC` checks the cached distance to opposing players (inclusive
+30 terrain units), excludes fallen opponents, and compensates each velocity
+component directed toward them before ordinary movement. Direction uses strict
+integer half-axis tests. Both simulations now apply this rule and retain movement
+velocity; the previous symmetric overlap-separation pass, including teammate
+repulsion, is removed. Standing still or retreating no longer causes an automatic
+push out of overlap. Cached pair distances are computed alongside ball distances.
+Paired tests cover the reach boundary, diagonal half-axis equality, teammates,
+fallen opponents, stationary overlap and retreat. Remaining differences include
+the original offscreen flags, late falling-animation handling and its global
+movement pass: this engine still moves each player after its thinking, so later
+players can see earlier players' moved positions. Tackle damage displacement also
+remains separate and approximate.

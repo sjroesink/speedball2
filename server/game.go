@@ -330,6 +330,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		}
 	}
 	s.selectPlayers()
+	contacts := contactDistances(&s.Players)
 	var catchDistances [18]int
 	for i, p := range s.Players {
 		catchDistances[i] = referenceDistance(p.X-b.X, p.Z-b.Z)
@@ -497,6 +498,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			speed = 0
 		}
 		p.moveX, p.moveZ = dx*speed, dz*speed
+		blockPlayerMovement(&s.Players, i, &contacts[i], dt)
 		previousX := p.X
 		p.X = clamp(p.X+dx*speed*dt, -playerLimitX, playerLimitX)
 		p.Z = clamp(p.Z+dz*speed*dt, -playerLimitZ, playerLimitZ)
@@ -541,24 +543,6 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 					}
 					break
 				}
-			}
-		}
-	}
-	for i := range s.Players {
-		p := &s.Players[i]
-		for j := i + 1; j < len(s.Players); j++ {
-			q := &s.Players[j]
-			if p.Stun > 0 || q.Stun > 0 || p.Action == 1 || q.Action == 1 {
-				continue
-			}
-			dx, dz := q.X-p.X, q.Z-p.Z
-			d := math.Hypot(dx, dz)
-			if d > .001 && d < .85 {
-				push := (.85 - d) * .5
-				p.X = clamp(p.X-dx/d*push, -playerLimitX, playerLimitX)
-				p.Z = clamp(p.Z-dz/d*push, -playerLimitZ, playerLimitZ)
-				q.X = clamp(q.X+dx/d*push, -playerLimitX, playerLimitX)
-				q.Z = clamp(q.Z+dz/d*push, -playerLimitZ, playerLimitZ)
 			}
 		}
 	}
