@@ -1,6 +1,7 @@
 import { localInteraction } from "./interaction.js";
 import { pursuit } from "./pursuit.js";
 import { keeperAction } from "./keeper-action.js";
+import { defensivePass } from "./defensive-pass.js";
 import { advanceViewport, worldInViewport } from "./visibility.js";
 import { contactDistances, blockPlayerMovement } from "./collision.js";
 import { steerToTarget } from "./steering.js";
@@ -536,11 +537,31 @@ function simulateStep(
           (q) => q.team !== t && Math.hypot(q.x - p.x, q.z - p.z) < 3,
         );
         if (p.x * d > 12 || danger || i % 9 === 0) {
-          const receiver = p.x * d < 10 ? passTarget(s, i) : -1;
+          const plan = i % 9 < 6 ? defensivePass(s, i, catchDistances) : null;
+          const receiver =
+            i % 9 < 6
+              ? (plan?.receiver ?? -1)
+              : p.x * d < 10
+                ? passTarget(s, i)
+                : -1;
           const target =
             receiver >= 0 ? s.players[receiver] : { x: d * 23, z: 0 };
           [p.fx, p.fz] = norm(target.x - p.x, target.z - p.z);
-          beginThrow(s, i, receiver < 0 && danger && p.x * d < 10 ? 3 : 2);
+          if (plan) {
+            p.fx = plan.key > 1 ? 1 : plan.key < -1 ? -1 : 0;
+            p.fz = plan.key - 3 * p.fx;
+          }
+          beginThrow(
+            s,
+            i,
+            plan
+              ? plan.high
+                ? 3
+                : 2
+              : receiver < 0 && danger && p.x * d < 10
+                ? 3
+                : 2,
+          );
         }
       }
     }

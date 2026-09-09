@@ -475,8 +475,14 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 					}
 				}
 				if p.X*d > 12 || danger || i%9 == 0 {
+					var plan *passPlan
 					receiver := -1
-					if p.X*d < 10 {
+					if i%9 < 6 {
+						plan = s.defensivePass(i, &catchDistances)
+						if plan != nil {
+							receiver = plan.receiver
+						}
+					} else if p.X*d < 10 {
 						receiver = s.passTarget(i)
 					}
 					tx, tz := d*23, 0.
@@ -488,6 +494,19 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 					mode := 2
 					if receiver < 0 && danger && p.X*d < 10 {
 						mode = 3
+					}
+					if plan != nil {
+						p.FX = 0
+						if plan.key > 1 {
+							p.FX = 1
+						} else if plan.key < -1 {
+							p.FX = -1
+						}
+						p.FZ = float64(plan.key) - 3*p.FX
+						mode = 2
+						if plan.high {
+							mode = 3
+						}
 					}
 					s.beginThrow(i, mode)
 				}
