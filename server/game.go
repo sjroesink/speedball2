@@ -549,7 +549,11 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				} else if s.Controlled[t] == i {
 					// The field-player pursuit branch above has selected the target.
 				} else {
-					tx, tz = s.supportTarget(i)
+					var aggressive bool
+					tx, tz, aggressive = s.aggressionTarget(i, &contacts[i], random)
+					if !aggressive {
+						tx, tz = s.supportTarget(i)
+					}
 				}
 				p.aiX, p.aiZ, p.aiTarget = tx, tz, true
 			}

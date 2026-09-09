@@ -1,4 +1,6 @@
 import { zones, forwardTargets } from "./support-data.js";
+import { predictedTarget } from "./steering.js";
+import { worldInViewport } from "./visibility.js";
 
 const unit = 22.4 / 576;
 const role = (i) => [0, 1, 1, 2, 2, 2, 4, 4, 3][i % 9];
@@ -14,6 +16,27 @@ const predicted = (p) => {
   ];
 };
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+// base_player_ai / find_closest_available_enemy (0xf786..0xf8ca).
+// Reuse the decision's random byte and cached opponent distances.
+export function aggressionTarget(s, i, distances, random) {
+  const p = s.players[i];
+  if (!worldInViewport(s, p) || random >= (p.stats[0] >> 1)) return null;
+  const side = p.team ^ (s.period === 2 ? 1 : 0);
+  const [xmin, xmax, ymin, ymax] = zones[side][i % 9];
+  let closest = p.stats[7] * 2, target = null;
+  for (let j = 0; j < s.players.length; j++) {
+    const q = s.players[j];
+    if (q.team === p.team || q.stun > 0 || q.health <= 0 ||
+        !worldInViewport(s, q) || distances[j] >= closest) continue;
+    const next = predictedTarget(q.x, q.z, q.moveX || 0, q.moveZ || 0, p.stats[7]);
+    const [x, y] = terrain({ x: next[0], z: next[1] });
+    if (x < xmin || x > xmax || y < ymin || y > ymax) continue;
+    closest = distances[j];
+    target = next;
+  }
+  return target;
+}
 
 // Positional branch of base_player_ai: E218..E438 in the C# reference,
 // adjust_support_target / attackers_targeting in the Amiga disassembly.

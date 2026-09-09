@@ -12,7 +12,7 @@ import { advanceViewport, worldInViewport } from "./visibility.js";
 import { contactDistances, blockPlayerMovement } from "./collision.js";
 import { advanceSteering } from "./steering.js";
 import { goalieTarget, deflectBall } from "./goalie.js";
-import { supportTarget } from "./support.js";
+import { supportTarget, aggressionTarget } from "./support.js";
 import { emit as event } from "./events.js";
 import { enterMultiplier, runMultiplier } from "./multiplier.js";
 import {
@@ -571,7 +571,7 @@ function simulateStep(
           tx = chase.tx;
           tz = chase.tz;
         } else {
-          [tx, tz] = supportTarget(s, i);
+          [tx, tz] = aggressionTarget(s, i, contacts[i], random) ?? supportTarget(s, i);
         }
         p.aiX = tx;
         p.aiZ = tz;

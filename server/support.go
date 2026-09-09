@@ -11,6 +11,34 @@ func supportPredicted(p Player) (int, int) {
 	return x + int(math.Round(p.moveZ/(22.4/576)/25)), y - int(math.Round(p.moveX/(22.4/576)/25))
 }
 
+// base_player_ai / find_closest_available_enemy (0xf786..0xf8ca).
+func (s *State) aggressionTarget(i int, distances *[18]int, random int) (float64, float64, bool) {
+	p := &s.Players[i]
+	if !s.worldInViewport(p.X, p.Z, 0) || random >= p.Stats[0]/2 {
+		return 0, 0, false
+	}
+	side := p.Team
+	if s.Period == 2 {
+		side ^= 1
+	}
+	zone := supportZones[side][i%9]
+	closest := p.Stats[7] * 2
+	var tx, tz float64
+	found := false
+	for j, q := range s.Players {
+		if q.Team == p.Team || q.Stun > 0 || q.Health <= 0 || !s.worldInViewport(q.X, q.Z, 0) || distances[j] >= closest {
+			continue
+		}
+		x, z := predictedTarget(q.X, q.Z, q.moveX, q.moveZ, p.Stats[7])
+		a, b := supportTerrain(Player{X: x, Z: z})
+		if a < zone[0] || a > zone[1] || b < zone[2] || b > zone[3] {
+			continue
+		}
+		closest, tx, tz, found = distances[j], x, z, true
+	}
+	return tx, tz, found
+}
+
 // Positional branch of base_player_ai, including forward support lookup tables.
 func (s *State) supportTarget(i int) (float64, float64) { return s.supportPosition(i, false) }
 func (s *State) supportPosition(i int, self bool) (float64, float64) {

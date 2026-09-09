@@ -446,3 +446,23 @@ held grip error was zero and the largest release-frame displacement was 0.628.
 No medical phase or equipped item occurred in this run, so their dedicated
 fixtures remain the evidence for those changes. This was local, not WAN.
 Full JS suite at this checkpoint: 285 passed; Go tests and go vet pass.
+
+### Unselected field-player aggression
+
+The positional support branch omitted base_player_ai's aggression decision
+at 0xf786..0xf7b0. JS and Go now reuse the current decision's random byte:
+visible field players seek an opponent when random < floor(aggression/2).
+find_closest_available_enemy (0xf866..0xf8ca) limits candidates to visible,
+available opponents whose predicted position lies inside the player's inclusive
+role bounds. It uses cached opponent distance, a strict initial limit of twice
+intelligence (get_player_observe_distance at 0xf55a), and keeps the first equal
+distance candidate. With no candidate, positional support remains the fallback.
+The existing nearby-interaction, carrier, keeper and selected-player branches
+retain priority. No additional random draw is introduced.
+
+Targeted JS/Go tests cover random and distance boundaries, equal-distance order,
+unavailable opponents, prediction across the role boundary and offscreen fallback.
+Full validation: 292 JS tests pass, including six 10,000-tick JS/Go match traces;
+Go tests, go vet and production build pass. This branch was checked against the
+disassembly; unlike the six numeric helper corpora, it has not yet been measured
+through original machine-code execution. Full original-match parity remains open.
