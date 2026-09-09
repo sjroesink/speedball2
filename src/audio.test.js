@@ -27,6 +27,8 @@ function context() {
     value: 0,
     setValueAtTime() {},
     exponentialRampToValueAtTime() {},
+    cancelScheduledValues() {},
+    setTargetAtTime(value) { this.value = value; },
   });
   const node = () => ({
     connect() {},
@@ -66,6 +68,21 @@ function context() {
     createBuffer: () => ({ getChannelData: () => new Float32Array(200) }),
   };
 }
+
+test("volume can be set before unlocking, survives mute and silences active voices at zero", async () => {
+  const c=context(), a=new ArenaAudio(()=>c);
+  a.setVolume(.3);
+  assert.equal(a.context,undefined,"adjusting level does not unlock autoplay");
+  await a.enable(true);a.setActive(true);
+  assert.equal(a.master.gain.value,.3);
+  a.play(7);assert.ok(a.voices.size>0);
+  a.setVolume(0);assert.equal(a.voices.size,0);
+  a.play(7);assert.equal(a.voices.size,0);
+  a.setVolume(.4);await a.enable(false);await a.enable(true);
+  assert.equal(a.volume,.4);assert.equal(a.master.gain.value,.4);
+  assert.equal(a.setVolume(NaN),.4);
+  assert.equal(a.setVolume(2),1);assert.equal(a.setVolume(-1),0);
+});
 
 test("gesture unlock, mute, pause and polyphony bound all scheduled voices", async () => {
   const c = context();

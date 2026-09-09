@@ -140,6 +140,7 @@ export class ArenaAudio {
   constructor(createContext = () => new AudioContext()) {
     this.createContext = createContext;
     this.enabled = false;
+    this.volume = 0.65;
     this.active = false;
     this.voices = new Set();
     this.lastEvent = 0;
@@ -158,7 +159,7 @@ export class ArenaAudio {
       if (!this.context) {
         const c = (this.context = this.createContext());
         this.master = c.createGain();
-        this.master.gain.value = 0.65;
+        this.master.gain.value = this.volume;
         this.limiter = c.createDynamicsCompressor();
         this.master.connect(this.limiter);
         this.limiter.connect(c.destination);
@@ -174,6 +175,18 @@ export class ArenaAudio {
       this.stop();
       return false;
     }
+  }
+
+  setVolume(value) {
+    if (!Number.isFinite(value)) return this.volume;
+    this.volume = Math.max(0, Math.min(1, value));
+    if (this.master) {
+      const now = this.context.currentTime;
+      this.master.gain.cancelScheduledValues(now);
+      this.master.gain.setTargetAtTime(this.volume, now, 0.015);
+    }
+    if (this.volume === 0) this.stop();
+    return this.volume;
   }
 
   reset() {
@@ -219,7 +232,7 @@ export class ArenaAudio {
 
   play(kind, pan = 0) {
     const c = this.context;
-    if (!this.enabled || !this.active || !c || c.state !== "running") return;
+    if (!this.enabled || !this.active || this.volume === 0 || !c || c.state !== "running") return;
     const priority =
       ["zap", "coin", "equipment"].includes(kind) ? 1 : typeof kind === "string" ? 3 : Math.max(0, notificationPriority(kind));
     for (const layer of cues[kind] ?? []) {

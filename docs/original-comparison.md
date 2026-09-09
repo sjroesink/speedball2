@@ -2716,3 +2716,20 @@ criterion includes low swing portions; these measurements are not a guarantee
 of planted feet during turns, collisions or visual blending. All 14 exported
 animation tests and production build pass. The active browser renderer was
 inspected with the rebuilt assets. Full gameplay equivalence remains open.
+
+### Modern match volume control
+
+The pause menu now includes a keyboard-accessible 0–100% sound-volume slider.
+Default level remains the previous master gain of 65%. The chosen level is
+retained through pause, mute/unmute and local match resets in the current
+page. Moving the slider does not enable sound or unlock autoplay; the existing
+sound button remains the user gesture for that. Gain changes use a 15 ms
+AudioParam target transition. Zero stops current voices and prevents silent
+new sources from being scheduled while events continue to be consumed.
+
+The audio suite (13 tests) verifies level selection before context creation,
+zero-volume voice cleanup, muted-level retention and value bounds. The
+production build passes. Browser checks used Home/ArrowRight to reach 1%,
+End to reach 100%, and reopening the pause menu after Resume retained 100%.
+The fullscreen menu and slider were visually inspected. This verifies controls
+and routing; subjective sound balance remains an open requirement.

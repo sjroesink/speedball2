@@ -209,6 +209,9 @@ body.in-game {
   line-height: 1.6;
   color: #aabfcd;
 }
+.volume-control { display:block; margin:20px 0; color:#c7d3da; font-size:12px; }
+.volume-control output { float:right; color:var(--mint); }
+.volume-control input { display:block; width:100%; margin:12px 0 0; accent-color:var(--mint); }
 .pause-menu > button:last-child {
   background: none;
   color: #c7d3da;

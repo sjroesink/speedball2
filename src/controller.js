@@ -33,6 +33,12 @@ export async function start() {
     `<div class="game-toolbar"><button id="gameMenu">☰ MENU</button><span id="matchRoom">TRAINING</span><button id="gameSound" aria-pressed="false">SOUND OFF</button><button id="gameFullscreen">⛶ FULL SCREEN</button></div><div class="game-feedback"><strong id="actionLabel">READY</strong><div class="charge-meter"><i id="chargeFill"></i></div><small id="actionHint">SPACE: ACTION · E: LOB · SHIFT: TACKLE</small></div><div class="power-hud"><strong id="powerStatus">NO POWER-UP</strong><span id="healthStatus"></span><span id="gearStatus"></span></div><div class="bonus-hud"><span id="bonus0">☆☆☆☆☆ · ×1</span><b>SCORE TARGETS</b><span id="bonus1">☆☆☆☆☆ · ×1</span></div><div id="eventToast" class="event-toast hidden" role="status"></div><div class="game-instructions">WASD / ARROWS <b>MOVE & AIM</b> &nbsp; SPACE <b>TAP: LOW · HOLD: HIGH</b></div><div id="pauseMenu" class="pause-menu hidden"><h2>TIME OUT</h2><p id="pauseText">Training is paused.</p><button id="resume" class="primary">RESUME →</button><button id="leave">BACK TO LOBBY</button></div>`,
   );
   const keys = new Set();
+  $("resume").insertAdjacentHTML("beforebegin",
+    '<label class="volume-control" for="soundVolume">SOUND VOLUME <output id="soundVolumeValue" for="soundVolume">65%</output><input id="soundVolume" type="range" min="0" max="100" step="1" value="65"></label>');
+  $("soundVolume").oninput = () => {
+    const percent = Math.round(audio.setVolume(Number($("soundVolume").value) / 100) * 100);
+    $("soundVolumeValue").textContent = `${percent}%`;
+  };
   let fire = 0,
     tackleId = 0,
     lobId = 0;
