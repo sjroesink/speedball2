@@ -1,3 +1,4 @@
+import { playPlayerAction } from "./player-animation.js";
 import { centeredBall } from "./ball-model.js";
 import {
   cameraExtent,
@@ -255,13 +256,7 @@ export class ArenaRenderer {
           key.includes(name),
         )?.[1];
         if (name && action) {
-          action.setLoop(
-            visualAction === 5 ? THREE.LoopRepeat : THREE.LoopOnce,
-            visualAction === 5 ? Infinity : 1,
-          );
-          if (visualAction === 6) action.setDuration(3 / 25);
-          if (visualAction === 7) action.setDuration(4 / 25);
-          action.reset().play();
+          playPlayerAction(action, visualAction, p.actionTime);
         }
       }
       actor.mixer.update(dt);

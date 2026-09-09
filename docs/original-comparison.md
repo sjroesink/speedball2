@@ -1495,3 +1495,24 @@ covers four scenarios. With corrected release positions, AI-only play covers
 warps and side scores; the mixed and two-human scenarios cover goals, and the
 tackle-only scenario retains injury/replacement coverage. Event requirements
 follow those observed scenarios, preserving aggregate feature coverage.
+
+
+### Throw clip playback timing (2026-09-09)
+
+The renderer previously played the Blender Throw clip at its authored duration,
+longer than the 8/25-second simulation action, so changing back to idle/run
+cut the throw short. `playPlayerAction` now scales Throw to eight reference
+ticks and starts it from the received remaining action time. Catch and Punch
+retain their existing durations and also seek to the received action phase.
+Run still loops and other clips retain their existing timing.
+
+Tests load the actual cyan GLB through Three.js and check clip midpoint at
+release, completion at 0.32 seconds for 30/60/144 FPS and a late snapshot
+starting at recovery. `tools/animation-playtest.html` provides normal and
+quarter-speed playback plus a static release inspection. Browser inspection
+confirmed the model renders and playback reaches completion. This establishes
+clip timing, not exact hand-to-ball alignment; the Blender throwing pose and
+carried-ball attachment still need coordinated visual refinement.
+
+Validation: 202 JavaScript tests and production build pass. No server or
+protocol changes in this increment.
