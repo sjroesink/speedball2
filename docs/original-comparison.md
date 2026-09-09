@@ -2320,3 +2320,19 @@ athlete, selection ring and ball. It also provides a Play impact button.
 The browser screenshot confirms spatial readability at that phase; it does not
 establish final artistic acceptance or overall animation quality. Production
 build passes. Blender source and exported asset are committed together locally.
+
+
+### Time-based ball trail
+
+The modern trail previously stored ten rendered frames, making its duration
+about 333 ms at 30 FPS but only 69 ms at 144 FPS. BallTrail now samples displayed
+ball travel at 60 Hz, interpolating between rendered positions. Ten points span
+150 ms between newest and oldest samples at every render rate. This affects
+presentation only; authoritative ball motion and original flight stages remain
+unchanged. The geometry remains the existing Blender-derived trail mesh.
+
+Tests trace the same linear movement at 30, 60 and 144 FPS and verify identical
+sample positions. Additional checks cover clearing on possession, a position
+jump above five world units, a frame gap above 250 ms, and zero elapsed time.
+Both targeted tests and production build pass. These checks establish sampling
+behavior, not a claim of constant measured browser FPS or final visual approval.

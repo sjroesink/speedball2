@@ -1,3 +1,4 @@
+import { BallTrail } from "./ball-trail.js";
 import { addArenaLights } from "./lighting.js";
 import { playPlayerAction, startsPlayerAction, runningAnimationDelta, settleRunningPose, syncFallRecovery } from "./player-animation.js";
 import { centeredBall } from "./ball-model.js";
@@ -156,6 +157,7 @@ export class ArenaRenderer {
       this.scene.add(m);
       return m;
     });
+    this.ballTrail = new BallTrail();
     this.trailPositions = [];
   }
   resize() {
@@ -401,10 +403,9 @@ export class ArenaRenderer {
     this.aim.position.set(displayedPlayer.x, 0.2, displayedPlayer.z);
     this.aim.setDirection(new THREE.Vector3(cp.fx, 0, cp.fz));
     this.aim.setLength(2.2 + Math.min(s.charge[team], 0.5) * 3, 0.6, 0.32);
-    if (b.owner < 0 && Math.hypot(b.vx, b.vz) > 4) {
-      this.trailPositions.unshift(this.ball.position.clone());
-      this.trailPositions.length = Math.min(10, this.trailPositions.length);
-    } else this.trailPositions = [];
+    this.trailPositions = this.ballTrail.update(
+      this.ball.position, dt, b.owner < 0 && Math.hypot(b.vx, b.vz) > 4,
+    );
     this.trail.forEach((m, i) => {
       m.visible = !!this.trailPositions[i];
       if (m.visible) {
