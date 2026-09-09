@@ -125,3 +125,22 @@ test("snapshot repetition, timer rounding and medical holds do not restart clips
  assert.equal(startsPlayerAction(5,5,0,.4),false);
  assert.equal(startsPlayerAction(1,0,.04,0),true);
 });
+
+test("exported knees articulate independently and the running cycle closes", async () => {
+  for (const team of ["cyan", "orange"]) {
+    const model = await player(team), mixer = new AnimationMixer(model.scene);
+    const knees = [-1, 1].map(side => model.scene.getObjectByName(`Knee_${side}`));
+    assert.ok(knees.every(knee => knee && knee.parent.name.startsWith("Leg_")));
+    const clip = model.animations.find(c => c.name === "Run");
+    mixer.clipAction(clip).play();
+    mixer.setTime(0);
+    const initial = knees.map(knee => knee.quaternion.clone());
+    mixer.setTime(clip.duration / 4);
+    const first = knees.map(knee => knee.quaternion.clone());
+    assert.ok(first[0].angleTo(first[1]) > .5, "one knee bends while the other extends");
+    mixer.setTime(clip.duration * .75);
+    assert.ok(knees.every((knee, i) => knee.quaternion.angleTo(first[1-i]) < .02), "legs exchange swing phase");
+    mixer.setTime(clip.duration - 1e-6);
+    assert.ok(knees.every((knee, i) => knee.quaternion.angleTo(initial[i]) < .001), "no seam at loop boundary");
+  }
+});

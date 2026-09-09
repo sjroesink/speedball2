@@ -1944,3 +1944,15 @@ Inspected both exported athletes in the browser art study. All eight exported
 player animation tests and the production build pass. These changes refine
 armor silhouette; articulated elbows/knees and less rigid poses remain work
 for a later character animation pass.
+
+### Articulated running knees
+
+Each Blender athlete now has a knee pivot beneath each hip, carrying the knee
+guard, shin and boot. The Run clip alternates flexion during swing and near
+extension during stance. Other clips explicitly reset the knee pose. The art
+study includes a Run animation toggle for inspecting the current exports.
+
+Inspected successive running poses in the browser. Nine exported-model tests
+pass, including opposite knee phases, loop continuity and the prior throwing
+hand/action timing checks; production build passes. This does not yet provide
+foot planting, articulated elbows or a complete animation polish pass.

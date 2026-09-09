@@ -122,6 +122,7 @@ def build_players():
   cube('Jaw',(0,-.163,1.56),(.21,.15,.12),athlete_skin,.035)
   cube('Chin strap',(0,-.237,1.53),(.16,.018,.035),rubber,.006)
   limbs=[]
+  knees=[]
   for side in [-1,1]:
    before=set(bpy.context.scene.objects)
    shoulder=contoured_shell('Silver shoulder pad',(side*.46,0,1.40),[(-.13,.30,.34),(-.07,.42,.46),(.06,.40,.43),(.13,.25,.29)],athlete_steel)
@@ -141,13 +142,19 @@ def build_players():
    limbs.append((joint,side,True))
    before=set(bpy.context.scene.objects)
    contoured_shell('Thigh',(side*.22,0,.56),[(-.15,.22,.26),(-.06,.28,.32),(.09,.33,.36),(.165,.28,.31)],athlete_steel)
+   lower_start=set(bpy.context.scene.objects)
    cube('Knee guard',(side*.22,-.15,.36),(.24,.15,.19),steel,.055)
    contoured_shell('Shin',(side*.22,-.015,.23),[(-.14,.18,.22),(-.07,.20,.25),(.07,.27,.30),(.13,.23,.25)],athlete_steel)
    cube('Boot',(side*.22,-.12,.10),(.30,.49,.18),rubber,.035)
    cube('Steel toe',(side*.22,-.32,.14),(.28,.15,.13),athlete_steel,.025)
+   lower_parts=set(bpy.context.scene.objects)-lower_start
+   bpy.ops.object.empty_add(location=(side*.22,0,.38));knee=bpy.context.object;knee.name='Knee_'+str(side)
+   for part in lower_parts: part.parent=knee;part.matrix_parent_inverse=knee.matrix_world.inverted()
+   knees.append((knee,side))
    parts=set(bpy.context.scene.objects)-before
    bpy.ops.object.empty_add(location=(side*.22,0,.75));joint=bpy.context.object;joint.name='Leg_'+str(side)
-   for part in parts: part.parent=joint;part.matrix_parent_inverse=joint.matrix_world.inverted()
+   for part in parts:
+    if part.parent is None: part.parent=joint;part.matrix_parent_inverse=joint.matrix_world.inverted()
    limbs.append((joint,side,False))
   # Native Blender animation clips, played by the browser's AnimationMixer.
   parts=list(bpy.context.scene.objects)
@@ -184,6 +191,19 @@ def build_players():
     joint.animation_data.action=None
     track=joint.animation_data.nla_tracks.new();track.name=clip;track.strips.new(clip,1,action)
    joint.rotation_euler=(0,0,0)
+  for knee,side in knees:
+   knee.animation_data_create()
+   for clip in poses:
+    action=bpy.data.actions.new(knee.name+'_'+clip);knee.animation_data.action=action
+    frames=range(1,26,3) if clip=='Run' else [1,poses[clip][-1][0]]
+    for frame in frames:
+     # Flex the trailing leg during swing; the planted leg stays near extension.
+     phase=(frame-1)/24*math.tau
+     angle=.08+.95*max(0,math.sin(phase)*side) if clip=='Run' else 0
+     knee.rotation_euler.x=angle;knee.keyframe_insert(data_path='rotation_euler',frame=frame)
+    knee.animation_data.action=None
+    track=knee.animation_data.nla_tracks.new();track.name=clip;track.strips.new(clip,1,action)
+   knee.rotation_euler=(0,0,0)
   root.rotation_euler=(0,0,0);root.location=(0,0,0);bpy.context.scene.render.fps=60
   export(name,apply_modifiers=True)
 if '--players-only' in sys.argv:
