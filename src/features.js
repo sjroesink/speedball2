@@ -44,6 +44,7 @@ const cap = (x, a, b) => Math.max(a, Math.min(b, x));
 export function initFeatures(s) {
   s.effect = { kind: 0, team: -1, time: 0 };
   s.credits = [0, 0];
+  s.cashLimits = s.training ? [10000, 10000] : [2000, 2000];
   s.reserves = [3, 3];
   s.bench = Array.from({ length: 2 }, () =>
     Array.from({ length: 3 }, () => defaultStats()),
@@ -132,7 +133,7 @@ export function giveBall(s, i) {
 export function pickup(s, i, k) {
   const p = s.players[i],
     t = p.team;
-  if (k === 13) s.credits[t] += 10;
+  if (k === 13) s.credits[t] += 100;
   else if (k >= 14) {
     equip(p, k);
     s.pickups[6].kind = 0; // Held equipment has no floor sprite.
@@ -260,6 +261,12 @@ export function featureStep(s, dt) {
     if (item.wait > 0) {
       item.wait = Math.max(0, item.wait - dt);
       if (item.wait > 1e-9) continue;
+      if (slot >= 2 && slot < 6 &&
+          s.credits[0] >= s.cashLimits[0] &&
+          (s.training || s.credits[1] >= s.cashLimits[1])) {
+        item.wait = 256 / 25; // Original byte timer wraps before retrying.
+        continue;
+      }
       item.wait = 0;
     }
     if (!item.kind) continue;

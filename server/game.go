@@ -91,6 +91,8 @@ type State struct {
 	Credits, Reserves [2]int
 	PickupSerial      int
 	ArmourPickupsLeft int
+	Training          bool
+	CashLimits        [2]int
 }
 type Input struct {
 	Fire     uint32  `json:"fire"`

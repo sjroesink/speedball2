@@ -182,7 +182,7 @@ func TestPickupRespawnAndEquipment(t *testing.T) {
 	s.Pickups[0] = Pickup{Kind: 13, X: 0, Z: 0, Life: 14}
 	s.featureStep(dt)
 	s.featureStep(dt)
-	if s.Credits[0] != 10 || s.Pickups[0].Wait <= 0 {
+	if s.Credits[0] != 100 || s.Pickups[0].Wait <= 0 {
 		t.Fatal("double pickup")
 	}
 	s.pickup(7, 17)
@@ -282,7 +282,7 @@ func TestSelectedGroundedPickup(t *testing.T) {
 		if kind == 1 && s.Effect.Team != 0 {
 			t.Fatal("power priority")
 		}
-		if kind == 13 && s.Credits != [2]int{10, 0} {
+		if kind == 13 && s.Credits != [2]int{100, 0} {
 			t.Fatal("credit priority")
 		}
 		if kind == 17 && s.Players[7].Gear != 17 {

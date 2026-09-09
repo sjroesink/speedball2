@@ -105,9 +105,10 @@ export function eightWay(x, z) {
 }
 export const direction = (s, t) =>
   (t === 0 ? 1 : -1) * (s.period === 2 ? -1 : 1);
-export function initial() {
+export function initial({ training = false } = {}) {
   const s = {
     players: [],
+    training,
     rng: [0x31415926, 0x53589793],
     ball: {},
     score: [0, 0],

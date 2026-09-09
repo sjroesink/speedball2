@@ -193,9 +193,9 @@ test("pickups are collected once, respawn, randomize powers and expose equipment
     p = s.pickups[0];
   Object.assign(p, { x: 4, z: 0, wait: 0, kind: 13 });
   featureStep(s, dt);
-  assert.equal(s.credits[0], 10);
+  assert.equal(s.credits[0], 100);
   featureStep(s, dt);
-  assert.equal(s.credits[0], 10);
+  assert.equal(s.credits[0], 100);
   assert.ok(p.wait > 0);
   const kinds = new Set();
   for (let n = 0; n < 256; n++) {
@@ -257,7 +257,7 @@ test("floor items require the selected grounded player and use team-order priori
     featureStep(s, dt);
     assert.ok(item.wait > 0);
     if (kind === 1) assert.equal(s.effect.team, 0);
-    if (kind === 13) assert.deepEqual(s.credits, [10, 0]);
+    if (kind === 13) assert.deepEqual(s.credits, [100, 0]);
     if (kind === 17) assert.equal(s.players[7].gear, 17);
   }
 });

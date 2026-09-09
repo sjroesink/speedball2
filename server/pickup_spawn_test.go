@@ -62,7 +62,7 @@ func TestPersistentPickupAndDistance(t *testing.T) {
 	}
 	p.X = 16 * u
 	s.featureStep(.04)
-	if item.Wait <= 0 || s.Credits[0] != 10 {
+	if item.Wait <= 0 || s.Credits[0] != 100 {
 		t.Fatal("boundary collection")
 	}
 }

@@ -47,5 +47,5 @@ test("uncollected coins and powers persist; collection requires the original 16-
   p.x = 16 * u;
   featureStep(s, 0.04);
   assert.ok(item.wait > 0);
-  assert.equal(s.credits[0], 10);
+  assert.equal(s.credits[0], 100);
 });

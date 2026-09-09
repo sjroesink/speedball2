@@ -13,6 +13,10 @@ type Pickup struct {
 
 func (s *State) initFeatures() {
 	s.Effect = Effect{Team: -1}
+	s.CashLimits = [2]int{2000, 2000}
+	if s.Training {
+		s.CashLimits = [2]int{10000, 10000}
+	}
 	s.Reserves = [2]int{3, 3}
 	for team := range s.Bench {
 		for i := range s.Bench[team] {
@@ -98,7 +102,7 @@ func (s *State) pickup(i, k int) {
 	t := p.Team
 	switch {
 	case k == 13:
-		s.Credits[t] += 10
+		s.Credits[t] += 100
 	case k >= 14:
 		equip(p, k)
 		s.Pickups[6].Kind = 0
@@ -225,6 +229,10 @@ func (s *State) featureStep(dt float64) {
 		if item.Wait > 0 {
 			item.Wait = math.Max(0, item.Wait-dt)
 			if item.Wait > 1e-9 {
+				continue
+			}
+			if slot >= 2 && slot < 6 && s.Credits[0] >= s.CashLimits[0] && (s.Training || s.Credits[1] >= s.CashLimits[1]) {
+				item.Wait = 256. / 25
 				continue
 			}
 			item.Wait = 0

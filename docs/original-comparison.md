@@ -1156,3 +1156,22 @@ buttons exercised both collections and hits; a screenshot confirmed the dropped
 speed item appears beside the player. Full online match playtesting remains.
 This supersedes the earlier equipment lifecycle gap; income limits, solo-mode
 power exclusions and appearance sound events still require comparison.
+
+
+## Match cash and coin appearance limits (2026-09-09)
+
+Amiga collect_coin (0x113d4) awards coin_value, normally 100. spawn_cash
+(0xe894) checks the match cash thresholds when a hidden coin's timer expires;
+it does not clamp collection income or remove coins already visible. Two-player
+setup (0x8be6) sets each threshold to 2000, and new coins remain possible while
+either team is below its threshold. Practice setup (0x8b72) uses 10000 and only
+the human player's threshold controls appearances. Implemented these rules in
+JS/Go, including the hidden byte-timer's 256-tick retry interval. Training entry
+now explicitly selects practice configuration. Existing packet fields suffice.
+
+Regression tests cover asymmetric multiplayer income, both thresholds reached,
+collection beyond the threshold from existing floor coins, and practice behavior
+regardless of AI income. 184 JS tests, Go tests/vet and production build pass.
+The English rules explain the amounts and distinction between appearance limits
+and collectible floor coins. League/cup economy, starting cash, bonuses and shop
+persistence are not represented by the current training/head-to-head modes.

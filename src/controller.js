@@ -145,7 +145,7 @@ export async function start() {
   }
   function practice() {
     disconnect();
-    state = initial();
+    state = initial({ training: true });
     beginRestart(state);
     team = 0;
     playing = true;
