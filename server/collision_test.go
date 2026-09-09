@@ -50,3 +50,47 @@ func TestContactExclusions(t *testing.T) {
 		}
 	}
 }
+
+func tackleFixture(distance int) State {
+	const unit = 22.4 / 576
+	s := initial()
+	for i := range s.Players {
+		s.Players[i].Stun = 100
+	}
+	p, q := &s.Players[7], &s.Players[16]
+	p.Stun, p.X, p.Z, p.FX, p.FZ = 0, 0, 0, 1, 0
+	p.Action = 1
+	p.ActionTime = .3
+	q.Stun, q.X, q.Z, q.FX, q.FZ = 0, float64(distance)*unit, 0, 1, 0
+	s.Ball.Owner, s.Ball.X, s.Ball.Z = 16, q.X, 0
+	return s
+}
+func TestTackleCachedDistance(t *testing.T) {
+	near := tackleFixture(30)
+	near.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
+	if !near.Players[7].tackleResolved {
+		t.Fatal("inclusive reach")
+	}
+	far := tackleFixture(31)
+	far.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
+	if far.Players[7].tackleResolved {
+		t.Fatal("used post-movement distance")
+	}
+	far.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
+	if !far.Players[7].tackleResolved {
+		t.Fatal("next tick contact")
+	}
+}
+func TestTackleRosterOrder(t *testing.T) {
+	for _, tick := range []uint64{0, 1} {
+		s := tackleFixture(20)
+		s.Tick = tick
+		s.RNG = [2]uint32{}
+		s.Players[16].Action = 1
+		s.Players[16].ActionTime = .3
+		s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
+		if !s.Players[16].tackleResolved || s.Players[7].tackleResolved || s.Players[7].Stun <= 0 {
+			t.Fatal("roster order", tick)
+		}
+	}
+}

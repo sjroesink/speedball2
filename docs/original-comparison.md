@@ -435,3 +435,17 @@ the original offscreen flags, late falling-animation handling and its global
 movement pass: this engine still moves each player after its thinking, so later
 players can see earlier players' moved positions. Tackle damage displacement also
 remains separate and approximate.
+
+
+### Cached tackle reach and contact priority
+
+`sub_ED92` tests the cached opponent distance against an inclusive 30-unit
+limit, then consumes the first eligible contact in opponent roster order.
+Both simulations now use that cached distance rather than a post-movement
+Euclidean radius. Attacker processing follows the original interleaved roster
+order, team two then team one, instead of reversing priority on alternating
+ticks. Paired tests verify contact at 30 units, delayed contact after entering
+range from 31 units, and identical simultaneous-tackle priority on both tick
+parities. The contact pass still runs after player thinking/movement; original
+per-player hit processing, offscreen guards and falling-action continuation
+remain to be ported before complete collision-order equivalence can be claimed.

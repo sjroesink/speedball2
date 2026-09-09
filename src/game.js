@@ -572,7 +572,7 @@ export function step(
     }
   }
   for (let o = 0; o < 18; o++) {
-    const i = s.tick % 2 === 0 ? 17 - o : o,
+    const i = Math.floor(o / 2) + (o % 2 === 0 ? 9 : 0),
       p = s.players[i];
     if (p.stun > 0) continue;
     if (p.action === 1 && !p.tackleResolved)
@@ -584,9 +584,7 @@ export function step(
           shielded(s, q.team)
         )
           return false;
-        const dx = q.x - p.x,
-          dz = q.z - p.z;
-        if (Math.hypot(dx, dz) < 1.15) {
+        if (contacts[i][j] <= 30) {
           // sub_ED92 switches out of contact checks at the first eligible opponent.
           p.tackleResolved = true;
           if (randomByte(s) > tackleThreshold(p, q, j % 9 === 0)) return true;

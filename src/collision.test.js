@@ -37,3 +37,49 @@ test("teammates, fallen opponents, stationary overlap and retreat are not pushed
     assert.equal(p[0].z, 0, kind);
   }
 });
+
+import { initial, step, simulationStep } from "./game.js";
+function tackleFixture(distance) {
+  const s = initial();
+  for (const p of s.players) p.stun = 100;
+  Object.assign(s.players[7], {
+    stun: 0,
+    x: 0,
+    z: 0,
+    fx: 1,
+    fz: 0,
+    action: 1,
+    actionTime: 0.3,
+  });
+  Object.assign(s.players[16], {
+    stun: 0,
+    x: distance * unit,
+    z: 0,
+    fx: 1,
+    fz: 0,
+  });
+  Object.assign(s.ball, { owner: 16, x: distance * unit, z: 0 });
+  return s;
+}
+test("tackle uses cached 30-unit distance before movement", () => {
+  const near = tackleFixture(30);
+  step(near, simulationStep, {}, [true, true]);
+  assert.equal(near.players[7].tackleResolved, true);
+  const far = tackleFixture(31);
+  step(far, simulationStep, {}, [true, true]);
+  assert.equal(!!far.players[7].tackleResolved, false);
+  step(far, simulationStep, {}, [true, true]);
+  assert.equal(far.players[7].tackleResolved, true);
+});
+test("simultaneous tackles use roster order independently of tick parity", () => {
+  for (const tick of [0, 1]) {
+    const s = tackleFixture(20);
+    s.tick = tick;
+    s.rng = [0, 0];
+    Object.assign(s.players[16], { action: 1, actionTime: 0.3 });
+    step(s, simulationStep, {}, [true, true]);
+    assert.equal(s.players[16].tackleResolved, true);
+    assert.equal(!!s.players[7].tackleResolved, false);
+    assert.ok(s.players[7].stun > 0);
+  }
+});

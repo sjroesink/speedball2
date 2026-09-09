@@ -510,12 +510,9 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			}
 		}
 	}
-	// Resolve contacts in alternating order so equal teams get equal priority.
+	// Original roster order interleaves team two then team one.
 	for offset := range s.Players {
-		i := offset
-		if s.Tick%2 == 0 {
-			i = 17 - offset
-		}
+		i := offset/2 + (1-offset%2)*9
 		p := &s.Players[i]
 		if p.Stun > 0 {
 			continue
@@ -526,8 +523,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				if q.Team == p.Team || q.Stun > 0 || q.Health <= 0 || s.active(10, q.Team) {
 					continue
 				}
-				dx, dz := q.X-p.X, q.Z-p.Z
-				if math.Hypot(dx, dz) < 1.15 {
+				if contacts[i][j] <= 30 {
 					// sub_ED92 switches out of contact checks at the first eligible opponent.
 					p.tackleResolved = true
 					if s.randomByte() > tackleThreshold(p, q, j%9 == 0) {
