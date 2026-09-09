@@ -150,3 +150,33 @@ Both are included in normal tests, increasing reference cases per host to
 21,660. Equipment dropping, shields, fall animation and injury/substitution
 scheduling are outside the executed original range and remain separate checks.
 No production change was necessary for these measured cases.
+
+## Random generator and emulator ADDX correction
+
+`CompareOriginalRandom.java` executes 0x14e78..0x14eac for 256 consecutive calls
+per seed, across six seeds including the original startup pair, zero and carry
+edge cases. It measures both the returned low byte and the two complete 32-bit
+seed words. There is a 32-instruction bound per call. The normal host tests now
+include these 1,536 measurements (23,196 total reference cases per host).
+
+The raw Ghidra 12.1.3 execution disagreed in upper seed words immediately:
+original startup seed gave 2224638431 versus the remake's 2224703967 for the
+first new seed. Inspection of 68000.sinc showed addxflags updates CF/VF but
+neither the ADDX instruction nor extendedResultFlags updates XF. The
+[Motorola programmer reference, ADDX section 4-13](https://www.nxp.com/docs/en/reference-manual/M68000PRM.pdf)
+specifies that X is set to C. Consequently the harness synchronizes XF from CF
+immediately after original ADDX instructions at 0x14e88 and 0x14e92. This is an
+explicit emulator correction, not an edit to original game code or a replacement
+of its arithmetic with the remake's formula. Pass a second script argument
+`raw` to reproduce uncorrected emulator behavior. Future routines using ADDX
+must account for this issue; earlier measured routines do not execute ADDX.
+
+```text
+node tools/compare-original-random.mjs docs/original-random.csv
+```
+
+Corrected-emulator result: 1,536 steps, no differences in output or full state.
+Only corrected numeric measurements are retained. The comparator caps displayed
+mismatches to eight while reporting the total and exiting unsuccessfully if
+any differ. Both JS and Go checks pass. This proves the generator for these
+sequences, not the number/order of random calls during a complete match.

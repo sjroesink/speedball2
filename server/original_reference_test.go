@@ -114,3 +114,16 @@ func TestOriginalDamageMeasurements(t *testing.T) {
 		}
 	}
 }
+
+func TestOriginalRandomMeasurements(t *testing.T) {
+	var s State
+	for _, r := range originalMeasurements(t, "original-random", "seed0,seed1,step,value,state0,state1", 1536, 3) {
+		if r[2] == 0 {
+			s.RNG = [2]uint32{uint32(r[0]), uint32(r[1])}
+		}
+		got := s.randomByte()
+		if got != r[3] || s.RNG != [2]uint32{uint32(r[4]), uint32(r[5])} {
+			t.Fatalf("seed %v step %d: got %d state %v", r[:2], r[2], got, s.RNG)
+		}
+	}
+}
