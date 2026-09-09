@@ -23,6 +23,7 @@ test("browser and Go stay aligned through seeded AI and scripted-input matches",
     p.physicalPoseValid?1:0,p.physicalSprite??0,p.physicalFrame??0,p.poseCursor??0,
     p.poseKind??0,p.poseRemaining??0,p.poseDuration??0,p.actionTime,p.fallPosePending?1:0);
   row.push(...s.credits,s.effect.kind,s.effect.time,...[0,1].map(t=>s.pendingShoot?.[t]?1:0));
+  row.push(s.ball.charged?1:0,s.ball.electric??0,s.ball.electricBudget??0,s.ball.lastTouch??-1,...s.controlled,...(s.logicalView??[160,484]));
   const expected=rows[sample++];
   // Inactive flight indices and held-ball slowdown timers are not consumed.
   for(let j=0;j<row.length;j++) if((j!==15||row[14])&&(j!==16||(row[10]<0&&(row[12]||row[13])))) assert.ok(Math.abs(row[j]-expected[j])<1e-6,`scenario ${scenario} tick ${tick} field ${j}: JS ${row[j]}, Go ${expected[j]}\nJS ${JSON.stringify(row.slice(0,17))}\nGo ${JSON.stringify(expected.slice(0,17))}`);

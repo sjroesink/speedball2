@@ -71,6 +71,11 @@ func TestSimulationParityTrace(t *testing.T) {
 				}
 				row = append(row, value)
 			}
+			charged := 0.
+			if s.Ball.Charged {
+				charged = 1
+			}
+			row = append(row, charged, float64(s.Ball.Electric), float64(s.Ball.ElectricBudget), float64(s.Ball.LastTouch), float64(s.Controlled[0]), float64(s.Controlled[1]), float64(s.logicalView[0]), float64(s.logicalView[1]))
 			rows = append(rows, row)
 		}
 		traces = append(traces, rows)

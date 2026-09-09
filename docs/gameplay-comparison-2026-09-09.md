@@ -198,3 +198,19 @@ stationary at the start of the pass, with held-ball and multiplier-path guards.
 Both simulations now apply this rule. The allowance is preserved independently
 of the flag. Holding a stationary ball does not clear it. Verification: 272 JS
 tests pass, including long JS/Go parity, plus Go tests, vet and production build.
+
+### Expanded authoritative trace
+
+The six 10,000-tick cross-language scenarios now also compare charged flag,
+remaining electric hits, throw hit budget, last thrower, selected players and
+logical viewport coordinates, in addition to pending fire and existing pose,
+movement and match state. The expanded trace passes. These fields were previously
+only covered indirectly by the long scenario comparison.
+
+Live WebTransport check on updated server (room AXM5WZ): stopped at ticks
+624/620 with 495 paired snapshots, zero state mismatches and zero missing shared
+events. Client two used 160 ms delivery delay and dropped 124 snapshots (five
+of every 25). Both clients observed seven throws and seven throw cue dispatches,
+minimum energy 75, coins and a boost pickup. No medical sequence or charged
+rethrow was observed in this live run; deterministic lifecycle tests supply that
+coverage. This is a local network check, not WAN or subjective audio validation.
