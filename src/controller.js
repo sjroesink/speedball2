@@ -1,4 +1,5 @@
 import { ArenaAudio } from "./audio.js";
+import { notificationEvent, notificationPriority } from "./events.js";
 import { powerNames } from "./features.js";
 import { initial, step, direction, clamp, simulationStep } from "./game.js";
 import { decodeSnapshot } from "./wire.js";
@@ -22,7 +23,8 @@ export async function start() {
     previous = performance.now(),
     acc = 0,
     lastEvent = 0,
-    eventLife = 0;
+    eventLife = 0,
+    eventPriority = 0;
   $("viewport").insertAdjacentHTML(
     "beforeend",
     `<div class="game-toolbar"><button id="gameMenu">☰ MENU</button><span id="matchRoom">TRAINING</span><button id="gameSound" aria-pressed="false">SOUND OFF</button><button id="gameFullscreen">⛶ FULL SCREEN</button></div><div class="game-feedback"><strong id="actionLabel">READY</strong><div class="charge-meter"><i id="chargeFill"></i></div><small id="actionHint">SPACE: ACTION · E: LOB · SHIFT: TACKLE</small></div><div class="power-hud"><strong id="powerStatus">NO POWER-UP</strong><span id="healthStatus"></span><span id="gearStatus"></span></div><div class="bonus-hud"><span id="bonus0">☆☆☆☆☆ · ×1</span><b>SCORE TARGETS</b><span id="bonus1">☆☆☆☆☆ · ×1</span></div><div id="eventToast" class="event-toast hidden" role="status"></div><div class="game-instructions">WASD / ARROWS <b>MOVE & AIM</b> &nbsp; SPACE <b>TAP: LOW · HOLD: HIGH</b></div><div id="pauseMenu" class="pause-menu hidden"><h2>TIME OUT</h2><p id="pauseText">Training is paused.</p><button id="resume" class="primary">RESUME →</button><button id="leave">BACK TO LOBBY</button></div>`,
@@ -146,6 +148,8 @@ export async function start() {
     team = 0;
     playing = true;
     lastEvent = 0;
+    eventLife = 0;
+    view.lastEvent = 0;
     $("result").classList.add("hidden");
     $("mode").textContent = "TRAINING";
     $("connection").textContent = "LOCAL TRAINING";
@@ -206,6 +210,8 @@ export async function start() {
       online = true;
       lastTick = -1;
       lastEvent = 0;
+      eventLife = 0;
+      view.lastEvent = 0;
       state = initial();
       $("result").classList.add("hidden");
       $("connection").textContent = "WEBTRANSPORT CONNECTED";
@@ -331,41 +337,48 @@ export async function start() {
       ? `EQUIPMENT: ${powerNames[p.gear]}`
       : "RUN OVER A PICKUP TO COLLECT IT";
     if (state.event.id !== lastEvent) {
+      const e = notificationEvent(
+        state,
+        lastEvent,
+        eventLife > 0 ? eventPriority : 0,
+      );
       lastEvent = state.event.id;
-      const e = state.event;
-      const featureText =
-        e.kind === 11
-          ? powerNames[e.target]
-          : e.kind === 12
-            ? "WARP-GATE"
-            : e.kind === 13
-              ? "BALL CHARGED"
-              : e.kind === 14
-                ? "INJURY · OPPONENT SCORES"
-                : e.kind === 15
-                  ? "SUBSTITUTE ENTERS THE COURT"
-                  : "";
-      const text =
-        featureText ||
-        (e.kind === 4
-          ? "HARD HIT"
-          : e.kind === 5
-            ? "WALL REBOUND"
-            : e.kind === 6
-              ? "HALFTIME · SWITCH ENDS"
-              : e.kind === 7
-                ? `GOAL! +${10 * ((e.actor === 0 && state.multiplier > 0) || (e.actor === 1 && state.multiplier < 0) ? 1 + Math.abs(state.multiplier) * 0.5 : 1)}`
-                : e.kind === 8
-                  ? `BONUS +${e.target}`
-                  : e.kind === 9
-                    ? "MULTIPLIER CHANGED"
-                    : e.kind === 10
-                      ? `STAR EXTINGUISHED −${e.target}`
-                      : "");
-      if (text) {
-        $("eventToast").textContent = text;
-        $("eventToast").classList.remove("hidden");
-        eventLife = e.kind === 6 ? 3 : e.kind === 7 ? 1.4 : 0.7;
+      if (e) {
+        const featureText =
+          e.kind === 11
+            ? powerNames[e.target]
+            : e.kind === 12
+              ? "WARP-GATE"
+              : e.kind === 13
+                ? "BALL CHARGED"
+                : e.kind === 14
+                  ? "INJURY · OPPONENT SCORES"
+                  : e.kind === 15
+                    ? "SUBSTITUTE ENTERS THE COURT"
+                    : "";
+        const text =
+          featureText ||
+          (e.kind === 4
+            ? "HARD HIT"
+            : e.kind === 5
+              ? "WALL REBOUND"
+              : e.kind === 6
+                ? "HALFTIME · SWITCH ENDS"
+                : e.kind === 7
+                  ? `GOAL! +${10 * ((e.actor === 0 && state.multiplier > 0) || (e.actor === 1 && state.multiplier < 0) ? 1 + Math.abs(state.multiplier) * 0.5 : 1)}`
+                  : e.kind === 8
+                    ? `BONUS +${e.target}`
+                    : e.kind === 9
+                      ? "MULTIPLIER CHANGED"
+                      : e.kind === 10
+                        ? `STAR EXTINGUISHED −${e.target}`
+                        : "");
+        if (text) {
+          eventPriority = notificationPriority(e.kind);
+          $("eventToast").textContent = text;
+          $("eventToast").classList.remove("hidden");
+          eventLife = e.kind === 6 ? 3 : e.kind === 7 ? 1.4 : 0.7;
+        }
       }
     }
     eventLife -= dt;

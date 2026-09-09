@@ -1,4 +1,5 @@
 import { active } from "./features.js";
+import { recentEvents } from "./events.js";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { clamp, jumpHeight } from "./game.js";
@@ -364,12 +365,11 @@ export class ArenaRenderer {
         lit ? (owner === 0 ? 0x51dfff : 0xff7b4b) : 0x334955,
       );
     });
-    if (s.event.id !== this.lastEvent) {
-      this.lastEvent = s.event.id;
-      const e = s.event;
+    for (const e of recentEvents(s, this.lastEvent)) {
       if ([4, 5, 8, 9, 10, 11, 12, 13, 14, 15].includes(e.kind))
         this.burst(e.x, e.z, e.h, e.kind === 4 ? 0xffbd65 : 0xa7fcff);
     }
+    this.lastEvent = s.event.id;
     for (let i = this.effects.length - 1; i >= 0; i--) {
       const e = this.effects[i];
       e.life -= dt;
