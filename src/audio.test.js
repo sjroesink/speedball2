@@ -277,3 +277,19 @@ test('clients choose identical hit variation and retained snapshots do not repea
  assert.deepEqual(heard[0].map(call=>call[2]),[1,2,3,0]);
  assert.equal(heard[0].length,4);
 });
+
+test("collection after injury retains its sound without replacing the priority notice", async () => {
+ const {initial} = await import("./game.js");
+ const {pickup} = await import("./features.js");
+ const {emit,notificationEvent} = await import("./events.js");
+ for (const kind of [13,14]) {
+  const s=initial(), a=new ArenaAudio(), heard=[];
+  s.pause=1;
+  a.play=(cue)=>heard.push(cue);
+  const injury=emit(s,14,7,-1);
+  pickup(s,16,kind);
+  assert.equal(notificationEvent(s,0),injury);
+  a.observe(s,true);a.observe(s,true);
+  assert.deepEqual(heard,[14,kind===13?"coin":"equipment"]);
+ }
+});

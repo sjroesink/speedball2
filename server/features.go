@@ -152,9 +152,8 @@ func (s *State) pickup(i, k int) {
 			}
 		}
 	}
-	if s.Event.Kind != 14 {
-		s.event(11, i, k, p.X, p.Z, .5)
-	}
+	// Keep collection in the event tail; the client selects notification priority.
+	s.event(11, i, k, p.X, p.Z, .5)
 }
 
 // start_injury runs when the fatal fall animation finishes, not on impact.

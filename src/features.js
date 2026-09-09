@@ -165,8 +165,8 @@ export function pickup(s, i, k) {
         }
       });
   }
-  // Injury notifications take precedence over the pickup toast.
-  if (s.event.kind !== 14) emit(s, 11, i, k, p.x, p.z);
+  // Notification selection preserves injury priority; audio still needs collection.
+  emit(s, 11, i, k, p.x, p.z);
 }
 // start_injury runs when the fatal fall animation finishes, not on impact.
 export function startInjury(s, i) {

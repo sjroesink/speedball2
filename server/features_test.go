@@ -334,3 +334,24 @@ func TestDamageLeavesBallStateToCaller(t *testing.T) {
 		t.Fatalf("damage altered ball: %+v", s.Ball)
 	}
 }
+
+func TestCollectionAfterInjuryRetainsEvent(t *testing.T) {
+	for _, kind := range []int{13, 14} {
+		s := initial()
+		s.event(14, 7, -1, 0, 0, .5)
+		injury := s.Event.ID
+		s.pickup(16, kind)
+		if s.Event.Kind != 11 || s.Event.Target != kind || s.Event.ID != injury+1 {
+			t.Fatalf("collection missing after injury: %+v", s.Event)
+		}
+		found := false
+		for _, e := range s.Events {
+			if e.ID == injury && e.Kind == 14 {
+				found = true
+			}
+		}
+		if !found {
+			t.Fatal("injury lost from event tail")
+		}
+	}
+}

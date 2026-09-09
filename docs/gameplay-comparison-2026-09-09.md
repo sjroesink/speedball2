@@ -334,3 +334,20 @@ cover players with and without the ball. Both new JS cases failed on the old
 code, and pass after the fix; matching Go regressions also pass. Validation:
 280 JS tests, Go tests, go vet and production build pass. This fixes targeting
 of removed items; it does not establish complete AI fidelity.
+
+### Preserve collection audio alongside injury notification priority
+
+The pickup handler still suppressed event 11 whenever the latest event was an
+injury (14). That rule predates the retained event tail and notificationEvent
+priority selection. It discarded collection audio as well as its toast. Both
+hosts now always retain the collection event; client notification selection
+still prefers the injury. Renderer inspection confirms kind-zero equipment
+is hidden and waiting items remain invisible.
+
+A regression seeds an injury event, invokes the real coin/equipment pickup
+handler, then runs production audio consumption twice. It failed before the
+change (only the injury cue was dispatched) and now observes one injury cue
+and one collection cue, while notificationEvent still selects the injury.
+The Go regression verifies both events survive in order. This is an event
+routing test, not a subjective audio mix or live medical sequence assessment.
+Validation: 281 JS tests, Go tests, go vet and production build pass.
