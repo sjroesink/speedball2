@@ -256,7 +256,7 @@ export class ArenaRenderer {
           key.includes(name),
         )?.[1];
         if (name && action) {
-          playPlayerAction(action, visualAction, p.actionTime);
+          playPlayerAction(action, visualAction, p.actionTime, p.stats?.[3] ?? 100);
         }
       }
       actor.mixer.update(dt);

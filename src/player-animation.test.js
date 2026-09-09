@@ -71,3 +71,33 @@ test("Blender ball grip stays next to the hand through wind-up and release", asy
     }
   }
 });
+
+test("tackle and jump clips follow original sustain bands rather than Blender duration", async () => {
+  const model = await player(), mixer = new AnimationMixer(model.scene);
+  for (const [speed, sustain] of [[100,8],[120,9],[160,10],[200,11],[240,12]]) {
+    for (const [kind,name,extra] of [[1,"Slide",0],[2,"Jump",4]]) {
+      mixer.stopAllAction();
+      const clip=model.animations.find(c=>c.name.includes(name));
+      const action=mixer.clipAction(clip),duration=(sustain+extra)/25;
+      playPlayerAction(action,kind,duration,speed);
+      mixer.update(duration/2);
+      assert.ok(Math.abs(action.time/clip.duration-.5)<1e-6);
+      assert.ok(action.isRunning());
+      mixer.update(duration/2+1e-8);
+      assert.equal(action.isRunning(),false);
+    }
+  }
+});
+
+test("fall animation remains active through recovery and seeks late snapshots", async () => {
+  const model=await player(),mixer=new AnimationMixer(model.scene);
+  const clip=model.animations.find(c=>c.name.includes("Hit")),action=mixer.clipAction(clip);
+  playPlayerAction(action,4,35/25);
+  mixer.update(18/25);
+  assert.ok(action.isRunning(),"player still recovering");
+  assert.ok(Math.abs(action.time/clip.duration-18/35)<1e-6);
+  playPlayerAction(action,4,5/25);
+  assert.ok(Math.abs(action.time/clip.duration-30/35)<1e-6);
+  mixer.update(5/25+1e-8);
+  assert.equal(action.isRunning(),false);
+});

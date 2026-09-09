@@ -1,13 +1,16 @@
 import { LoopOnce, LoopRepeat } from "three";
+import { actionDuration, fallDuration } from "./attributes.js";
 
-// Match the complete throw (four wind-up and four recovery reference ticks).
-export function playPlayerAction(action, kind, remaining = 0) {
+// Visual clips share the simulation action duration, independent of authored FPS.
+export function playPlayerAction(action, kind, remaining = 0, speed = 100) {
   action.reset();
   action.setLoop(kind === 5 ? LoopRepeat : LoopOnce, kind === 5 ? Infinity : 1);
-  const duration = kind === 3 ? 8 / 25 : kind === 6 ? 3 / 25 : kind === 7 ? 4 / 25 : 0;
+  const duration = kind === 1 || kind === 2 ? actionDuration(kind, speed)
+    : kind === 4 ? fallDuration
+    : kind === 3 ? 8 / 25 : kind === 6 ? 3 / 25 : kind === 7 ? 4 / 25 : 0;
   if (duration) {
     action.setDuration(duration);
-    // A first received snapshot can already be partway through the throw.
+    // A first received snapshot can already be partway through the action.
     const elapsed = Math.max(0, Math.min(duration, duration - remaining));
     action.time = action.getClip().duration * elapsed / duration;
   }

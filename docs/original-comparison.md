@@ -1570,3 +1570,20 @@ an observation, not a smoothness acceptance threshold: frame duration and
 normal ball motion also contribute. One throw did not produce a sampled
 held-to-loose rendering transition. Long outages, variable delay and subjective
 release smoothness still need coverage. Both sessions were stopped afterward.
+
+
+### Tackle, jump and fall clip durations (2026-09-09)
+
+Slide and Jump playback now uses `actionDuration` from the simulation's
+original sustain table, with player speed read from the snapshot. Hit uses
+35/25 seconds, matching the existing fall timer. Each starts at the phase
+represented by remaining action time, instead of restarting an authored clip
+when its first network snapshot arrives. This replaces the earlier unchanged
+Blender timing for these clips; Run continues to loop.
+
+Actual-GLB tests cover all five sustain values, completion for Slide/Jump,
+and fall recovery plus late entry. The browser preview includes inspection
+buttons for those poses; the tackle midpoint rendered successfully. These
+checks establish playback timing and pose availability, not full equivalence
+of every pose to the original sprites. Mid-action speed changes and missed
+complete actions remain presentation cases to investigate.

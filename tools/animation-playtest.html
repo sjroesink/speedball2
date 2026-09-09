@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><meta charset="utf-8"><title>Throw animation playtest</title>
 <style>body{margin:0;background:#09101a;color:white;font:16px system-ui}#view{height:85vh}nav{padding:16px}button{padding:10px;margin-right:8px}output{margin-left:12px}</style>
-<div id="view"></div><nav><button id="play">Play throw</button><button id="slow">Play at quarter speed</button><button id="release">Inspect release pose</button><output id="status">Loading Blender model</output></nav>
+<div id="view"></div><nav><button id="play">Play throw</button><button id="slow">Play at quarter speed</button><button id="release">Inspect release pose</button><button id="slide">Inspect tackle midpoint</button><button id="jump">Inspect jump midpoint</button><button id="hit">Inspect fall recovery</button><output id="status">Loading Blender model</output></nav>
 <script type="module">
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
@@ -15,10 +15,13 @@ const gltf=await new GLTFLoader().loadAsync('/assets/player-cyan.glb');scene.add
 const ball=centeredBall((await new GLTFLoader().loadAsync('/assets/ball.glb')).scene);scene.add(ball);const grip=gltf.scene.getObjectByName('BallGrip');
 const mixer=new THREE.AnimationMixer(gltf.scene),action=mixer.clipAction(gltf.animations.find(c=>c.name.includes('Throw')));action.clampWhenFinished=true;
 let elapsed=0,rate=1,running=false;
-function start(speed){elapsed=0;rate=speed;running=true;playPlayerAction(action,3,.32)}
+function start(speed){mixer.stopAllAction();ball.visible=true;elapsed=0;rate=speed;running=true;playPlayerAction(action,3,.32)}
 document.querySelector('#play').onclick=()=>start(1);
 document.querySelector('#slow').onclick=()=>start(.25);
-document.querySelector('#release').onclick=()=>{running=false;elapsed=.16;playPlayerAction(action,3,.16);mixer.update(0);status.textContent='Release — 0.16 / 0.32 seconds';};
+document.querySelector('#release').onclick=()=>{running=false;mixer.stopAllAction();ball.visible=true;elapsed=.16;playPlayerAction(action,3,.16);mixer.update(0);status.textContent='Release — 0.16 / 0.32 seconds';};
+for(const [id,kind,name,remaining] of [['slide',1,'Slide',.2],['jump',2,'Jump',.28],['hit',4,'Hit',17/25]]){
+ document.querySelector('#'+id).onclick=()=>{running=false;mixer.stopAllAction();ball.visible=false;const preview=mixer.clipAction(gltf.animations.find(c=>c.name.includes(name)));preview.clampWhenFinished=true;playPlayerAction(preview,kind,remaining,170);mixer.update(0);status.textContent=name+' — snapshot pose at speed 170';};
+}
 const status=document.querySelector('#status');status.textContent='Ready';
 let last=performance.now();
 function draw(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(running){const step=Math.min(dt*rate,.32-elapsed);elapsed+=step;mixer.update(step);status.textContent=`${elapsed<.16?'Wind-up':'Recovery'} — ${elapsed.toFixed(2)} / 0.32 seconds`;if(elapsed>=.32)running=false}const box=document.querySelector('#view');renderer.setSize(box.clientWidth,box.clientHeight);camera.aspect=box.clientWidth/box.clientHeight;camera.updateProjectionMatrix();gltf.scene.updateWorldMatrix(true,true);grip.getWorldPosition(ball.position);renderer.render(scene,camera);requestAnimationFrame(draw)}requestAnimationFrame(draw);
