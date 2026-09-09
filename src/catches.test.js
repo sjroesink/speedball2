@@ -59,3 +59,16 @@ test("contested catches follow interleaved roster order, team two first at equal
   catchBall(other);
   assert.equal(other.ball.owner, 6);
 });
+
+test("interception cue identifies the team and excludes friendly or charged catches", () => {
+ for(const team of [0,1]) for(const friendly of [false,true]) for(const charged of [false,true]) {
+  const s=setup(),i=team*9+7;
+  Object.assign(s.players[i],{x:0,z:0});
+  Object.assign(s.ball,{lastTouch:(friendly?team:1-team)*9+6,charged,electric:0});
+  catchBall(s);
+  assert.equal(s.ball.owner,i);
+  const intercepts=s.events.filter(e=>e.kind===24||e.kind===25);
+  assert.equal(intercepts.length,!friendly&&!charged?1:0);
+  if(intercepts.length) assert.equal(intercepts[0].kind,24+team);
+ }
+});

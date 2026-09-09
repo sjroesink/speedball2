@@ -60,3 +60,43 @@ func TestThrowerCannotCatchButOpponentCan(t *testing.T) {
 		t.Fatal("opponent blocked by global throw lock")
 	}
 }
+
+func TestInterceptionCues(t *testing.T) {
+	for team := 0; team < 2; team++ {
+		for _, friendly := range []bool{false, true} {
+			for _, charged := range []bool{false, true} {
+				s := catchFixture()
+				i := team*9 + 7
+				s.Players[i].X = 0
+				s.Players[i].Z = 0
+				throwTeam := 1 - team
+				if friendly {
+					throwTeam = team
+				}
+				s.Ball.LastTouch = throwTeam*9 + 6
+				s.Ball.Charged = charged
+				s.Ball.Electric = 0
+				s.catchBall()
+				if s.Ball.Owner != i {
+					t.Fatal("catch owner")
+				}
+				count := 0
+				for _, e := range s.Events[:s.EventCount] {
+					if e.Kind == 24 || e.Kind == 25 {
+						count++
+						if e.Kind != 24+team {
+							t.Fatal("team cue")
+						}
+					}
+				}
+				expected := 0
+				if !friendly && !charged {
+					expected = 1
+				}
+				if count != expected {
+					t.Fatal("interception count", team, friendly, charged, count)
+				}
+			}
+		}
+	}
+}

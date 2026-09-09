@@ -16,6 +16,9 @@ export function eventPan(state, event, view) {
 
 // Each layer is [waveform, start Hz, end Hz, seconds, gain, delay seconds].
 export const cues = {
+  // Distinct team interception signals, alongside the catch contact sound.
+  24: [["triangle", 440, 880, 0.16, 0.1, 0], ["sine", 1100, 1100, 0.12, 0.06, 0.08]],
+  25: [["triangle", 880, 440, 0.16, 0.1, 0], ["sine", 550, 550, 0.12, 0.06, 0.08]],
   // Launcher mechanism (source 0x09), then pneumatic release (0x28).
   22: [
     ["noise", 600, 1200, 0.55, 0.15, 0],

@@ -1282,3 +1282,20 @@ both languages require exactly one mechanism event and one release event.
 Actual browser OfflineAudioContext rendering passed all cues: mechanism peak
 0.0553/RMS 0.00243, release peak 0.0318/RMS 0.00189, zero leaked voices.
 Subjective listening and full-match loudness balance remain unverified.
+
+
+## Catch-condition audit and interception feedback (2026-09-09)
+
+Compared get_ball (0xeb9c) with both catch implementations: selected-player
+collection, inclusive 16-unit distance and an active jump for ball stages above
+two are already represented. The current audit did not change those rules.
+The Amiga-only interception branch at 0xec88 was missing its distinct signals.
+Added synthesized team-specific cues (events 24/25) for taking an opponent's
+non-electrified ball, alongside the existing catch contact. Friendly passes and
+charged balls skip these cues. Preserve the charge flag before ordinary catch
+cleanup so an electrically marked ball cannot gain the normal interception cue.
+
+192 JS tests, Go tests/vet and production build pass. Regressions exercise both
+teams, friendly/opponent possession and charged/unmarked catches. The two new
+timbres are modern interpretations of source sound 0x29/0x28; no original
+samples are included. Subjective audio review remains pending.

@@ -782,6 +782,7 @@ export function catchBall(s, only = -1, distances = null) {
         event(s, 17, i, -1, b.x, b.z, b.h);
         return;
       }
+      const wasCharged = b.charged;
       if (
         (b.vx !== 0 || b.vz !== 0) &&
         b.lastTouch >= 0 &&
@@ -806,6 +807,8 @@ export function catchBall(s, only = -1, distances = null) {
           p.actionTime = 3 / 25;
         }
       }
+      if (!wasCharged && b.lastTouch >= 0 && s.players[b.lastTouch].team !== p.team)
+        event(s, p.team === 0 ? 24 : 25, i, b.lastTouch, b.x, b.z, b.h);
       s.charge[team] = 0;
       b.flightKind = 0;
       b.owner = i;

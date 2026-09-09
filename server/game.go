@@ -706,6 +706,7 @@ func (s *State) catchBallAt(only int, distances *[18]int) {
 				s.event(17, i, -1, b.X, b.Z, b.H)
 				return
 			}
+			wasCharged := b.Charged
 			if (b.VX != 0 || b.VZ != 0) && b.LastTouch >= 0 && s.Players[b.LastTouch].Team != p.Team {
 				b.Electric = 0
 				b.Charged = false
@@ -726,6 +727,9 @@ func (s *State) catchBallAt(only int, distances *[18]int) {
 					p.Action = 6
 					p.ActionTime = 3. / 25
 				}
+			}
+			if !wasCharged && b.LastTouch >= 0 && s.Players[b.LastTouch].Team != p.Team {
+				s.event(24+p.Team, i, b.LastTouch, b.X, b.Z, b.H)
 			}
 			s.Charge[team] = 0
 			b.FlightKind = 0
