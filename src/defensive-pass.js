@@ -1,6 +1,39 @@
 import { predictedTarget } from "./steering.js";
 const unit = 22.4 / 576;
 const role = (i) => [0, 1, 1, 2, 2, 2, 4, 4, 3][i % 9];
+function directionKey(p, x, z) {
+  const dx = Math.round(x / unit) - Math.round(p.x / unit);
+  const dz = Math.round(z / unit) - Math.round(p.z / unit);
+  return (
+    (Math.abs(dx) > Math.floor(Math.abs(dz) / 2) ? Math.sign(dx) * 3 : 0) +
+    (Math.abs(dz) > Math.floor(Math.abs(dx) / 2) ? Math.sign(dz) : 0)
+  );
+}
+
+// Amiga do_throw_punt_ai / set_goal_throw_location, normal match mode.
+export function defensivePunt(s, i, random) {
+  const p = s.players[i];
+  const d = (p.team === 0 ? 1 : -1) * (s.period === 2 ? -1 : 1);
+  const lateral = Math.round(p.z / unit);
+  let z =
+    (lateral > 0 ? -16 : lateral < 0 ? 16 : random & 64 ? 48 : -48) * unit;
+  let x = d * 576 * unit;
+  const steer = Math.floor(p.stats[7] / 2) > random ? Math.sign(z - p.z) : 0;
+  const q = s.players[s.controlled[1 - p.team]];
+  const blocked =
+    q && q.stun <= 0 && q.health > 0
+      ? directionKey(
+          p,
+          ...predictedTarget(q.x, q.z, q.moveX || 0, q.moveZ || 0, p.stats[7]),
+        )
+      : 0;
+  // The Amiga reloads opponent_directions here, even for an electroball.
+  if (directionKey(p, x, z) === blocked) {
+    z = (random & 16 ? 288 : -288) * unit;
+    x = p.x + d * Math.abs(z - p.z);
+  }
+  return { receiver: -1, x, z, key: directionKey(p, x, z), high: true, steer };
+}
 // get_opposing_player_directions and active_defensive_player_pass_ai.
 export function defensivePass(s, i, distances) {
   const p = s.players[i];

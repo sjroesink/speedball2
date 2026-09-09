@@ -7,6 +7,7 @@ type passPlan struct {
 	x, z     float64
 	high     bool
 	key      int
+	steer    float64
 }
 
 func (s *State) defensivePass(i int, distances *[18]int) *passPlan {
@@ -73,5 +74,60 @@ func (s *State) defensivePass(i int, distances *[18]int) *passPlan {
 		return nil
 	}
 	x, z, key := aim(receiver)
-	return &passPlan{receiver, x, z, !(role(i) != 0 || role(receiver) == 1) || p.Stats[4]*2 <= distance, key}
+	return &passPlan{receiver: receiver, x: x, z: z, high: !(role(i) != 0 || role(receiver) == 1) || p.Stats[4]*2 <= distance, key: key}
+}
+
+// Amiga do_throw_punt_ai / set_goal_throw_location, normal match mode.
+func (s *State) defensivePunt(i, random int) *passPlan {
+	const unit = 22.4 / 576
+	p := &s.Players[i]
+	key := func(x, z float64) int {
+		dx, dz := int(math.Round(x/unit)-math.Round(p.X/unit)), int(math.Round(z/unit)-math.Round(p.Z/unit))
+		fx, fz := 0, 0
+		if absInt(dx) > absInt(dz)/2 {
+			fx = 1
+			if dx < 0 {
+				fx = -1
+			}
+		}
+		if absInt(dz) > absInt(dx)/2 {
+			fz = 1
+			if dz < 0 {
+				fz = -1
+			}
+		}
+		return fx*3 + fz
+	}
+	lateral := int(math.Round(p.Z / unit))
+	z := -48. * unit
+	if lateral > 0 {
+		z = -16 * unit
+	} else if lateral < 0 {
+		z = 16 * unit
+	} else if random&64 != 0 {
+		z = 48 * unit
+	}
+	x := s.direction(p.Team) * 576 * unit
+	steer := 0.
+	if p.Stats[7]/2 > random {
+		steer = 1
+		if z < p.Z {
+			steer = -1
+		}
+	}
+	blocked := 0
+	if j := s.Controlled[1-p.Team]; j >= 0 && s.Players[j].Stun <= 0 && s.Players[j].Health > 0 {
+		q := &s.Players[j]
+		qx, qz := predictedTarget(q.X, q.Z, q.moveX, q.moveZ, p.Stats[7])
+		blocked = key(qx, qz)
+	}
+	// Reloaded from opponent_directions even for an electroball.
+	if key(x, z) == blocked {
+		z = -288 * unit
+		if random&16 != 0 {
+			z = 288 * unit
+		}
+		x = p.X + s.direction(p.Team)*math.Abs(z-p.Z)
+	}
+	return &passPlan{receiver: -1, x: x, z: z, key: key(x, z), high: true, steer: steer}
 }

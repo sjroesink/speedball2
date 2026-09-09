@@ -18,6 +18,7 @@ type Player struct {
 	fallX, fallZ                float64
 	slideEnding                 bool
 	throwMode                   int
+	throwSteer                  float64
 	jumping                     bool
 	stationaryJump              bool
 	jumpSpeed                   float64
@@ -218,6 +219,7 @@ func (s *State) beginThrow(i, mode int) {
 	p.Action = 3
 	p.ActionTime = 8. / 25
 	p.throwMode = mode
+	p.throwSteer = 0
 }
 func (s *State) throw(i int, lob bool, release ...Input) {
 	p := &s.Players[i]
@@ -386,10 +388,11 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			if !p.aiTarget {
 				tx, tz = p.X, p.Z
 			}
+			random := 0
 			if decide {
 				p.aiWait = aiReactionTime(p.Stats[7])
 				p.aiAvoid = false
-				random := s.randomByte()
+				random = s.randomByte()
 				var nearby *interaction
 				hasKeeperTarget := false
 				if s.Controlled[t] != i || b.Owner != i {
@@ -479,6 +482,9 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 					receiver := -1
 					if i%9 < 6 {
 						plan = s.defensivePass(i, &catchDistances)
+						if plan == nil {
+							plan = s.defensivePunt(i, random)
+						}
 						if plan != nil {
 							receiver = plan.receiver
 						}
@@ -509,6 +515,9 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 						}
 					}
 					s.beginThrow(i, mode)
+					if plan != nil {
+						p.throwSteer = plan.steer
+					}
 				}
 			}
 		}
@@ -538,7 +547,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				s.Charge[t] = 8./25 - p.ActionTime + dt
 				if p.ActionTime <= 4./25+1e-9 {
 					high := p.throwMode == 3 || p.throwMode == 1 && inputs[t].Shoot
-					steering := Input{}
+					steering := Input{Z: p.throwSteer}
 					if humans[t] {
 						steering = inputs[t]
 					}

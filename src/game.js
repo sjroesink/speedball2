@@ -1,7 +1,7 @@
 import { localInteraction } from "./interaction.js";
 import { pursuit } from "./pursuit.js";
 import { keeperAction } from "./keeper-action.js";
-import { defensivePass } from "./defensive-pass.js";
+import { defensivePass, defensivePunt } from "./defensive-pass.js";
 import { advanceViewport, worldInViewport } from "./visibility.js";
 import { contactDistances, blockPlayerMovement } from "./collision.js";
 import { steerToTarget } from "./steering.js";
@@ -204,6 +204,7 @@ function beginThrow(s, i, mode) {
   p.action = 3;
   p.actionTime = 8 / 25;
   p.throwMode = mode;
+  p.throwSteer = 0;
 }
 export function throwBall(s, i, lob, input = {}) {
   const p = s.players[i],
@@ -451,11 +452,12 @@ function simulateStep(
       const decide = p.aiWait < 1e-9 && p.actionTime <= 0;
       let tx = p.aiX ?? p.x,
         tz = p.aiZ ?? p.z;
+      let random = 0;
       if (decide) {
         p.aiWait = aiReactionTime(p.stats[7]);
 
         p.aiAvoid = false;
-        const random = randomByte(s);
+        random = randomByte(s);
         let chase;
         let keeper;
         let nearby =
@@ -537,7 +539,11 @@ function simulateStep(
           (q) => q.team !== t && Math.hypot(q.x - p.x, q.z - p.z) < 3,
         );
         if (p.x * d > 12 || danger || i % 9 === 0) {
-          const plan = i % 9 < 6 ? defensivePass(s, i, catchDistances) : null;
+          const plan =
+            i % 9 < 6
+              ? (defensivePass(s, i, catchDistances) ??
+                defensivePunt(s, i, random))
+              : null;
           const receiver =
             i % 9 < 6
               ? (plan?.receiver ?? -1)
@@ -562,6 +568,7 @@ function simulateStep(
                 ? 3
                 : 2,
           );
+          p.throwSteer = plan?.steer || 0;
         }
       }
     }
@@ -600,7 +607,12 @@ function simulateStep(
         if (p.actionTime <= 4 / 25 + 1e-9) {
           const high =
             p.throwMode === 3 || (p.throwMode === 1 && !!inputs[t].shoot);
-          throwBall(s, i, high, humans[t] ? inputs[t] : {});
+          throwBall(
+            s,
+            i,
+            high,
+            humans[t] ? inputs[t] : { z: p.throwSteer || 0 },
+          );
           p.throwMode = 0;
           s.charge[t] = 0;
         }

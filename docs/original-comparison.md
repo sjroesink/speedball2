@@ -722,3 +722,32 @@ Coordinate fixtures cover left/right approaches, the asymmetric branch, central 
 Keeper and defensive-role passing now use WIP `sub_D902`, `sub_DBE8` and `sub_E05C` receiver rules: predicted directions of the selected opponent and nearest other eligible opponent exclude lanes; charged balls clear those exclusions; candidate roles are searched from the original minimum downward; range is intelligence times two; equal distances select the later roster entry. The keeper prefers roles >=2 before falling back to defenders. Keeper passes to non-defenders are high; other eligible passes are low only when throw strength times two is strictly greater than receiver distance. Aim uses the original integer half-axis direction toward the predicted receiver.
 
 Tests cover role priority, fallback, strict throw/range boundaries, blocked directions, electroball exceptions and roster ties. All 146 JavaScript tests, Go tests, Go vet and the production build pass. This replaces receiver selection when the current carrier AI decides to pass; field-player pass triggering and no-receiver bank-shot fallback still require the original decision tree.
+
+
+### Defensive high punts and release bias
+
+Ported the normal-match Amiga `do_throw_punt_ai` (0x1069a) and
+`set_goal_throw_location` (0xf580). When defensive receiver selection fails,
+the keeper/defender/midfielder now winds up a high punt. The initial target
+uses the original 304/336 terrain-X offsets, or random-bit-6 272/368 targets
+on the center line. A blocked selected-opponent direction changes this to
+a 45-degree wall target at terrain X 32/608, chosen with the same decision
+random byte's bit 4. The aim mirrors with the attacking direction.
+
+The Amiga reloads the global opponent directions for this fallback, so an
+electroball still checks that direction even though its receiver search
+ignores blocked lanes. This differs from interpreting the WIP's mutable
+DirBits references as authoritative. The additional Amiga manager/demo-mode
+proximity branch does not apply to the current normal-match mode.
+
+AI release bias is retained through windup and supplied to the existing
+unused-axis four-unit release adjustment. Integer intelligence/2 must be
+strictly greater than the decision random byte to retain the lateral input.
+Human-team throws continue to sample their live controller input at release.
+This ports the fallback; the field-player decision to invoke defensive
+passing and other carrier/hardware decisions still contain heuristics.
+
+Validation: 148 JavaScript tests, Go tests, Go vet, production build. Mirrored
+fixtures cover both wall choices, both halves, electroball behavior, center
+target randomness, the strict bias threshold, and a keeper's complete
+no-receiver windup/release. No browser or audio listening check in this change.

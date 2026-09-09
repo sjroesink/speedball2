@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { initial } from "./game.js";
-import { defensivePass } from "./defensive-pass.js";
+import { initial, step, simulationStep } from "./game.js";
+import { defensivePass, defensivePunt } from "./defensive-pass.js";
 const u = 22.4 / 576;
 function fixture() {
   const s = initial(),
@@ -39,4 +39,45 @@ test("pass lanes reject blocking directions; electroball clears those exclusions
   Object.assign(s.players[4], { x: 100 * u, z: 0, stun: 0 });
   d[4] = 100;
   assert.equal(defensivePass(s, 0, d).receiver, 4);
+});
+
+test("defensive punts use goal offsets, strict steering threshold and mirrored wall routes", () => {
+  const [s] = fixture();
+  let plan = defensivePunt(s, 0, 0);
+  assert.equal(plan.key, 3);
+  assert.equal(plan.z, -48 * u);
+  assert.equal(plan.steer, -1);
+  assert.equal(plan.high, true);
+  assert.equal(defensivePunt(s, 0, 50).steer, 0);
+  assert.equal(defensivePunt(s, 0, 64).z, 48 * u);
+  Object.assign(s.players[16], { x: 50 * u, z: 0, stun: 0 });
+  for (const charged of [false, true]) {
+    s.ball.charged = charged;
+    for (const period of [1, 2]) {
+      s.period = period;
+      const d = period === 1 ? 1 : -1;
+      s.players[16].x = d * 50 * u;
+      for (const random of [0, 16]) {
+        plan = defensivePunt(s, 0, random);
+        assert.equal(plan.z, (random ? 288 : -288) * u);
+        assert.equal(plan.x, d * 288 * u);
+        assert.equal(plan.key, d * 3 + (random ? 1 : -1));
+      }
+    }
+  }
+});
+
+test("AI keeper without receivers winds up a high punt and retains release steering", () => {
+  const s = initial();
+  for (const p of s.players) p.stun = 100;
+  Object.assign(s.players[0], { x: 0, z: 0, stun: 0, aiWait: 0 });
+  Object.assign(s.ball, { x: 0, z: 0, owner: 0 });
+  step(s, simulationStep, {}, [false, false]);
+  assert.equal(s.players[0].throwMode, 3);
+  assert.equal(s.ball.owner, 0);
+  const steer = s.players[0].throwSteer;
+  for (let n = 0; n < 4; n++) step(s, simulationStep, {}, [false, false]);
+  assert.equal(s.ball.owner, -1);
+  assert.equal(s.ball.flightKind, 2);
+  assert.equal(s.ball.vz, steer * 4 * 25 * u);
 });
