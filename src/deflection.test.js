@@ -48,7 +48,7 @@ test("keeper deflections use both original direction tables and preserve throw a
       assert.equal(s.event.kind, 17);
     }
 });
-test("standing keeper catches, high ball bypasses a block, electric shot still injures", () => {
+test("standing keeper catches; blocking keeper deflects high and electric shots", () => {
   const s = initial(),
     p = s.players[0];
   s.controlled[0] = 0;
@@ -68,7 +68,7 @@ test("standing keeper catches, high ball bypasses a block, electric shot still i
     lastTouch: 17,
   });
   catchBall(s);
-  assert.ok(p.health < 100);
+  assert.equal(p.health, 100);
   assert.equal(s.ball.owner, -1);
   assert.equal(s.ball.electric, 0);
 });

@@ -764,14 +764,20 @@ export function catchBall(s, only = -1, distances = null) {
       )
         continue;
       if (
+        (distances ? distances[i] : referenceDistance(p.x - b.x, p.z - b.z)) >
+        16
+      )
+        continue;
+      // get_ball (0xebd6): keeper deflection precedes height and charge checks.
+      if (p.action === 1 && p.keeperBlock) {
+        deflectBall(s, i);
+        event(s, 17, i, -1, b.x, b.z, b.h);
+        return;
+      }
+      if (
         b.flightKind
           ? b.flightStage > 2 && !(p.action === 2 && p.jumping)
           : b.h > 1.25 + jumpHeight(p)
-      )
-        continue;
-      if (
-        (distances ? distances[i] : referenceDistance(p.x - b.x, p.z - b.z)) >
-        16
       )
         continue;
       if (
@@ -791,11 +797,6 @@ export function catchBall(s, only = -1, distances = null) {
           b.electricBudget = b.electric;
           continue;
         }
-      }
-      if (p.action === 1 && p.keeperBlock) {
-        deflectBall(s, i);
-        event(s, 17, i, -1, b.x, b.z, b.h);
-        return;
       }
       const wasCharged = b.charged;
       if (

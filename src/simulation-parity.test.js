@@ -6,15 +6,15 @@ test("browser and Go stay aligned through seeded AI and scripted-input matches",
  const r=spawnSync("go",["test","./server","-run","^TestSimulationParityTrace$","-v"],{encoding:"utf8",maxBuffer:8*1024*1024});
  assert.equal(r.status,0,r.stdout+r.stderr);
  const traces=JSON.parse(r.stdout.match(/TRACE:(.+)/)[1]);
- for(let scenario=0;scenario<3;scenario++){
+ for(let scenario=0;scenario<4;scenario++){
  const rows=traces[scenario],s=createMatch();let sample=0;const seen=new Set();
  for(let tick=0;tick<10000;tick++) {
   const inputs=[0,1].map(team=>{
     const p=s.players[s.controlled[team]];
     let dx=s.ball.x-p.x,dz=s.ball.z-p.z;
-    if(s.ball.owner===s.controlled[team]){dx=(team===0?1:-1)*(s.period===2?-1:1)*20;dz=-p.z}
+    if(scenario!==3 && s.ball.owner===s.controlled[team]){dx=(team===0?1:-1)*(s.period===2?-1:1)*20;dz=-p.z}
     const sign=v=>Math.abs(v)<.05?0:Math.sign(v);
-    return {x:sign(dx),z:sign(dz),shoot:tick%37<8,tackle:tick%53===0,lob:tick%97<7};
+    return {x:sign(dx),z:sign(dz),shoot:scenario!==3 && tick%37<8,tackle:scenario===3?tick%18<5:tick%53===0,lob:scenario!==3 && tick%97<7};
   });
   step(s,.04,inputs[0],[scenario>0,scenario>1],inputs[1]);for(const e of s.events??[])seen.add(e.kind);if(tick%25)continue;
   const row=[tick,s.time,s.period,...s.score,...s.rng,s.ball.x,s.ball.z,s.ball.h,s.ball.owner,s.restartPhase,s.ball.vx,s.ball.vz,s.ball.flightKind??0,s.ball.flightIndex??0,s.ball.speedTimer??0];
@@ -26,7 +26,7 @@ test("browser and Go stay aligned through seeded AI and scripted-input matches",
  }
  assert.equal(s.over,true,`scenario ${scenario} must reach full time`);
  assert.equal(s.period,2);
- for(const kind of [3,4,6,7,11,16,22,23]) assert.ok(seen.has(kind),`scenario ${scenario} missing event ${kind}`);
- if(scenario===1)for(const kind of [12,14,15])assert.ok(seen.has(kind),`missing warp/medical coverage ${kind}`);
+ for(const kind of (scenario===3?[4,6,11,14,15,16,22,23]:[3,4,6,7,11,16,22,23])) assert.ok(seen.has(kind),`scenario ${scenario} missing event ${kind}`);
+ if(scenario===1)for(const kind of [12])assert.ok(seen.has(kind),`missing warp/medical coverage ${kind}`);
  }
 });

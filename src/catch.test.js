@@ -43,3 +43,23 @@ test("moving catches and stationary balls do not trigger standing recovery", () 
     assert.equal(p.action, 0, mode);
   }
 });
+
+test("keeper block deflects high and charged shots before catch eligibility", () => {
+  for (const stage of [1, 6]) for (const charged of [false, true]) {
+    const s = initial();
+    for (const p of s.players) p.stun = 100;
+    const p = s.players[0];
+    Object.assign(p, { x: 0, z: 0, stun: 0, action: 1, keeperBlock: true, fx: 0, fz: 1 });
+    s.controlled[0] = 0;
+    Object.assign(s.ball, { owner: -1, lastTouch: 9, x: 0, z: 0,
+      vx: -4, vz: 0, h: 0.25 + stage * 0.5, flightKind: 2,
+      flightStage: stage, charged, electric: charged ? 3 : 0 });
+    catchBall(s);
+    assert.equal(p.health, 100);
+    assert.equal(p.action, 1);
+    assert.equal(s.ball.owner, -1);
+    assert.equal(s.ball.flightStage, 1);
+    assert.equal(s.ball.charged, false);
+    assert.equal(s.events.at(-1).kind, 17);
+  }
+});

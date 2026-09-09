@@ -681,14 +681,20 @@ func (s *State) catchBallAt(only int, distances *[18]int) {
 			if s.Controlled[team] != i || p.Stun > 0 || p.Health <= 0 || p.Action == 3 {
 				continue
 			}
-			if b.FlightKind != 0 && b.FlightStage > 2 && !(p.Action == 2 && p.jumping) || b.FlightKind == 0 && b.H > 1.25+jumpHeight(*p) {
-				continue
-			}
 			distance := referenceDistance(p.X-b.X, p.Z-b.Z)
 			if distances != nil {
 				distance = distances[i]
 			}
 			if distance > 16 {
+				continue
+			}
+			// get_ball (0xebd6): keeper deflection precedes height and charge checks.
+			if p.Action == 1 && p.keeperBlock {
+				s.deflectBall(i)
+				s.event(17, i, -1, b.X, b.Z, b.H)
+				return
+			}
+			if b.FlightKind != 0 && b.FlightStage > 2 && !(p.Action == 2 && p.jumping) || b.FlightKind == 0 && b.H > 1.25+jumpHeight(*p) {
 				continue
 			}
 			if b.Charged && b.Electric > 0 && b.LastTouch >= 0 && p.Team != s.Players[b.LastTouch].Team && !s.active(10, p.Team) {
@@ -704,11 +710,6 @@ func (s *State) catchBallAt(only int, distances *[18]int) {
 					b.ElectricBudget = b.Electric
 					continue
 				}
-			}
-			if p.Action == 1 && p.keeperBlock {
-				s.deflectBall(i)
-				s.event(17, i, -1, b.X, b.Z, b.H)
-				return
 			}
 			wasCharged := b.Charged
 			if (b.VX != 0 || b.VZ != 0) && b.LastTouch >= 0 && s.Players[b.LastTouch].Team != p.Team {

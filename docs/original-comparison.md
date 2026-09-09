@@ -1435,3 +1435,27 @@ This bounded run validates recovery under these short loss bursts; extended
 outages beyond the retained event tail can still lose transient sounds. The
 previous live medical run did not enable loss, so no combined loss/medical
 claim is made. No production simulation or network code changed.
+
+
+### Keeper deflection precedence (2026-09-09)
+
+The Amiga `get_ball` routine checks the selected player's eligibility and the
+16-unit contact radius, then branches to `goalie_deflect_ball` at 0xebd6.
+Only ordinary catches proceed to the height check at 0xebea and charged-ball
+damage at 0xebfe. Browser and server previously ran those checks before a
+keeper block, allowing high shots to bypass a contacting block and electric
+shots to injure the blocking keeper. Both now follow the source ordering.
+This supersedes the earlier test expectation that an electric block injures.
+
+Regression coverage combines low/high flight stages with ordinary/charged
+shots, checking deflection, preserved health, loose ball ownership and the
+keeper deflection audio event. Existing direction-table tests cover both ends
+and all eight facing directions. This is a correction to contact resolution;
+it does not make the keeper automatically reach every high shot.
+
+Validation: 198 JavaScript tests, Go tests, Go vet and the production build
+pass. The complete-match parity test now includes a fourth, tackle-focused
+scenario: the keeper correction removed the injury from the previous mixed
+scenario. The fourth scenario independently reaches injury, replacement and
+full time with matching browser/server states; the mixed scenario retains
+warp coverage. All four scenarios run for 10,000 reference ticks.

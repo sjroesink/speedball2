@@ -28,7 +28,7 @@ func TestKeeperDeflection(t *testing.T) {
 		}
 	}
 }
-func TestKeeperCatchAndBlockExclusions(t *testing.T) {
+func TestKeeperCatchAndBlock(t *testing.T) {
 	s := initial()
 	p := &s.Players[0]
 	s.Controlled[0] = 0
@@ -45,8 +45,8 @@ func TestKeeperCatchAndBlockExclusions(t *testing.T) {
 	s.Ball.FlightKind = 2
 	s.Ball.FlightStage = 3
 	s.catchBall()
-	if s.Ball.Owner != -1 {
-		t.Fatal("blocked high ball")
+	if s.Ball.Owner != -1 || s.Ball.FlightStage != 1 {
+		t.Fatal("high ball was not deflected")
 	}
 	s.Ball.FlightStage = 1
 	s.Ball.Charged = true
@@ -54,7 +54,7 @@ func TestKeeperCatchAndBlockExclusions(t *testing.T) {
 	s.Ball.ElectricBudget = 1
 	s.Ball.LastTouch = 17
 	s.catchBall()
-	if p.Health >= 100 || s.Ball.Owner != -1 || s.Ball.Electric != 0 {
-		t.Fatal("electric block did not injure")
+	if p.Health != 100 || s.Ball.Owner != -1 || s.Ball.Electric != 0 {
+		t.Fatal("electric block did not protect keeper")
 	}
 }

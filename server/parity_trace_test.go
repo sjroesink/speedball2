@@ -8,7 +8,7 @@ import (
 
 func TestSimulationParityTrace(t *testing.T) {
 	traces := [][][]float64{}
-	for scenario := 0; scenario < 3; scenario++ {
+	for scenario := 0; scenario < 4; scenario++ {
 		s := newMatch()
 		rows := [][]float64{}
 		for tick := 0; tick < 10000; tick++ {
@@ -17,7 +17,7 @@ func TestSimulationParityTrace(t *testing.T) {
 			for team := 0; team < 2; team++ {
 				p := s.Players[s.Controlled[team]]
 				dx, dz := s.Ball.X-p.X, s.Ball.Z-p.Z
-				if s.Ball.Owner == s.Controlled[team] {
+				if scenario != 3 && s.Ball.Owner == s.Controlled[team] {
 					dx = s.direction(team) * 20
 					dz = -p.Z
 				}
@@ -28,6 +28,11 @@ func TestSimulationParityTrace(t *testing.T) {
 					return math.Copysign(1, v)
 				}
 				inputs[team] = Input{X: sign(dx), Z: sign(dz), Shoot: tick%37 < 8, Tackle: tick%53 == 0, Lob: tick%97 < 7}
+				if scenario == 3 {
+					inputs[team].Shoot = false
+					inputs[team].Lob = false
+					inputs[team].Tackle = tick%18 < 5
+				}
 			}
 			s.simulate(.04, inputs, humans)
 			if tick%25 != 0 {
