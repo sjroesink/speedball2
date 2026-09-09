@@ -180,3 +180,28 @@ Only corrected numeric measurements are retained. The comparator caps displayed
 mismatches to eight while reporting the total and exiting unsuccessfully if
 any differ. Both JS and Go checks pass. This proves the generator for these
 sequences, not the number/order of random calls during a complete match.
+
+## Predicted target position
+
+`CompareOriginalPrediction.java` executes target_predicted_position at
+0x10aaa through 0x10ae6, including the original reflect_x/reflect_y calls.
+It initializes div_10_table by executing 0x84ac..0x84c4, supplies the target's
+terrain position and signed per-tick velocity in memory, and reads the final
+D1/D2 words. Intelligence is supplied through the querying player's record.
+Each prediction has an 80-instruction bound. No ADDX correction is needed.
+
+The 8,575 cases combine seven intelligence values around lookahead transitions,
+seven positions on each axis (walls, nearby interior positions and center),
+and five velocities per axis (-8, -1, 0, 1, 8). Both JS and Go match every
+result. The retained CSV contains numeric inputs and outputs only; the source
+archive and runtime remain ignored. The normal test suites now check 31,771
+original measurements per host across seven routines.
+
+```text
+node tools/compare-original-prediction.mjs docs/original-prediction.csv
+```
+
+This verifies the prediction used by aggression, pursuit and other AI callers
+for the sampled states. It does not verify candidate selection, the caller's
+timing or an entire match. The newly restored aggression branch still needs
+its own original-execution comparison.

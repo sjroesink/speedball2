@@ -51,6 +51,17 @@ func TestOriginalSustainMeasurements(t *testing.T) {
 		}
 	}
 }
+
+func TestOriginalPredictionMeasurements(t *testing.T) {
+	const unit = 22.4 / 576
+	for _, r := range originalMeasurements(t, "original-prediction", "intelligence,x,y,dx,dy,targetX,targetY", 8575, 5) {
+		x, z := predictedTarget(float64(576-r[2])*unit, float64(r[1]-320)*unit, -float64(r[4])*unit*25, float64(r[3])*unit*25, r[0])
+		a, b := int(math.Round(z/unit+320)), int(math.Round(576-x/unit))
+		if a != r[5] || b != r[6] {
+			t.Fatalf("prediction %v: got %d,%d, original %d,%d", r[:5], a, b, r[5], r[6])
+		}
+	}
+}
 func TestOriginalDistanceMeasurements(t *testing.T) {
 	for _, r := range originalMeasurements(t, "original-distance", "dx,dz,distance,instructions", 6400, 2) {
 		got := referenceDistance(float64(r[0])*terrainUnit, float64(r[1])*terrainUnit)
