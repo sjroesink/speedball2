@@ -386,7 +386,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				p.aiWait = aiReactionTime(p.Stats[7])
 				p.aiAvoid = false
 				var nearby *interaction
-				if s.Controlled[t] != i {
+				if s.Controlled[t] != i || b.Owner != i {
 					nearby = s.localInteraction(i, &contacts[i], s.randomByte())
 				}
 				if nearby != nil {
@@ -394,9 +394,21 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 					if nearby.attack {
 						p.Action = 7
 						p.ActionTime = 4. / 25
+						cue := 20
+						if s.Controlled[t] == i {
+							p.Action = 1
+							if canJumpAtBall(p, b, catchDistances[i], inMultiplier) {
+								p.Action = 2
+							}
+							p.ActionTime = actionDuration(p.Action, p.Stats[3])
+							cue = p.Action
+						}
 						p.Cooldown = p.ActionTime
 						p.tackleResolved = false
-						s.event(20, i, -1, p.X, p.Z, 0)
+						p.jumping = p.Action == 2
+						p.slideEnding = false
+						p.keeperBlock = p.Action == 1 && i%9 == 0 && b.Owner < 0 && (b.VX != 0 || b.VZ != 0) && math.Abs(p.FZ) > .1
+						s.event(cue, i, -1, p.X, p.Z, 0)
 					} else {
 						p.aiAvoid = true
 					}
@@ -423,7 +435,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				dx, dz = steerToTarget(p, tx, tz, decide)
 			}
 			u = Input{}
-			if decide && s.Controlled[t] == i && p.Cooldown <= 0 && math.Hypot(b.X-p.X, b.Z-p.Z) < gearRange(p.Gear, 14, 3, 4) && b.Owner != i {
+			if decide && !p.aiAvoid && p.ActionTime <= 0 && s.Controlled[t] == i && p.Cooldown <= 0 && math.Hypot(b.X-p.X, b.Z-p.Z) < gearRange(p.Gear, 14, 3, 4) && b.Owner != i {
 				if b.H > 1.4 {
 					u.Shoot = true
 				} else if (b.Owner >= 0 && s.Players[b.Owner].Team != t) || (i%9 == 0 && b.Owner < 0 && math.Hypot(b.VX, b.VZ) > 4) {

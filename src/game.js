@@ -448,18 +448,33 @@ export function step(
 
         p.aiAvoid = false;
         const nearby =
-          s.controlled[t] !== i
+          s.controlled[t] !== i || b.owner !== i
             ? localInteraction(s, i, contacts[i], randomByte(s))
             : null;
         if (nearby) {
           p.fx = nearby.x;
           p.fz = nearby.z;
           if (nearby.attack) {
-            p.action = 7;
-            p.actionTime = 4 / 25;
+            const selected = s.controlled[t] === i;
+            p.action = selected
+              ? canJumpAtBall(p, b, catchDistances[i], inMultiplier)
+                ? 2
+                : 1
+              : 7;
+            p.actionTime = selected
+              ? actionDuration(p.action, p.stats[3])
+              : 4 / 25;
             p.cooldown = p.actionTime;
             p.tackleResolved = false;
-            event(s, 20, i, -1, p.x, p.z, 0);
+            p.jumping = p.action === 2;
+            p.slideEnding = false;
+            p.keeperBlock =
+              p.action === 1 &&
+              i % 9 === 0 &&
+              b.owner < 0 &&
+              (b.vx !== 0 || b.vz !== 0) &&
+              Math.abs(p.fz) > 0.1;
+            event(s, selected ? p.action : 20, i, -1, p.x, p.z, 0);
           } else p.aiAvoid = true;
         } else if (b.owner === i) {
           tx = d * 22;
@@ -485,6 +500,8 @@ export function step(
       u = {};
       if (
         decide &&
+        !p.aiAvoid &&
+        p.actionTime <= 0 &&
         s.controlled[t] === i &&
         p.cooldown <= 0 &&
         Math.hypot(b.x - p.x, b.z - p.z) < (p.gear === 14 ? 4 : 3) &&

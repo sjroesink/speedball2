@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { initial } from "./game.js";
+import { initial, step } from "./game.js";
 import { localInteraction } from "./interaction.js";
 function setup() {
   const s = initial();
@@ -10,6 +10,39 @@ function setup() {
   s.ball.owner = -1;
   return s;
 }
+test("selected attacks lead the opponent; supporting punches use current position", () => {
+  const s = setup(),
+    d = Array(18).fill(100);
+  d[9] = 20;
+  s.players[1].stats[7] = 250;
+  s.players[9].moveZ = 8 * (22.4 / 576) * 25;
+  s.controlled[0] = 1;
+  assert.deepEqual(localInteraction(s, 1, d, 0), { attack: true, x: 1, z: 1 });
+  s.controlled[0] = 7;
+  assert.deepEqual(localInteraction(s, 1, d, 0), { attack: true, x: 1, z: 0 });
+  s.players[9].x = 0;
+  assert.equal(localInteraction(s, 1, d, 255).x, 1);
+});
+test("selected AI starts a slide or high-ball jump on nearby contact", () => {
+  for (const high of [false, true]) {
+    const s = initial();
+    for (const p of s.players) p.stun = 100;
+    Object.assign(s.players[7], { x: 0, z: 0, stun: 0 });
+    s.players[7].stats[0] = 255;
+    Object.assign(s.players[16], { x: 0.7, z: 0, stun: 0, aiWait: 100 });
+    Object.assign(s.ball, {
+      x: 0.7,
+      z: 0,
+      h: high ? 4 : 1,
+      stage: high ? 10 : 1,
+      owner: high ? -1 : 16,
+    });
+    step(s, 1 / 25, {}, [false, false]);
+    assert.equal(s.controlled[0], 7);
+    assert.equal(s.players[7].action, high ? 2 : 1);
+    assert.equal(s.players[7].jumping, high);
+  }
+});
 test("local aggression comparison is strict and returns avoidance at equality", () => {
   const s = setup(),
     d = Array(18).fill(100);
