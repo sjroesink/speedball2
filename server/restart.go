@@ -11,12 +11,16 @@ func (s *State) beginRestart(pause float64) {
 
 // prepare_ball_launch waits for formation; deck frame 19 plus ball frame 21.
 func (s *State) restartStep(dt float64) bool {
-	if s.RestartPhase == 0 {
+	return s.formationAndLaunchStep(dt, false)
+}
+
+func (s *State) formationAndLaunchStep(dt float64, medicalFormation bool) bool {
+	if s.RestartPhase == 0 && !medicalFormation {
 		return false
 	}
-	if s.RestartPhase == 1 {
+	if s.RestartPhase == 1 || medicalFormation {
 		// step_prepare_ball_launch clears temporary powers before formation.
-		if s.Effect.Kind != 0 {
+		if !medicalFormation && s.Effect.Kind != 0 {
 			s.restorePower()
 			s.Effect = Effect{Team: -1}
 		}
@@ -25,11 +29,14 @@ func (s *State) restartStep(dt float64) bool {
 			for _, team := range []int{1, 0} {
 				i := team*9 + slot
 				p := &s.Players[i]
+				if medicalFormation && s.Medical.Player == i {
+					continue
+				}
 				p.ActionTime = math.Max(0, p.ActionTime-dt)
 				p.Stun = math.Max(0, p.Stun-dt)
 				p.aiWait = math.Max(0, p.aiWait-dt)
 				if p.Health <= 0 {
-					if s.startInjury(i) {
+					if !medicalFormation && s.startInjury(i) {
 						return true
 					}
 					ready = false
@@ -56,7 +63,7 @@ func (s *State) restartStep(dt float64) bool {
 				}
 			}
 		}
-		if ready {
+		if ready && !medicalFormation {
 			s.event(22, -1, -1, 0, 0, .1)
 			s.RestartPhase = 2
 			s.RestartTicks = 0

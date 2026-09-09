@@ -1299,3 +1299,22 @@ cleanup so an electrically marked ball cannot gain the normal interception cue.
 teams, friendly/opponent possession and charged/unmarked catches. The two new
 timbres are modern interpretations of source sound 0x29/0x28; no original
 samples are included. Subjective audio review remains pending.
+
+
+## Formation movement during medical care (2026-09-09)
+
+The supplied Player.cs clock-paused control branch sends available players to
+_launchXY while medical transport runs. Previously the modern simulation
+returned immediately from medicalStep, freezing the whole roster until the
+patient left and then requiring everyone to walk back. Both simulations now
+advance healthy players' formation movement during care, respecting action and
+wait timers. The current patient is excluded, and other fatal falls wait for
+the serialized medical service. The ball/medical camera anchor and stopped
+match clock remain intact; launcher phases and their sounds cannot start early.
+
+193 JS tests, Go tests/vet and production build pass. Integrated simulation
+regressions verify healthy-player arrival, unchanged patient status and ball
+anchor, a waiting second injury, and no premature clock/launcher advancement.
+The original offscreen teleport shortcut remains intentionally replaced by
+continuous movement in the modern renderer. This closes the earlier frozen-
+teammate medical gap, not the remaining original viewport/phase timing audit.

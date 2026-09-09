@@ -27,11 +27,11 @@ export function beginRestart(s, pause = 0) {
 
 // Match restart: prepare_ball_launch waits for every player, then the deck
 // reaches frame 19 and the ball reaches frame 21 before the clock resumes.
-export function restartStep(s, dt, launchPosition) {
-  if (!s.restartPhase) return false;
-  if (s.restartPhase === 1) {
+export function restartStep(s, dt, launchPosition, medicalFormation = false) {
+  if (!s.restartPhase && !medicalFormation) return false;
+  if (s.restartPhase === 1 || medicalFormation) {
     // step_prepare_ball_launch clears temporary powers before formation.
-    if (s.effect.kind) {
+    if (!medicalFormation && s.effect.kind) {
       restorePower(s);
       s.effect = { kind: 0, team: -1, time: 0 };
     }
@@ -40,11 +40,12 @@ export function restartStep(s, dt, launchPosition) {
       for (const team of [1, 0]) {
         const i = team * 9 + slot,
           p = s.players[i];
+        if (medicalFormation && s.medical.player === i) continue;
         p.actionTime = Math.max(0, p.actionTime - dt);
         p.stun = Math.max(0, p.stun - dt);
         p.aiWait = Math.max(0, (p.aiWait || 0) - dt);
         if (p.health <= 0) {
-          if (startInjury(s, i)) return true;
+          if (!medicalFormation && startInjury(s, i)) return true;
           ready = false;
           continue;
         }
@@ -71,7 +72,7 @@ export function restartStep(s, dt, launchPosition) {
           p.moveX = p.moveZ = 0;
         }
       }
-    if (ready) {
+    if (ready && !medicalFormation) {
       emit(s, 22, -1, -1, 0, 0, 0.1);
       s.restartPhase = 2;
       s.restartTicks = 0;

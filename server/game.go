@@ -263,6 +263,9 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		return
 	}
 	s.matchClock(dt)
+	if s.Medical != nil {
+		s.formationAndLaunchStep(dt, true)
+	}
 	if s.medicalStep(dt) {
 		s.previous = inputs
 		return

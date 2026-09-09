@@ -327,6 +327,7 @@ function simulateStep(
   s.tick++;
   if (s.over) return;
   matchClock(s, dt);
+  if (s.medical) restartStep(s, dt, launchPosition, true);
   if (medicalStep(s, dt)) {
     s.previous = inputs.map((u) => ({ ...u }));
     return;
