@@ -1,5 +1,6 @@
 import { localInteraction } from "./interaction.js";
 import { pursuit } from "./pursuit.js";
+import { keeperAction } from "./keeper-action.js";
 import { advanceViewport, worldInViewport } from "./visibility.js";
 import { contactDistances, blockPlayerMovement } from "./collision.js";
 import { steerToTarget } from "./steering.js";
@@ -455,10 +456,19 @@ function simulateStep(
         p.aiAvoid = false;
         const random = randomByte(s);
         let chase;
+        let keeper;
         let nearby =
           s.controlled[t] !== i || b.owner !== i
             ? localInteraction(s, i, contacts[i], random)
             : null;
+        if (!nearby && s.controlled[t] === i && b.owner !== i && i % 9 === 0) {
+          keeper = keeperAction(s, i, catchDistances[i], random);
+          if (keeper) {
+            tx = keeper.tx;
+            tz = keeper.tz;
+            if (keeper.attack) nearby = keeper;
+          }
+        }
         if (!nearby && s.controlled[t] === i && b.owner !== i && i % 9 !== 0) {
           chase = pursuit(s, i, random, catchDistances, inMultiplier);
           tx = chase.tx;
@@ -504,7 +514,7 @@ function simulateStep(
           tz = clamp(p.z * 0.4, -2, 2);
         } else if (i % 9 === 0) {
           if (s.controlled[t] !== i) [tx, tz] = goalieTarget(s, i);
-          else {
+          else if (!keeper) {
             tx = -d * 19.5;
             tz = clamp(b.z, -1.55, 1.55);
           }
@@ -522,23 +532,6 @@ function simulateStep(
           ? eightWay(p.fx, p.fz)
           : steerToTarget(p, tx, tz, decide);
       u = {};
-      if (
-        decide &&
-        !p.aiAvoid &&
-        p.actionTime <= 0 &&
-        s.controlled[t] === i &&
-        i % 9 === 0 &&
-        p.cooldown <= 0 &&
-        Math.hypot(b.x - p.x, b.z - p.z) < (p.gear === 14 ? 4 : 3) &&
-        b.owner !== i
-      ) {
-        if (b.h > 1.4) u.shoot = true;
-        else if (
-          (b.owner >= 0 && s.players[b.owner].team !== t) ||
-          (i % 9 === 0 && b.owner < 0 && Math.hypot(b.vx, b.vz) > 4)
-        )
-          u.tackle = true;
-      }
       if (decide && b.owner === i) {
         const danger = s.players.some(
           (q) => q.team !== t && Math.hypot(q.x - p.x, q.z - p.z) < 3,

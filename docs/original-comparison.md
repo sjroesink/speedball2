@@ -699,3 +699,12 @@ Protocol v7 adds the two logical scroll coordinates as uint16 values. The browse
 The in-match orthographic camera now looks straight down, with world X pointing up-screen and world Z right-screen. Its ground footprint is the original 320 by 184 terrain units and its center comes from the logical scroll coordinates. Letterboxing preserves that footprint on different browser shapes; the preview retains its oblique arena view. First-render viewport initialization was fixed after browser testing exposed an undefined viewport.
 
 All 141 JavaScript tests, Go tests, Go vet and the production build pass. The local Go server was restarted with v7. Two browser tabs joined UXP8LD and both showed LIVE, WebTransport connected and 01:12; the second client reported no browser errors and its screenshot showed the centered original-aspect playfield. The first tab retains the historical pre-fix console error. This verifies basic online framing, not all animation appearance or original medical/presentation camera states.
+
+
+### Selected keeper immediate actions
+
+The first branches of Amiga `active_goalie_no_ball_ai` (0xfcf4–0xfd60) now drive selected keeper actions in both simulations. Against a free ball or opposing carrier, a visible keeper starts slide/jump-at-target within eight sustain units (inclusive), using the keeper intelligence prediction constrained by its zone. Friendly possession bypasses this branch. Outside action reach, a stationary target with half-aggression greater than the existing decision random byte is approached within the keeper zone. The old generic fixed-distance keeper attack heuristic was removed.
+
+Two WIP differences were resolved against the Amiga instructions: 0xfd4c compares the stored random byte rather than drawing another; 0xfd54/0xfd58 load the target entity position rather than the keeper position. Tests cover reach 64/65 and 96/97, aggression equality, teammate possession and simulation-level keeper action initiation. All 143 JavaScript tests, Go tests, Go vet and the build pass.
+
+The remaining selected-keeper interception/positioning branches (0xfd60 onward) still fall back to the previous goal position when neither immediate branch applies. They are not yet equivalent to the original.

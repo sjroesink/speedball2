@@ -391,8 +391,19 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				p.aiAvoid = false
 				random := s.randomByte()
 				var nearby *interaction
+				hasKeeperTarget := false
 				if s.Controlled[t] != i || b.Owner != i {
 					nearby = s.localInteraction(i, &contacts[i], random)
+				}
+				if nearby == nil && s.Controlled[t] == i && b.Owner != i && i%9 == 0 {
+					var keeper *interaction
+					keeper, tx, tz = s.keeperAction(i, catchDistances[i], random)
+					if keeper != nil {
+						hasKeeperTarget = true
+						if keeper.attack {
+							nearby = keeper
+						}
+					}
 				}
 				if nearby == nil && s.Controlled[t] == i && b.Owner != i && i%9 != 0 {
 					var chase interaction
@@ -440,7 +451,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				} else if i%9 == 0 {
 					if s.Controlled[t] != i {
 						tx, tz = s.goalieTarget(i)
-					} else {
+					} else if !hasKeeperTarget {
 						tx = -d * 19.5
 						tz = clamp(b.Z, -1.55, 1.55)
 					}
@@ -457,13 +468,6 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				dx, dz = steerToTarget(p, tx, tz, decide)
 			}
 			u = Input{}
-			if decide && !p.aiAvoid && p.ActionTime <= 0 && s.Controlled[t] == i && i%9 == 0 && p.Cooldown <= 0 && math.Hypot(b.X-p.X, b.Z-p.Z) < gearRange(p.Gear, 14, 3, 4) && b.Owner != i {
-				if b.H > 1.4 {
-					u.Shoot = true
-				} else if (b.Owner >= 0 && s.Players[b.Owner].Team != t) || (i%9 == 0 && b.Owner < 0 && math.Hypot(b.VX, b.VZ) > 4) {
-					u.Tackle = true
-				}
-			}
 			if decide && b.Owner == i {
 				danger := false
 				for _, q := range s.Players {
