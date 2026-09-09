@@ -708,3 +708,10 @@ The first branches of Amiga `active_goalie_no_ball_ai` (0xfcf4–0xfd60) now dri
 Two WIP differences were resolved against the Amiga instructions: 0xfd4c compares the stored random byte rather than drawing another; 0xfd54/0xfd58 load the target entity position rather than the keeper position. Tests cover reach 64/65 and 96/97, aggression equality, teammate possession and simulation-level keeper action initiation. All 143 JavaScript tests, Go tests, Go vet and the build pass.
 
 The remaining selected-keeper interception/positioning branches (0xfd60 onward) still fall back to the previous goal position when neither immediate branch applies. They are not yet equivalent to the original.
+
+
+### Selected keeper interception positioning
+
+The remaining Amiga `active_goalie_no_ball_ai` positioning branches (0xfd60–0xfece) replace the fixed selected-keeper goal position. Shared keeper prediction feeds distinct selected/unselected interception thresholds. Selected positioning uses the goal back line at terrain Y 32/1120, averages toward that line, averages lateral intercepts once for released balls and an additional time for relevant held-ball directions, then clamps to the keeper zone. The asymmetric right-side comparison at 0xfd9e–0xfdb2 is retained literally rather than symmetrized.
+
+Coordinate fixtures cover left/right approaches, the asymmetric branch, central distant and straight shots, diagonal free and held balls, zone clamping, and swapped ends. Existing unselected keeper fixtures remain unchanged and pass. All 144 JavaScript tests, Go tests, Go vet and the production build pass. The selected keeper no-ball positioning no longer uses the fixed -19.5 world-X fallback. Keeper carrier passing/throw decisions remain part of the broader unfinished AI port.

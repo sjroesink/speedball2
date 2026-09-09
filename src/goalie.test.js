@@ -9,6 +9,42 @@ const target = (s, i = 0) => {
   const [x, z] = goalieTarget(s, i);
   return [Math.round(z / u + 320), Math.round(576 - x / u)];
 };
+
+test("selected keeper uses original averaged intercepts and zone limits", () => {
+  for (const [x, y, dir, held, wantX, wantY] of [
+    [200, 1050, 4, false, 236, 1085],
+    [440, 1050, 4, false, 380, 1085],
+    [400, 980, 4, false, 330, 1050],
+    [320, 1000, 4, false, 320, 1060],
+    [320, 1080, 4, false, 320, 1100],
+    [320, 1080, 3, false, 340, 1100],
+    [320, 1080, 3, true, 330, 1100],
+    [320, 576, 4, false, 320, 960],
+  ]) {
+    const s = initial(),
+      q = held ? s.players[16] : s.ball;
+    place(q, x, y);
+    q.fx = q.dirX = Math.round(Math.cos((dir * Math.PI) / 4));
+    q.fz = q.dirZ = Math.round(Math.sin((dir * Math.PI) / 4));
+    s.ball.owner = held ? 16 : -1;
+    const [tx, tz] = goalieTarget(s, 0, true);
+    assert.deepEqual(
+      [Math.round(tz / u + 320), Math.round(576 - tx / u)],
+      [wantX, wantY],
+      `${x},${y},${dir},${held}`,
+    );
+  }
+  const s = initial();
+  s.period = 2;
+  place(s.ball, 320, 72);
+  s.ball.dirX = 1;
+  s.ball.dirZ = 1;
+  const [tx, tz] = goalieTarget(s, 0, true);
+  assert.deepEqual(
+    [Math.round(tz / u + 320), Math.round(576 - tx / u)],
+    [340, 52],
+  );
+});
 test("keeper covers projected shot angle and recenters distant side attacks", () => {
   const s = initial();
   place(s.ball, 200, 1000);

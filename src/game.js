@@ -515,8 +515,7 @@ function simulateStep(
         } else if (i % 9 === 0) {
           if (s.controlled[t] !== i) [tx, tz] = goalieTarget(s, i);
           else if (!keeper) {
-            tx = -d * 19.5;
-            tz = clamp(b.z, -1.55, 1.55);
+            [tx, tz] = goalieTarget(s, i, true);
           }
         } else if (s.controlled[t] === i) {
           tx = chase.tx;

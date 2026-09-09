@@ -25,6 +25,9 @@ func (s *State) deflectBall(i int) {
 
 // Unselected keeper positioning: base_goalie_set_intercept_position, 0xfb30.
 func (s *State) goalieTarget(i int) (float64, float64) {
+	return s.goaliePosition(i, false)
+}
+func (s *State) goaliePosition(i int, selected bool) (float64, float64) {
 	side := i / 9
 	if s.Period == 2 {
 		side ^= 1
@@ -61,21 +64,39 @@ func (s *State) goalieTarget(i int) (float64, float64) {
 	if side != 0 {
 		line = ymin
 	}
+	if selected {
+		line = 1120
+		if side != 0 {
+			line = 32
+		}
+	}
+	low, high := 288, 352
+	if selected {
+		low, high = 272, 368
+	}
 	spread := int(math.Abs(float64(line - ty)))
 	plus, minus := tx+spread, tx-spread
 	dir := (int(math.Round(math.Atan2(fz, fx)/(math.Pi/4))) + 8) % 8
 	kind, intercept := -1, 0
 	if tx < 272 {
 		intercept = plus
-		if plus > 352 {
+		if plus > high {
 			intercept = 320
 		} else {
-			intercept = max(256, plus)
+			minimum := 256
+			if selected {
+				minimum = 272
+			}
+			intercept = max(minimum, plus)
 		}
 		kind = 2
 	} else if tx > 368 {
 		intercept = minus
-		if minus < 288 {
+		if selected {
+			if minus > 272 {
+				intercept = 320
+			}
+		} else if minus < 288 {
 			intercept = 320
 		} else {
 			intercept = min(384, minus)
@@ -103,17 +124,17 @@ func (s *State) goalieTarget(i int) (float64, float64) {
 			if mode == 3 {
 				intercept = minus
 			}
-			if mode == 2 && intercept > 352 {
+			if mode == 2 && intercept > high {
 				intercept = minus
 				kind = 1
-				if intercept >= 288 {
+				if intercept >= low {
 					kind = 3
 				}
 			}
-			if mode == 3 && intercept < 288 {
+			if mode == 3 && intercept < low {
 				intercept = plus
 				kind = 1
-				if intercept <= 352 {
+				if intercept <= high {
 					kind = 3
 				}
 			}
@@ -126,10 +147,10 @@ func (s *State) goalieTarget(i int) (float64, float64) {
 		}
 		if kind < 0 {
 			intercept = minus
-			if intercept < 288 {
+			if intercept < low {
 				intercept = plus
 				kind = 3
-				if intercept > 352 {
+				if intercept > high {
 					kind = 1
 				}
 			} else {
@@ -146,7 +167,14 @@ func (s *State) goalieTarget(i int) (float64, float64) {
 		intercept = (intercept + tx) / 2
 	}
 	if kind >= 2 {
-		tx = intercept
+		if selected {
+			tx = (tx + intercept) / 2
+		} else {
+			tx = intercept
+		}
+	}
+	if selected {
+		line = max(ymin, min(ymax, (ty+line)/2))
 	}
 	return float64(576-line) * (22.4 / 576), float64(max(160, min(480, tx))-320) * (22.4 / 576)
 }

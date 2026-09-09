@@ -5,6 +5,42 @@ import (
 	"testing"
 )
 
+func TestSelectedGoaliePosition(t *testing.T) {
+	const u = 22.4 / 576
+	for _, c := range []struct {
+		x, y, dir    int
+		held         bool
+		wantX, wantY int
+	}{
+		{200, 1050, 4, false, 236, 1085}, {440, 1050, 4, false, 380, 1085},
+		{400, 980, 4, false, 330, 1050}, {320, 1000, 4, false, 320, 1060},
+		{320, 1080, 4, false, 320, 1100}, {320, 1080, 3, false, 340, 1100},
+		{320, 1080, 3, true, 330, 1100}, {320, 576, 4, false, 320, 960},
+	} {
+		s := initial()
+		x, z := float64(576-c.y)*u, float64(c.x-320)*u
+		fx, fz := math.Round(math.Cos(float64(c.dir)*math.Pi/4)), math.Round(math.Sin(float64(c.dir)*math.Pi/4))
+		if c.held {
+			s.Ball.Owner = 16
+			s.Players[16].X, s.Players[16].Z, s.Players[16].FX, s.Players[16].FZ = x, z, fx, fz
+		} else {
+			s.Ball.X, s.Ball.Z, s.Ball.DirX, s.Ball.DirZ = x, z, fx, fz
+		}
+		tx, tz := s.goaliePosition(0, true)
+		got := [2]int{int(math.Round(tz/u + 320)), int(math.Round(576 - tx/u))}
+		if got != [2]int{c.wantX, c.wantY} {
+			t.Fatal(c, got)
+		}
+	}
+	s := initial()
+	s.Period = 2
+	s.Ball.X, s.Ball.Z, s.Ball.DirX, s.Ball.DirZ = 504*u, 0, 1, 1
+	tx, tz := s.goaliePosition(0, true)
+	if int(math.Round(tz/u+320)) != 340 || int(math.Round(576-tx/u)) != 52 {
+		t.Fatal("switched ends", tx, tz)
+	}
+}
+
 func TestGoaliePositioning(t *testing.T) {
 	s := initial()
 	u := 22.4 / 576

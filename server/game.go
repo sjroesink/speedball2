@@ -452,8 +452,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 					if s.Controlled[t] != i {
 						tx, tz = s.goalieTarget(i)
 					} else if !hasKeeperTarget {
-						tx = -d * 19.5
-						tz = clamp(b.Z, -1.55, 1.55)
+						tx, tz = s.goaliePosition(i, true)
 					}
 				} else if s.Controlled[t] == i {
 					// The field-player pursuit branch above has selected the target.

@@ -28,8 +28,8 @@ const unit = 22.4 / 576;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 // Amiga base_goalie_set_intercept_position (0xfb30), prediction at 0xfed0.
-// This is the unselected keeper's positioning branch, not the dive decision.
-export function goalieTarget(s, i) {
+// Selected positioning adds the active keeper averaging rules at 0xfd60–0xfece.
+export function goalieTarget(s, i, selected = false) {
   const side = Math.floor(i / 9) ^ (s.period === 2 ? 1 : 0);
   const p = s.players[i],
     loose = s.ball.owner < 0;
@@ -48,7 +48,9 @@ export function goalieTarget(s, i) {
   }
   x += vx * 2 ** shift;
   y += vy * 2 ** shift;
-  const line = side === 0 ? ymax : ymin;
+  const line = selected ? (side === 0 ? 1120 : 32) : side === 0 ? ymax : ymin;
+  const low = selected ? 272 : 288,
+    high = selected ? 368 : 352;
   const spread = Math.abs(line - y),
     plus = x + spread,
     minus = x - spread;
@@ -59,10 +61,16 @@ export function goalieTarget(s, i) {
   let type = -1,
     intercept = 0;
   if (x < 272) {
-    intercept = plus > 352 ? 320 : Math.max(256, plus);
+    intercept = plus > high ? 320 : Math.max(selected ? 272 : 256, plus);
     type = 2;
   } else if (x > 368) {
-    intercept = minus < 288 ? 320 : Math.min(384, minus);
+    intercept = selected
+      ? minus > 272
+        ? 320
+        : minus
+      : minus < 288
+        ? 320
+        : Math.min(384, minus);
     type = 2;
   } else {
     let mode = 0;
@@ -74,21 +82,21 @@ export function goalieTarget(s, i) {
     if (mode === 1 && released) type = 1;
     else if (mode === 2 || mode === 3) {
       intercept = mode === 2 ? plus : minus;
-      if (mode === 2 && intercept > 352) {
+      if (mode === 2 && intercept > high) {
         intercept = minus;
-        type = intercept >= 288 ? 3 : 1;
+        type = intercept >= low ? 3 : 1;
       }
-      if (mode === 3 && intercept < 288) {
+      if (mode === 3 && intercept < low) {
         intercept = plus;
-        type = intercept <= 352 ? 3 : 1;
+        type = intercept <= high ? 3 : 1;
       }
       if (type < 0) type = released ? 2 : 3;
     }
     if (type < 0) {
       intercept = minus;
-      if (intercept < 288) {
+      if (intercept < low) {
         intercept = plus;
-        type = intercept > 352 ? 1 : 3;
+        type = intercept > high ? 1 : 3;
       } else {
         intercept = plus;
         if (intercept <= 352) type = 1;
@@ -100,6 +108,9 @@ export function goalieTarget(s, i) {
     }
   }
   if (type === 3) intercept = Math.floor((intercept + x) / 2);
-  if (type >= 2) x = intercept;
-  return [(576 - line) * unit, (clamp(x, 160, 480) - 320) * unit];
+  if (type >= 2) x = selected ? Math.floor((x + intercept) / 2) : intercept;
+  const targetY = selected
+    ? clamp(Math.floor((y + line) / 2), ymin, ymax)
+    : line;
+  return [(576 - targetY) * unit, (clamp(x, 160, 480) - 320) * unit];
 }
