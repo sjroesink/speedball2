@@ -332,6 +332,10 @@ export class ArenaRenderer {
     });
     this.pickupMeshes.forEach((slot, i) => {
       const item = s.pickups[i];
+      if (!item.kind) {
+        if (slot.mesh) slot.mesh.visible = false;
+        return;
+      }
       if (slot.kind !== item.kind) {
         if (slot.mesh) this.scene.remove(slot.mesh);
         slot.mesh = this.pickupBank

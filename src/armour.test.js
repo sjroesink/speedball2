@@ -1,0 +1,54 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { initial } from "./game.js";
+import { featureStep, damage } from "./features.js";
+import { spawnPickup } from "./pickup-spawn.js";
+const u = 22.4 / 576;
+test("equipment circulates twice, stays held, and drops on the original grid", () => {
+  const s = initial();
+  for (const item of s.pickups) item.wait = 10000;
+  for (const p of s.players) p.stun = 100;
+  const p = s.players[s.controlled[0]], item = s.pickups[6];
+  Object.assign(p, { x: 1.1, z: 2.1, stun: 0, action: 0 });
+  Object.assign(item, { kind: 17, x: p.x, z: p.z, wait: 0 });
+  featureStep(s, .04);
+  assert.equal(p.gear, 17);
+  assert.equal(p.stats[3], 250);
+  assert.equal(s.armourPickupsLeft, 1);
+  featureStep(s, 60);
+  assert.equal(item.kind, 0);
+  assert.equal(p.gear, 17);
+  assert.ok(damage(s, 9, s.controlled[0]));
+  assert.equal(p.gear, 0);
+  assert.equal(p.stats[3], 100);
+  assert.equal(item.kind, 17);
+  assert.equal(item.wait, 0);
+  assert.equal(Math.round(item.z/u+320), (Math.round(p.z/u+320)&0xfe0)+16);
+  assert.equal(Math.round(576-item.x/u), (Math.round(576-p.x/u)&0xfe0)+16);
+  Object.assign(p, { x: item.x, z: item.z, stun: 0, action: 0 });
+  featureStep(s, .04);
+  assert.equal(p.gear, 17);
+  assert.equal(s.armourPickupsLeft, 0);
+  assert.equal(item.kind, 0);
+  assert.ok(damage(s, 9, s.controlled[0]));
+  assert.equal(p.gear, 0);
+  assert.equal(s.armourPickupsLeft, 2);
+  assert.ok(item.kind >= 14 && item.kind <= 21);
+  assert.ok(item.wait >= 0 && item.wait <= 255/25);
+});
+test("fresh armor spans the full court and does not expire", () => {
+  const s = initial(), seen = new Set();
+  for (const p of s.players) p.stun = 10000;
+  for (let i=0; i<100; i++) {
+    spawnPickup(s, 6);
+    const item=s.pickups[6], x=Math.round(item.z/u+320), y=Math.round(576-item.x/u);
+    assert.ok(x>=72 && x<=568 && y>=72 && y<=1080);
+    assert.equal((x-72)%16, 0); assert.equal((y-72)%16, 0);
+    seen.add(item.kind);
+    item.wait=0;
+    const before=structuredClone(item);
+    featureStep(s, 60);
+    assert.deepEqual(item, before);
+  }
+  assert.equal(seen.size, 8);
+});

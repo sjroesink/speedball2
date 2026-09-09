@@ -58,7 +58,7 @@ export function initFeatures(s) {
   }));
   for (const slot of [2, 3, 4, 5]) spawnPickup(s, slot);
   for (const slot of [3, 4, 5]) s.pickups[slot].wait = s.pickups[2].wait;
-  for (const slot of [0, 1]) spawnPickup(s, slot);
+  for (const slot of [0, 1, 6]) spawnPickup(s, slot);
 }
 export const active = (s, k, t) =>
   s.effect.time > 0 &&
@@ -76,7 +76,15 @@ export function damage(s, i, j) {
   const hit = hitDamage(p, q);
   // The renderer exposes energy as a percentage; original full energy is 128.
   q.health = Math.max(0, q.health - (hit * 100) / 128);
+  const gear = q.gear;
   deteriorate(q, hit);
+  if (gear) {
+    const unit = 22.4 / 576;
+    const x = (Math.round(320 + q.z / unit) & 0xfe0) + 16;
+    const y = (Math.round(576 - q.x / unit) & 0xfe0) + 16;
+    Object.assign(s.pickups[6], {kind: gear, x: (576-y)*unit, z: (x-320)*unit, wait: 0, life: 0});
+    if (s.armourPickupsLeft === 0) spawnPickup(s, 6);
+  }
   q.stun = fallDuration;
   q.fallX = q.fallZ = 0;
   q.action = 4;
@@ -125,7 +133,11 @@ export function pickup(s, i, k) {
   const p = s.players[i],
     t = p.team;
   if (k === 13) s.credits[t] += 10;
-  else if (k >= 14) equip(p, k);
+  else if (k >= 14) {
+    equip(p, k);
+    s.pickups[6].kind = 0; // Held equipment has no floor sprite.
+    s.armourPickupsLeft = Math.max(0, s.armourPickupsLeft - 1);
+  }
   else if (k === 7) giveBall(s, i);
   else if (k === 8) {
     // Token.Init_Transport targets roster slot 8, regardless of field position.
@@ -250,7 +262,7 @@ export function featureStep(s, dt) {
       if (item.wait > 1e-9) continue;
       item.wait = 0;
     }
-    if (slot === 6) item.life -= dt;
+    if (!item.kind) continue;
     let who = -1;
     // Entity item handlers test team 1's selected player before team 2's.
     for (const i of s.controlled) {
@@ -266,16 +278,7 @@ export function featureStep(s, dt) {
       if (who >= 0) spawnPickup(s, slot);
       continue;
     }
-    if (who >= 0 || item.life <= 0) {
-      s.pickupSerial++;
-      const n = s.pickupSerial + slot;
-      item.x = [-12, -5, 5, 12][n % 4];
-      item.z = [-7, -3, 3, 7][Math.floor(n / 4) % 4];
-      item.wait = who >= 0 ? 8 : 2;
-      item.life = 14;
-      if (slot < 2) item.kind = 1 + ((item.kind + 1) % 12);
-      else if (slot === 6) item.kind = 14 + ((item.kind - 13) % 8);
-    }
+
   }
 }
 // Four low-ball tunnels. Preserve direction through the opposite side wall.

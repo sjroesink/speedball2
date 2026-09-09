@@ -56,7 +56,7 @@ test("browser decodes actual Go protocol v8 snapshot with every new field", () =
     assert.deepEqual(p.stats, Array(8).fill(100 + i));
   });
   assert.equal(s.pickups.length, 7);
-  assert.equal(s.pickups[6].kind, 14);
+  assert.equal(s.pickups[6].kind, 0);
   assert.ok(bytes.length < 1200);
   const old = Buffer.from(bytes);
   old[3] = 7;

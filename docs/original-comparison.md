@@ -1133,3 +1133,26 @@ Remaining pickup gaps: armor drop/recollection lifecycle still uses the old
 respawn mechanism, match coin-income caps are not implemented, reverse-control
 exclusion for original solo modes is not applied, and appearance sound events
 are not yet emitted. Full spawn-order/frame-order parity remains unverified.
+
+
+## Circulating equipment (2026-09-09)
+
+Implemented Amiga randomise_armour (0x1158c), apply_armour (0x116b8)
+and tackle_drop_armour (0x1170e) in both simulations. There is one circulating
+floor item. Collection hides it and decrements its two-collection allowance.
+Damage restores the player's backed-up attribute and drops the same item at
+32-unit cell centers. After the second collection, the next damage instead
+randomizes a replacement with a 0..255-tick appearance delay. Fresh placement
+uses the original 16-unit grid across the full court. Equipment no longer
+expires or respawns periodically while held. The source sprite-to-stat order
+is translated to this game's attribute-based item identifiers.
+
+Kind zero encodes absent floor equipment through the existing snapshot field;
+no packet bytes were added. The renderer hides the previous mesh without
+requesting a nonexistent asset. Tests cover two complete collections/drops,
+attribute restoration, placement, persistence and decoding held equipment.
+182 JavaScript tests, Go tests/vet and production build pass. Browser preview
+buttons exercised both collections and hits; a screenshot confirmed the dropped
+speed item appears beside the player. Full online match playtesting remains.
+This supersedes the earlier equipment lifecycle gap; income limits, solo-mode
+power exclusions and appearance sound events still require comparison.

@@ -39,7 +39,7 @@ func (s *State) initFeatures() {
 	for _, slot := range []int{3, 4, 5} {
 		s.Pickups[slot].Wait = s.Pickups[2].Wait
 	}
-	for _, slot := range []int{0, 1} {
+	for _, slot := range []int{0, 1, 6} {
 		s.spawnPickup(slot)
 	}
 }
@@ -62,7 +62,17 @@ func (s *State) damage(i, j int) bool {
 	hit := hitDamage(&s.Players[i], q)
 	// The renderer exposes energy as a percentage; original full energy is 128.
 	q.Health = math.Max(0, q.Health-float64(hit)*100/128)
+	gear := q.Gear
 	deteriorate(q, hit)
+	if gear != 0 {
+		const unit = 22.4 / 576
+		x := (int(math.Round(320+q.Z/unit)) & 0xfe0) + 16
+		y := (int(math.Round(576-q.X/unit)) & 0xfe0) + 16
+		s.Pickups[6] = Pickup{Kind: gear, X: float64(576-y) * unit, Z: float64(x-320) * unit}
+		if s.ArmourPickupsLeft == 0 {
+			s.spawnPickup(6)
+		}
+	}
 	q.Stun = fallDuration
 	q.fallX, q.fallZ = 0, 0
 	q.Action = 4
@@ -91,6 +101,8 @@ func (s *State) pickup(i, k int) {
 		s.Credits[t] += 10
 	case k >= 14:
 		equip(p, k)
+		s.Pickups[6].Kind = 0
+		s.ArmourPickupsLeft = max(0, s.ArmourPickupsLeft-1)
 	case k == 7:
 		s.giveBall(i)
 	case k == 8:
@@ -217,8 +229,8 @@ func (s *State) featureStep(dt float64) {
 			}
 			item.Wait = 0
 		}
-		if slot == 6 {
-			item.Life -= dt
+		if item.Kind == 0 {
+			continue
 		}
 		who := -1
 		// Entity item handlers test team 1's selected player before team 2's.
@@ -244,22 +256,7 @@ func (s *State) featureStep(dt float64) {
 			}
 			continue
 		}
-		if who >= 0 || item.Life <= 0 {
-			s.PickupSerial++
-			n := s.PickupSerial + slot
-			item.X = []float64{-12, -5, 5, 12}[n%4]
-			item.Z = []float64{-7, -3, 3, 7}[(n/4)%4]
-			item.Wait = 2
-			if who >= 0 {
-				item.Wait = 8
-			}
-			item.Life = 14
-			if slot < 2 {
-				item.Kind = 1 + (item.Kind+1)%12
-			} else if slot == 6 {
-				item.Kind = 14 + (item.Kind-13)%8
-			}
-		}
+
 	}
 }
 func (s *State) sideFeature() bool {

@@ -7,6 +7,15 @@ function random(s) {
 // Amiga randomise_powerup_positions / randomise_coin_position: 16-unit grid.
 export function spawnPickup(s, slot) {
   const item = s.pickups[slot];
+  if (slot === 6) {
+    const x = 72 + (random(s) & 0x1f0);
+    const y = 72 + (random(s) & 0x3f0);
+    const value = random(s);
+    Object.assign(item, { x: (576 - y) * unit, z: (x - 320) * unit,
+      kind: 14 + (((value >>> 16) + 1) & 7), wait: (value & 255) / 25, life: 0 });
+    s.armourPickupsLeft = 2;
+    return;
+  }
   const coin = slot >= 2,
     quadrant = slot - 2;
   const x =

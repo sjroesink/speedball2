@@ -90,6 +90,7 @@ type State struct {
 	Pickups           [7]Pickup
 	Credits, Reserves [2]int
 	PickupSerial      int
+	ArmourPickupsLeft int
 }
 type Input struct {
 	Fire     uint32  `json:"fire"`
