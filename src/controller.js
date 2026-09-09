@@ -109,6 +109,7 @@ export async function start() {
     menu = false;
     audio.setActive(!document.hidden);
     document.body.classList.add("in-game");
+    $("lobbyShell").inert = true;
     $("pauseMenu").classList.add("hidden");
     view.setFollow(true);
     document.activeElement.blur();
@@ -144,6 +145,8 @@ export async function start() {
     inGame = false;
     menu = false;
     document.body.classList.remove("in-game");
+    $("lobbyShell").inert = false;
+    $("practice").focus();
     $("pauseMenu").classList.add("hidden");
     $("result").classList.add("hidden");
     view.setFollow(false);
@@ -168,8 +171,6 @@ export async function start() {
     $("homeName").textContent = "YOU";
     $("awayName").textContent = "AI";
     $("matchRoom").textContent = "TRAINING / 9 VS 9";
-    $("practiceTab").classList.add("selected");
-    $("onlineTab").classList.remove("selected");
     enter();
   }
   async function connect(room) {
@@ -227,8 +228,6 @@ export async function start() {
       state = initial();
       $("result").classList.add("hidden");
       $("connection").textContent = "WEBTRANSPORT CONNECTED";
-      $("onlineTab").classList.add("selected");
-      $("practiceTab").classList.remove("selected");
       session.closed
         .then((info) => {
           if (id === attempt) lost(info.reason || "Connection closed.");
@@ -409,22 +408,15 @@ export async function start() {
   }
   requestAnimationFrame(frame);
   $("practice").onclick = practice;
-  $("practiceTab").onclick = practice;
-  $("onlineTab").onclick = () => {
-    $("onlineTab").classList.add("selected");
-    $("practiceTab").classList.remove("selected");
-  };
   $("create").onclick = () => connect("");
-  $("join").onclick = () => {
+  $("joinForm").onsubmit = (event) => {
+    event.preventDefault();
     const code = $("room").value.trim().toUpperCase();
     if (!/^[A-Z0-9]{6}$/.test(code)) {
       $("notice").textContent = "Enter a six-character room code.";
       return;
     }
     connect(code);
-  };
-  $("room").onkeydown = (e) => {
-    if (e.key === "Enter") $("join").click();
   };
   $("gameMenu").onclick = toggleMenu;
   $("resume").onclick = () => {
@@ -450,17 +442,8 @@ export async function start() {
   document.addEventListener("visibilitychange", () => {
     audio.setActive(inGame && !menu && !document.hidden);
   });
-  document.querySelectorAll("[data-page]").forEach(
-    (b) =>
-      (b.onclick = () => {
-        $("rules").classList.toggle("hidden", b.dataset.page !== "how");
-        document
-          .querySelectorAll("[data-page]")
-          .forEach((n) => n.classList.toggle("active", n === b));
-        if (b.dataset.page === "how")
-          $("rules").scrollIntoView({ behavior: "smooth" });
-      }),
-  );
+  $("howToPlay").onclick = () => $("rules").showModal();
+  $("closeRules").onclick = () => $("rules").close();
   try {
     await view.load();
     $("loading").classList.add("hidden");
