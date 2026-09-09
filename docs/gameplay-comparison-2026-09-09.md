@@ -259,3 +259,14 @@ is unchanged; the maximum-name/event-tail datagram test still passes. Older
 protocol versions are rejected. Server and browser must update together.
 275 JS tests, Go tests, vet and build pass. Actual Go snapshot decoding verifies
 a retained 16-frame duration independently of the current speed attribute.
+
+### Blender jump phase follows captured duration
+
+The renderer now passes the retained jump duration to playPlayerAction, so the
+clip and wrapper height use the same launch clock. Previously a client first
+seeing a mid-jump snapshot after a stat change still initialized the Blender
+clip using the new speed attribute. Actual exported cyan/orange Jump clips now
+have regressions at 30, 60 and 144 FPS: a halfway snapshot starts halfway through
+the clip and finishes after the remaining 0.24 seconds, even with speed boosted
+from 100 to 250. All 16 player-animation tests and production build pass.
+This establishes clip timing, not final subjective animation approval.

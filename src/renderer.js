@@ -12,7 +12,7 @@ import { active } from "./features.js";
 import { recentEvents } from "./events.js";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { clamp, jumpHeight } from "./game.js";
+import { clamp, jumpHeight, jumpDuration } from "./game.js";
 
 export class ArenaRenderer {
   constructor(container) {
@@ -248,7 +248,8 @@ export class ArenaRenderer {
           key.includes(name),
         )?.[1];
         if (name && action) {
-          playPlayerAction(action, visualAction, p.actionTime, p.stats?.[3] ?? 100);
+          playPlayerAction(action, visualAction, p.actionTime, p.stats?.[3] ?? 100,
+            visualAction === 2 ? jumpDuration(p) : 0);
           if (visualAction === 5) action.fadeIn(.12);
         }
       }

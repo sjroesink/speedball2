@@ -238,3 +238,17 @@ test("Blender knockout stays prone through completion for both teams", async () 
     assert.equal(action.isRunning(), false);
   }
 });
+
+test('late Blender jump snapshots use launch duration despite changed speed',async()=>{
+ for(const team of ['cyan','orange']) for(const fps of [30,60,144]) {
+  const model=await player(team),mixer=new AnimationMixer(model.scene);
+  const clip=model.animations.find(c=>c.name.includes('Jump')),action=mixer.clipAction(clip);
+  // A 12-tick jump, received halfway through after speed was boosted to 250.
+  playPlayerAction(action,2,.24,250,.48);
+  assert.ok(Math.abs(action.time/clip.duration-.5)<1e-6);
+  let elapsed=0;
+  while(elapsed<.24-1e-9){const dt=Math.min(1/fps,.24-elapsed);mixer.update(dt);elapsed+=dt;}
+  mixer.update(1e-7);
+  assert.equal(action.isRunning(),false,'clip finishes with the remaining action time');
+ }
+});
