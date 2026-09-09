@@ -1,6 +1,43 @@
 package main
 
-import "testing"
+import (
+	"math"
+	"testing"
+)
+
+func TestCarriedBallDuringJump(t *testing.T) {
+	s := initial()
+	for i := range s.Players {
+		s.Players[i].Stun = 100
+	}
+	p := &s.Players[7]
+	p.X, p.Z, p.FX, p.FZ, p.Stun = 0, 0, 1, 0, 0
+	p.Action, p.jumping, p.ActionTime = 2, true, 12./25
+	s.Ball.Owner = 7
+	step := func() { s.simulate(simulationStep, [2]Input{}, [2]bool{true, false}) }
+	step()
+	if s.Ball.H <= 1 || s.Ball.VX != 4*velocityUnit || s.Ball.VZ != 0 {
+		t.Fatal("jump attachment", s.Ball)
+	}
+	for tick := 1; tick < 5; tick++ {
+		step()
+	}
+	if s.Ball.H <= 2.7 {
+		t.Fatal("ball stayed below carrier")
+	}
+	for tick := 5; tick < 10; tick++ {
+		step()
+	}
+	if math.Abs(s.Ball.H-1) > 1e-9 || s.Ball.Owner != 7 {
+		t.Fatal("landing")
+	}
+	for tick := 10; tick < 12; tick++ {
+		step()
+	}
+	if s.Ball.VX != 0 || s.Ball.H != 1 {
+		t.Fatal("standing attachment")
+	}
+}
 
 func TestHumanJumpLaunchSpeed(t *testing.T) {
 	for _, c := range [][2]int{{100, 5}, {140, 5}, {141, 6}, {170, 6}, {171, 6}, {200, 6}, {201, 7}, {250, 7}} {

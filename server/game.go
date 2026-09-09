@@ -589,9 +589,9 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		p := s.Players[b.Owner]
 		b.X = p.X + p.FX*.5
 		b.Z = p.Z + p.FZ*.5
-		b.H = 1
-		b.VX = 0
-		b.VZ = 0
+		b.H = 1 + jumpHeight(p)
+		b.VX = p.moveX
+		b.VZ = p.moveZ
 		b.VH = 0
 	} else if inMultiplier {
 		// The original multiplier animation owns the ball position while inside.

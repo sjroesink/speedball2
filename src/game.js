@@ -651,8 +651,10 @@ export function step(
     const p = s.players[b.owner];
     b.x = p.x + p.fx * 0.5;
     b.z = p.z + p.fz * 0.5;
-    b.h = 1;
-    b.vx = b.vz = b.vh = 0;
+    b.h = 1 + jumpHeight(p);
+    b.vx = p.moveX;
+    b.vz = p.moveZ;
+    b.vh = 0;
   } else if (inMultiplier) {
     // The original multiplier animation owns the ball position while inside.
   } else {

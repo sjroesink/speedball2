@@ -19,6 +19,35 @@ test("jump selection uses speed reach, free possession and original flight stage
 
 import { initial, step, simulationStep, jumpHeight } from "./game.js";
 
+test("carried ball rises with a jumping player and shares carrier velocity", () => {
+  const s = initial();
+  for (const q of s.players) q.stun = 100;
+  const p = s.players[7];
+  Object.assign(p, {
+    x: 0,
+    z: 0,
+    fx: 1,
+    fz: 0,
+    stun: 0,
+    action: 2,
+    jumping: true,
+    actionTime: 12 / 25,
+  });
+  s.ball.owner = 7;
+  step(s, simulationStep, {});
+  assert.ok(s.ball.h > 1);
+  assert.equal(s.ball.vx, 4 * velocityUnit);
+  assert.equal(s.ball.vz, 0);
+  for (let tick = 1; tick < 5; tick++) step(s, simulationStep, {});
+  assert.ok(s.ball.h > 2.7);
+  for (let tick = 5; tick < 10; tick++) step(s, simulationStep, {});
+  assert.ok(Math.abs(s.ball.h - 1) < 1e-9);
+  assert.equal(s.ball.owner, 7);
+  for (let tick = 10; tick < 12; tick++) step(s, simulationStep, {});
+  assert.equal(s.ball.vx, 0);
+  assert.equal(s.ball.h, 1);
+});
+
 test("human jumping keeps launch running speed across stat changes", () => {
   for (const [speed, level] of [
     [100, 5],
