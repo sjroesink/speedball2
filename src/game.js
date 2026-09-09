@@ -370,6 +370,7 @@ export function step(
   b.after = Math.max(0, b.after - dt);
   for (const p of s.players) {
     p.stun = Math.max(0, p.stun - dt);
+    if (p.stun < 1e-9) p.stun = 0;
     p.actionTime = Math.max(0, p.actionTime - dt);
     p.cooldown = Math.max(0, p.cooldown - dt);
     if (p.cooldown < 1e-9) p.cooldown = 0;
@@ -564,8 +565,9 @@ export function step(
   for (let i = 0; i < s.players.length; i++) {
     const p = s.players[i];
     if (p.stun > 0) {
-      p.moveX = p.moveZ = 0;
-      continue;
+      const falling = p.action === 4 && p.health > 0 && p.stun > 1 / 25 + 1e-9;
+      p.moveX = falling ? p.fallX || 0 : 0;
+      p.moveZ = falling ? p.fallZ || 0 : 0;
     }
     const previousX = p.x;
     p.x = clamp(p.x + p.moveX * dt, -playerLimitX, playerLimitX);
@@ -739,8 +741,9 @@ function resolveTackle(s, i, distances) {
     const hadBall = s.ball.owner === j;
     if (damage(s, i, j)) {
       if (hadBall) giveBall(s, i);
-      q.x = clamp(q.x + p.fx * 0.7, -playerLimitX, playerLimitX);
-      q.z = clamp(q.z + p.fz * 0.7, -playerLimitZ, playerLimitZ);
+      [q.fx, q.fz] = eightWay(p.fx, p.fz);
+      q.fallX = q.fx * 4 * velocityUnit;
+      q.fallZ = q.fz * 4 * velocityUnit;
     }
     return;
   }

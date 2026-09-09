@@ -14,6 +14,7 @@ const (
 
 // Actions are replicated, including misses: 1 slide, 2 jump, 3 throw, 4 hit.
 type Player struct {
+	fallX, fallZ                float64
 	slideEnding                 bool
 	throwMode                   int
 	jumping                     bool
@@ -303,6 +304,9 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 	for i := range s.Players {
 		p := &s.Players[i]
 		p.Stun = math.Max(0, p.Stun-dt)
+		if p.Stun < 1e-9 {
+			p.Stun = 0
+		}
 		p.ActionTime = math.Max(0, p.ActionTime-dt)
 		p.Cooldown = math.Max(0, p.Cooldown-dt)
 		if p.Cooldown < 1e-9 {
@@ -506,7 +510,9 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		p := &s.Players[i]
 		if p.Stun > 0 {
 			p.moveX, p.moveZ = 0, 0
-			continue
+			if p.Action == 4 && p.Health > 0 && p.Stun > 1./25+1e-9 {
+				p.moveX, p.moveZ = p.fallX, p.fallZ
+			}
 		}
 		previousX := p.X
 		p.X = clamp(p.X+p.moveX*dt, -playerLimitX, playerLimitX)
@@ -651,8 +657,8 @@ func (s *State) resolveTackle(i int, distances *[18]int) {
 			if hadBall {
 				s.giveBall(i)
 			}
-			q.X = clamp(q.X+p.FX*.7, -playerLimitX, playerLimitX)
-			q.Z = clamp(q.Z+p.FZ*.7, -playerLimitZ, playerLimitZ)
+			q.FX, q.FZ = eightWay(p.FX, p.FZ)
+			q.fallX, q.fallZ = q.FX*4*velocityUnit, q.FZ*4*velocityUnit
 		}
 		return
 	}

@@ -69,9 +69,10 @@ export function damage(s, i, j) {
   // The renderer exposes energy as a percentage; original full energy is 128.
   q.health = Math.max(0, q.health - (hit * 100) / 128);
   deteriorate(q, hit);
-  q.stun = 1.35;
+  q.stun = 26 / 25;
+  q.fallX = q.fallZ = 0;
   q.action = 4;
-  q.actionTime = 1.35;
+  q.actionTime = 26 / 25;
   s.charge[q.team] = 0;
   if (s.ball.owner === j)
     Object.assign(s.ball, {

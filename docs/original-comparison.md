@@ -478,3 +478,18 @@ on that tick. Existing throw, catch, tackle and keeper tests remain passing.
 The original relative ordering of goal/ball movement, player boundary clipping,
 and falling-player velocity still needs comparison; stunned players currently
 stop rather than following the original fall-motion sequence.
+
+
+### Sliding tackle fall motion
+
+The Amiga `anim_tackled` sequence at 0x7296 contains 26 sprite entries followed
+by 0xfffb, which stops velocity and clears falling/busy flags. Nonfatal hit
+recovery now uses 26/25 seconds. A sliding tackle sets the victim's facing to
+the attack direction and gives four terrain velocity units per tick, replacing
+the instantaneous 0.7-world-unit displacement. The global movement phase
+continues that velocity while the victim is stunned, stopping on the final
+fall frame before control returns. Paired tests trace the initial displacement,
+25 moving frames and subsequent stop/recovery. Fatal injuries still use the
+adapted medical sequence. Electric-hit direction/speed, standing punches,
+late-fall collision stopping, and animation-index differences when the victim
+has already had its thinking turn remain to be implemented.

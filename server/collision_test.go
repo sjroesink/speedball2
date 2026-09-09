@@ -137,3 +137,33 @@ func TestGlobalMovementAfterThinking(t *testing.T) {
 		t.Fatal("later player saw already-moved opponent", p.Z)
 	}
 }
+
+func TestTackleFallMotion(t *testing.T) {
+	const unit = 22.4 / 576
+	s := tackleFixture(20)
+	s.RNG = [2]uint32{}
+	p, q := &s.Players[7], &s.Players[16]
+	p.Action, p.ActionTime = 0, 0
+	q.Action = 1
+	q.ActionTime = .3
+	s.Ball.Owner = 7
+	s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
+	if p.Stun != 26./25 || math.Abs(p.X-4*unit) > 1e-9 {
+		t.Fatal("initial fall", p.X, p.Stun)
+	}
+	for n := 1; n < 25; n++ {
+		s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
+	}
+	if math.Abs(p.X-100*unit) > 1e-9 {
+		t.Fatal("fall speed", p.X)
+	}
+	x := p.X
+	s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
+	if p.X != x || p.Action != 4 {
+		t.Fatal("last fall frame")
+	}
+	s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
+	if p.Stun != 0 || p.Action != 0 {
+		t.Fatal("fall recovery")
+	}
+}

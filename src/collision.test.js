@@ -115,3 +115,24 @@ test("later player's blocking uses positions before the global movement pass", (
     "later player remains blocked by pre-movement position",
   );
 });
+
+test("tackled player moves at original fall speed then stops before recovery", () => {
+  const s = tackleFixture(20);
+  s.rng = [0, 0];
+  Object.assign(s.players[7], { action: 0, actionTime: 0 });
+  Object.assign(s.players[16], { action: 1, actionTime: 0.3 });
+  s.ball.owner = 7;
+  step(s, simulationStep, {}, [true, true]);
+  const p = s.players[7];
+  assert.equal(p.stun, 26 / 25);
+  assert.ok(Math.abs(p.x - 4 * unit) < 1e-9, "no instantaneous displacement");
+  for (let n = 1; n < 25; n++) step(s, simulationStep, {}, [true, true]);
+  assert.ok(Math.abs(p.x - 100 * unit) < 1e-9);
+  const x = p.x;
+  step(s, simulationStep, {}, [true, true]);
+  assert.equal(p.x, x, "final fall frame stops velocity");
+  assert.equal(p.action, 4);
+  step(s, simulationStep, {}, [true, true]);
+  assert.equal(p.stun, 0);
+  assert.equal(p.action, 0);
+});
