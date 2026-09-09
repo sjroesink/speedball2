@@ -132,3 +132,28 @@ func TestLaunchLandingAfterRelease(t *testing.T) {
 		t.Fatal("ground hold")
 	}
 }
+
+func TestLauncherSoundBoundaries(t *testing.T) {
+	s := initial()
+	s.beginRestart(0)
+	s.restartStep(.04)
+	if s.Event.ID != 1 || s.Event.Kind != 22 {
+		t.Fatal("mechanism start")
+	}
+	for i := 0; i < 18; i++ {
+		s.restartStep(.04)
+	}
+	if s.Event.ID != 1 {
+		t.Fatal("premature release")
+	}
+	s.restartStep(.04)
+	if s.Event.ID != 2 || s.Event.Kind != 23 {
+		t.Fatal("release")
+	}
+	for i := 0; i < 30; i++ {
+		s.restartStep(.04)
+	}
+	if s.Event.ID != 2 {
+		t.Fatal("repeated launch sound")
+	}
+}

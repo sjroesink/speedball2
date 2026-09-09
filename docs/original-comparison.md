@@ -1267,3 +1267,18 @@ continues independently of the 25 Hz reference stages.
 190 JS tests, Go tests/vet and production build pass. Tests verify release index,
 the exact remaining stage sequence, final ground hold and restart lockout.
 No commercial graphics or memory dump was added to the repository.
+
+
+## Launcher mechanism and release audio (2026-09-09)
+
+Added synthesized mechanism and pneumatic release cues, timed to source calls
+at 0xd80a (sound 0x09 when formation is ready) and 0xd88e (sound 0x28 at deck
+step 19). Events 22 and 23 use existing snapshot history and spatial playback,
+so both players receive the same transition cues. They do not replace HUD
+notifications. These are newly designed timbres, not copies of original samples.
+
+191 JS tests, Go tests/vet and production build pass. Boundary regressions in
+both languages require exactly one mechanism event and one release event.
+Actual browser OfflineAudioContext rendering passed all cues: mechanism peak
+0.0553/RMS 0.00243, release peak 0.0318/RMS 0.00189, zero leaked voices.
+Subjective listening and full-match loudness balance remain unverified.

@@ -1,3 +1,4 @@
+import { emit } from "./events.js";
 import { flightStep } from "./ball.js";
 import { movementSpeed, restorePower } from "./attributes.js";
 import { advanceSteering } from "./steering.js";
@@ -71,6 +72,7 @@ export function restartStep(s, dt, launchPosition) {
         }
       }
     if (ready) {
+      emit(s, 22, -1, -1, 0, 0, 0.1);
       s.restartPhase = 2;
       s.restartTicks = 0;
     }
@@ -78,6 +80,7 @@ export function restartStep(s, dt, launchPosition) {
     const previous = s.restartTicks;
     s.restartTicks += dt * 25;
     if (s.restartTicks >= 19) {
+      if (previous < 19) emit(s, 23, -1, -1, 0, 0, 0.25);
       if (s.ball.flightKind !== 3) Object.assign(s.ball, {
         flightKind: 3, flightIndex: -1, flightStage: 0, flightFraction: 0, vh: 0,
       });

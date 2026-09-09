@@ -109,3 +109,15 @@ test("launcher continues original landing frames after releasing the players", (
  assert.equal(s.ball.h,.25);assert.equal(s.ball.vh,0);
  flightStep(s.ball,1);assert.equal(s.ball.h,.25);
 });
+
+test("launcher mechanism and release sounds occur once at their phase boundaries", () => {
+ const s=initial();beginRestart(s);
+ restartStep(s,.04,launchPosition);
+ assert.deepEqual(s.events.map(e=>e.kind),[22]);
+ for(let i=0;i<18;i++)restartStep(s,.04,launchPosition);
+ assert.deepEqual(s.events.map(e=>e.kind),[22]);
+ restartStep(s,.04,launchPosition);
+ assert.deepEqual(s.events.map(e=>e.kind),[22,23]);
+ for(let i=0;i<30;i++)restartStep(s,.04,launchPosition);
+ assert.deepEqual(s.events.map(e=>e.kind),[22,23]);
+});

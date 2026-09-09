@@ -57,6 +57,7 @@ func (s *State) restartStep(dt float64) bool {
 			}
 		}
 		if ready {
+			s.event(22, -1, -1, 0, 0, .1)
 			s.RestartPhase = 2
 			s.RestartTicks = 0
 		}
@@ -64,6 +65,9 @@ func (s *State) restartStep(dt float64) bool {
 		previous := s.RestartTicks
 		s.RestartTicks += dt * 25
 		if s.RestartTicks >= 19 {
+			if previous < 19 {
+				s.event(23, -1, -1, 0, 0, .25)
+			}
 			if s.Ball.FlightKind != 3 {
 				s.Ball.FlightKind, s.Ball.FlightIndex, s.Ball.FlightStage = 3, -1, 0
 				s.Ball.FlightFraction, s.Ball.VH = 0, 0

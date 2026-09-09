@@ -16,6 +16,17 @@ export function eventPan(state, event, view) {
 
 // Each layer is [waveform, start Hz, end Hz, seconds, gain, delay seconds].
 export const cues = {
+  // Launcher mechanism (source 0x09), then pneumatic release (0x28).
+  22: [
+    ["noise", 600, 1200, 0.55, 0.15, 0],
+    ["sawtooth", 65, 115, 0.5, 0.055, 0],
+    ["sine", 340, 280, 0.1, 0.08, 0.5],
+  ],
+  23: [
+    ["noise", 280, 2800, 0.22, 0.2, 0],
+    ["sine", 100, 42, 0.16, 0.2, 0],
+    ["noise", 2400, 600, 0.2, 0.08, 0.1],
+  ],
   // Floor-item appearance, matching original sound 0x25 timing.
   21: [
     ["sine", 1040, 1560, 0.11, 0.1, 0],
