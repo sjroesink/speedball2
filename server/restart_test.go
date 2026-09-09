@@ -37,7 +37,7 @@ func TestMedicalRestartFormationAndLaunch(t *testing.T) {
 		t.Fatal("premature play")
 	}
 	s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
-	if s.RestartPhase != 0 || s.Ball.H != 3 || s.Time != clock {
+	if s.RestartPhase != 0 || s.Ball.H != 3.25 || s.Time != clock {
 		t.Fatal("launch completion")
 	}
 }
@@ -77,7 +77,7 @@ func TestGoalReturnPreservesPlayers(t *testing.T) {
 	for i := 0; s.RestartPhase != 0 && i < 1500; i++ {
 		s.simulate(simulationStep, [2]Input{}, [2]bool{})
 	}
-	if s.RestartPhase != 0 || s.Time != 90 || p.Health != 41 || s.Ball.Owner != -1 || s.Ball.H != 3 {
+	if s.RestartPhase != 0 || s.Time != 90 || p.Health != 41 || s.Ball.Owner != -1 || s.Ball.H != 3.25 {
 		t.Fatal("restart completion")
 	}
 }
@@ -105,5 +105,30 @@ func TestRestartClearsPowerPreservesEquipment(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+func TestLaunchLandingAfterRelease(t *testing.T) {
+	s := initial()
+	s.beginRestart(0)
+	s.RestartPhase = 2
+	for i := 0; i < 40; i++ {
+		s.restartStep(.04)
+	}
+	if s.RestartPhase != 0 || s.Ball.FlightKind != 3 || s.Ball.FlightIndex != 20 {
+		t.Fatal("release state", s.Ball)
+	}
+	for _, stage := range []int{6, 6, 10, 10, 9, 9, 8, 8, 7, 7, 0} {
+		flightStep(&s.Ball, .04)
+		if s.Ball.FlightStage != stage {
+			t.Fatal("landing stage", stage, s.Ball.FlightStage)
+		}
+	}
+	if s.Ball.H != .25 || s.Ball.VH != 0 {
+		t.Fatal("landing height")
+	}
+	flightStep(&s.Ball, 1)
+	if s.Ball.H != .25 {
+		t.Fatal("ground hold")
 	}
 }

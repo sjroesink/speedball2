@@ -83,6 +83,9 @@ func steerRelease(b *Ball, input Input) {
 }
 
 var highFlight = []int{1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 1, 1, 0}
+
+// Amiga anim_ball_launch at 0x6d8a.
+var launchFlight = []int{0, 7, 7, 8, 8, 9, 9, 10, 10, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 10, 10, 9, 9, 8, 8, 7, 7, 0}
 var lowFlight = []int{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0}
 
 func startFlight(b *Ball, high bool) {
@@ -101,6 +104,9 @@ func flightStep(b *Ball, dt float64) bool {
 		return false
 	}
 	frames := lowFlight
+	if b.FlightKind == 3 {
+		frames = launchFlight
+	}
 	if b.FlightKind == 2 {
 		frames = highFlight
 	}
@@ -110,7 +116,11 @@ func flightStep(b *Ball, dt float64) bool {
 		b.FlightIndex = min(b.FlightIndex+1, len(frames)-1)
 		b.FlightStage = frames[b.FlightIndex]
 	}
-	b.H = .25 + float64(b.FlightStage)*.5
+	heightStage := b.FlightStage
+	if b.FlightKind == 3 && heightStage >= 7 {
+		heightStage -= 6
+	}
+	b.H = .25 + float64(heightStage)*.5
 	b.VH = 0
 	return true
 }

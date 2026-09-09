@@ -61,12 +61,17 @@ func (s *State) restartStep(dt float64) bool {
 			s.RestartTicks = 0
 		}
 	} else {
+		previous := s.RestartTicks
 		s.RestartTicks += dt * 25
-		t := clamp((s.RestartTicks-19)/21, 0, 1)
-		s.Ball.H = .25 + 2.75*t + 6*math.Sin(math.Pi*t)
+		if s.RestartTicks >= 19 {
+			if s.Ball.FlightKind != 3 {
+				s.Ball.FlightKind, s.Ball.FlightIndex, s.Ball.FlightStage = 3, -1, 0
+				s.Ball.FlightFraction, s.Ball.VH = 0, 0
+			}
+			flightStep(&s.Ball, (s.RestartTicks-math.Max(19, previous))/25)
+		}
 		if s.RestartTicks >= 40-1e-9 {
 			s.RestartPhase = 0
-			s.Ball.H = 3
 		}
 	}
 	return true

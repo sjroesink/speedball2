@@ -1245,3 +1245,25 @@ that pivot at the simulation's center height. Trail clones use the same pivot.
 A full-rotation geometry test verifies constant center and no floor penetration;
 a browser screenshot using the real GLB confirmed the grounded ball is visible.
 189 JS tests and production build pass. Simulation physics are unchanged.
+
+
+## Source-driven central launch flight (2026-09-09)
+
+Read the complete anim_ball_launch sequence directly from the user-provided
+ZIP's Amiga.dmp at 0x6d8a; its first ten words and final -2 terminator match
+the Amiga disassembly. Implemented the 32-stage sequence in JS and Go as a
+third flight kind. After the existing 19-tick deck and 21-tick launch gate,
+flight continues from index 20 through eleven remaining frames to ground,
+then holds there. Previously it switched to free gravity from an arbitrary
+height, creating a different contest/landing window and extra bounces.
+
+Removed the sine-shaped launch curve. Heights are still a modern 3D mapping:
+source sprites 7..10 map to intermediate ascent/descent heights, while stage 6
+uses the existing high-ball height. This interpretation is not a recovered
+physical altitude from the original; exact sprite/projection and one-frame
+ordering against the original main loop remain to verify. Renderer interpolation
+continues independently of the 25 Hz reference stages.
+
+190 JS tests, Go tests/vet and production build pass. Tests verify release index,
+the exact remaining stage sequence, final ground hold and restart lockout.
+No commercial graphics or memory dump was added to the repository.

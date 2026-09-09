@@ -1,3 +1,4 @@
+import { flightStep } from "./ball.js";
 import { movementSpeed, restorePower } from "./attributes.js";
 import { advanceSteering } from "./steering.js";
 import { startInjury } from "./features.js";
@@ -74,14 +75,15 @@ export function restartStep(s, dt, launchPosition) {
       s.restartTicks = 0;
     }
   } else {
+    const previous = s.restartTicks;
     s.restartTicks += dt * 25;
-    // Smooth presentation of the otherwise non-interactive launcher sequence.
-    const t = Math.max(0, Math.min(1, (s.restartTicks - 19) / 21));
-    s.ball.h = 0.25 + 2.75 * t + 6 * Math.sin(Math.PI * t);
-    if (s.restartTicks >= 40 - 1e-9) {
-      s.restartPhase = 0;
-      s.ball.h = 3;
+    if (s.restartTicks >= 19) {
+      if (s.ball.flightKind !== 3) Object.assign(s.ball, {
+        flightKind: 3, flightIndex: -1, flightStage: 0, flightFraction: 0, vh: 0,
+      });
+      flightStep(s.ball, (s.restartTicks - Math.max(19, previous)) / 25);
     }
+    if (s.restartTicks >= 40 - 1e-9) s.restartPhase = 0;
   }
   return true;
 }

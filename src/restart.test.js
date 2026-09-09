@@ -1,3 +1,5 @@
+import { flightStep } from "./ball.js";
+import { restartStep } from "./restart.js";
 import { pickup } from "./features.js";
 import { beginRestart } from "./restart.js";
 import test from "node:test";
@@ -31,7 +33,7 @@ test("medical restart walks to formation, preserves damage and holds clock/input
   assert.equal(s.ball.owner, -1);
   step(s, simulationStep, { shoot: true }, [true, true]);
   assert.equal(s.restartPhase, 0);
-  assert.equal(s.ball.h, 3);
+  assert.equal(s.ball.h, 3.25);
   assert.equal(s.time, time);
   assert.equal(s.previous[0].shoot, true);
 });
@@ -76,7 +78,7 @@ test("goal celebration precedes formation without teleporting or healing players
   assert.equal(s.time, 90);
   assert.equal(s.players[7].health, 41);
   assert.equal(s.ball.owner, -1);
-  assert.equal(s.ball.h, 3);
+  assert.equal(s.ball.h, 3.25);
 });
 
 test("formation clears temporary powers while retaining equipment, energy and base attributes", () => {
@@ -94,4 +96,16 @@ test("formation clears temporary powers while retaining equipment, energy and ba
   assert.equal(p.stats[0],170);assert.equal(p.health,42);
   assert.ok(s.players.every(q=>q.statBackup.every(v=>v===0)));
  }
+});
+
+test("launcher continues original landing frames after releasing the players", () => {
+ const s=initial();beginRestart(s);s.restartPhase=2;
+ for(let i=0;i<40;i++)restartStep(s,.04,launchPosition);
+ assert.equal(s.restartPhase,0);assert.equal(s.ball.flightKind,3);
+ assert.equal(s.ball.flightIndex,20);
+ const stages=[];
+ for(let i=0;i<11;i++){flightStep(s.ball,.04);stages.push(s.ball.flightStage)}
+ assert.deepEqual(stages,[6,6,10,10,9,9,8,8,7,7,0]);
+ assert.equal(s.ball.h,.25);assert.equal(s.ball.vh,0);
+ flightStep(s.ball,1);assert.equal(s.ball.h,.25);
 });

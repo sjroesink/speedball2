@@ -69,6 +69,8 @@ export const highFlight = [
   1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6,
   6, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 1, 1, 0,
 ];
+// Amiga anim_ball_launch at 0x6d8a; final -2 holds the last stage.
+export const launchFlight = [0,7,7,8,8,9,9,10,10,6,6,6,6,6,6,6,6,6,6,6,6,6,6,10,10,9,9,8,8,7,7,0];
 export const lowFlight = [...Array(16).fill(1), 0];
 export function startFlight(b, high) {
   b.flightKind = high ? 2 : 1;
@@ -81,13 +83,15 @@ export function startFlight(b, high) {
 export function flightStep(b, dt) {
   if (!b.flightKind) return false;
   b.flightFraction += dt * 25;
-  const frames = b.flightKind === 2 ? highFlight : lowFlight;
+  const frames = b.flightKind === 3 ? launchFlight : b.flightKind === 2 ? highFlight : lowFlight;
   while (b.flightFraction >= 1 - 1e-9) {
     b.flightFraction = Math.max(0, b.flightFraction - 1);
     b.flightIndex = Math.min(b.flightIndex + 1, frames.length - 1);
     b.flightStage = frames[b.flightIndex];
   }
-  b.h = 0.25 + b.flightStage * 0.5;
+  // Launch sprites 7..10 depict the near-deck ascent/descent.
+  const heightStage = b.flightKind === 3 && b.flightStage >= 7 ? b.flightStage - 6 : b.flightStage;
+  b.h = 0.25 + heightStage * 0.5;
   b.vh = 0;
   return true;
 }
