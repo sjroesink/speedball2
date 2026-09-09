@@ -215,7 +215,9 @@ export class ArenaRenderer {
         dz = p.z - o.position.z;
       o.position.x += dx * (Math.abs(dx) > 5 ? 1 : damping(22, dt));
       o.position.z += dz * (Math.abs(dz) > 5 ? 1 : damping(22, dt));
-      o.position.y += (jumpHeight(p) - o.position.y) * damping(30, dt);
+      const carried = s.medical?.player === i && s.medical.phase >= 2;
+      const targetHeight = carried ? 0.7 : jumpHeight(p);
+      o.position.y += (targetHeight - o.position.y) * damping(30, dt);
       o.rotation.y = Math.atan2(p.fx, p.fz);
       const moving = Math.hypot(dx, dz) > 0.045;
       const visualAction = p.action || (moving ? 5 : 0);
@@ -251,7 +253,8 @@ export class ArenaRenderer {
       o.visible = p.health > 0 || p.action === 4 || p.injury > 1;
       actor.model.rotation.x = p.health <= 0 ? Math.PI / 2 : 0;
       const medic = this.medics[i],
-        medical = s.medical;
+        medical = s.medical,
+        wasVisible = medic.visible;
       medic.visible = medical?.player === i;
       if (medic.visible) {
         const unit = 22.4 / 576;
@@ -259,22 +262,27 @@ export class ArenaRenderer {
         for (let n = 0; n < 2; n++) {
           const part = medic.getObjectByName(`Medic_${n}`),
             point = medical.medics[n];
-          if (part)
-            part.position.set(
+          if (part) {
+            const target = new THREE.Vector3(
               (576 - point[1]) * unit,
               0,
               (point[0] - 320) * unit,
             );
+            part.position.lerp(target, wasVisible ? damping(22, dt) : 1);
+          }
+        }
+        if (medical.phase >= 2) {
+          o.rotation.y = 0;
         }
         const stretcher = medic.getObjectByName("StretcherAssembly");
         if (stretcher) {
           stretcher.visible = medical.phase >= 2;
-          stretcher.position.set(p.x, 0, p.z);
+          stretcher.position.set(
+            o.position.x,
+            o.position.y - 0.7,
+            o.position.z,
+          );
           stretcher.rotation.y = Math.PI / 2;
-        }
-        if (medical.phase >= 2) {
-          o.position.set(p.x, 0.7, p.z);
-          o.rotation.y = 0;
         }
       }
       actor.model.traverse((m) => {

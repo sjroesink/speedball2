@@ -1002,3 +1002,25 @@ injuries, phase replication and whistle deduplication. Full visual/network
 playthrough and original launch-height/frame-order verification remain open.
 Initial/goal/halftime restarts still use the previous reset/countdown mechanism;
 unifying those with this sequence remains outstanding.
+
+
+## Medical presentation browser check (2026-09-09)
+
+An ignored local preview uses the real initial/step/startInjury functions and
+ArenaRenderer, with UI buttons selecting approach, lift, carry, formation,
+launcher and release states. Browser screenshots verified independent medics,
+stretcher alignment, stationary injury camera and return to the central view.
+All sampled medical/restart states retained clock 90 and injury score 0:10.
+The preview lives under .reference and is not shipped.
+
+Removed direct 25 Hz position assignment from the medic meshes and carried
+player. They now use the existing frame-rate-independent damping; the stretcher
+follows the displayed patient position and lift height. First appearance starts
+at the actual medic position to avoid an unintended slide from the origin.
+Screenshots verify alignment, not subjective motion quality or frame pacing.
+
+Restarted the Go server and joined local arena QCH8SS with two browser tabs.
+Both displayed ONLINE / LIVE, WEBTRANSPORT CONNECTED, opposite team selection,
+clock 01:24 and score 0:0. This verifies current client/server compatibility,
+not a complete online medical event. Production build passes. Remaining visual
+work includes the overly rounded player shoulders and clearer human silhouettes.
