@@ -122,7 +122,7 @@ func (s *State) pickup(i, k int) {
 		p.Gear = 0
 	case k == 12:
 		for j, q := range s.Players {
-			if q.Team != t {
+			if q.Team != t && s.worldInViewport(q.X, q.Z, 0) {
 				speed := 3 * velocityUnit
 				if q.moveX != 0 || q.moveZ != 0 {
 					speed = 4 * velocityUnit

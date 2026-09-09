@@ -1,3 +1,4 @@
+import { worldInViewport } from "./visibility.js";
 import { spawnPickup } from "./pickup-spawn.js";
 import { beginRestart } from "./restart.js";
 import { createMedical, advanceMedical } from "./medical.js";
@@ -156,7 +157,7 @@ export function pickup(s, i, k) {
     p.gear = 0;
   } else if (k === 12)
     s.players.forEach((q, j) => {
-      if (q.team === t) return;
+      if (q.team === t || !worldInViewport(s, q)) return;
       const speed = ((q.moveX || q.moveZ) ? 4 : 3) * velocityUnit;
       const carried = s.ball.owner === j ? { ...s.ball } : null;
       if (damage(s, i, j)) {

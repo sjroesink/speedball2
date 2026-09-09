@@ -1769,3 +1769,23 @@ Regression tests cover sudden reversals, the angle seam, angular speed limits,
 frame-rate independence and zero/negative elapsed time. JavaScript tests and the
 production build pass. This is not yet a confirmation that every reported
 spinning case has been reproduced or resolved in a live match.
+
+
+### Zap activation range
+
+`powerup_zap` checks the opponent offscreen flag before applying damage
+(0x11a20–0x11a26); the WIP `Token.Init_ZapTeam` has the same exclusion.
+`update_offscreen_bit` (0xda5e–0xda98) uses inclusive player-center bounds
+of 0–320 horizontally and 0–184 vertically relative to the logical view.
+Both simulations now apply that boundary before Zap damage or ball release.
+
+The shared ball-following logical view determines gameplay range; modern browser
+resolution and camera aspect ratio do not give a player extra Zap reach. This is
+an explicit adaptation of the original screen-based rule: opponents visible in
+the additional area of a wide display can be outside the activation area.
+The in-game rules describe the limited reach.
+
+Boundary tests cover both inclusive corners and one unit outside each edge at
+three scroll positions, including both ends of the court. Excluded carriers keep
+their ball. Existing tests retain shield, damage and release-motion coverage.
+All 221 JavaScript tests, Go tests, Go vet and the production build pass.

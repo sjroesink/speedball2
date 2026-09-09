@@ -26,6 +26,7 @@ test("all twelve powers apply their advertised effect", () => {
   for (let k = 1; k <= 12; k++) {
     const s = initial();
     s.ball.owner = 16;
+    Object.assign(s.players[16], { x: 0, z: 0 });
     pickup(s, 7, k);
     if ([1, 2, 3, 4, 5, 6, 9, 10].includes(k)) {
       assert.equal(s.effect.kind, k);
@@ -76,6 +77,7 @@ test("temporary power expires, replacement removes old effect, goal reset keeps 
 });
 test("shield prevents tackle and zap damage; heal restores current player", () => {
   const s = initial();
+  Object.assign(s.players[16], { x: 0, z: 0 });
   pickup(s, 16, 10);
   assert.equal(damage(s, 7, 16), false);
   pickup(s, 7, 12);
@@ -273,7 +275,7 @@ test("knocked-loose ball clears stale throw slowdown and direction",()=>{
 test("zap fall follows victim facing and releases the existing ball without a throw impulse",()=>{
  for(const moving of [false,true]){
   const s=initial(),p=s.players[16];
-  Object.assign(p,{fx:-1,fz:1,moveX:moving?2:0,moveZ:0});
+  Object.assign(p,{x:0,z:0,fx:-1,fz:1,moveX:moving?2:0,moveZ:0});
   Object.assign(s.ball,{owner:16,lastTouch:16,x:3,z:4,h:1,vx:2,vz:0,vh:0,speedTimer:17,nextSlowdown:8});
   pickup(s,7,12);
   assert.equal(p.fallX,-(moving?4:3)*velocityUnit);

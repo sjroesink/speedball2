@@ -10,6 +10,7 @@ func TestAllPowers(t *testing.T) {
 	for k := 1; k <= 12; k++ {
 		s := initial()
 		s.Ball.Owner = 16
+		s.Players[16].X, s.Players[16].Z = 0, 0
 		s.pickup(7, k)
 		switch k {
 		case 7:
@@ -52,6 +53,7 @@ func TestPowerMovement(t *testing.T) {
 }
 func TestPowerExpiryShieldHeal(t *testing.T) {
 	s := initial()
+	s.Players[16].X, s.Players[16].Z = 0, 0
 	s.pickup(7, 1)
 	s.pickup(16, 10)
 	if s.active(1, -1) || !s.active(10, 1) {
@@ -295,6 +297,7 @@ func TestZapFallAndBallRelease(t *testing.T) {
 	for _, moving := range []bool{false, true} {
 		s := initial()
 		p := &s.Players[16]
+		p.X, p.Z = 0, 0
 		p.FX, p.FZ = -1, 1
 		if moving {
 			p.moveX = 2
