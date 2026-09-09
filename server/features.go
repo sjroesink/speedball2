@@ -33,6 +33,15 @@ func (s *State) initFeatures() {
 		}
 		s.Pickups[i] = Pickup{k, x, float64(i%3-1) * 6, 2 + float64(i)*1.5, 14}
 	}
+	for _, slot := range []int{2, 3, 4, 5} {
+		s.spawnPickup(slot)
+	}
+	for _, slot := range []int{3, 4, 5} {
+		s.Pickups[slot].Wait = s.Pickups[2].Wait
+	}
+	for _, slot := range []int{0, 1} {
+		s.spawnPickup(slot)
+	}
 }
 func (s *State) active(k, t int) bool {
 	return s.Effect.Time > 0 && s.Effect.Kind == k && (t < 0 || s.Effect.Team == t)
@@ -203,9 +212,14 @@ func (s *State) featureStep(dt float64) {
 		item := &s.Pickups[slot]
 		if item.Wait > 0 {
 			item.Wait = math.Max(0, item.Wait-dt)
-			continue
+			if item.Wait > 1e-9 {
+				continue
+			}
+			item.Wait = 0
 		}
-		item.Life -= dt
+		if slot == 6 {
+			item.Life -= dt
+		}
 		who := -1
 		// Entity item handlers test team 1's selected player before team 2's.
 		for _, i := range s.Controlled {
@@ -216,13 +230,19 @@ func (s *State) featureStep(dt float64) {
 			if p.Stun > 0 || p.Health <= 0 || p.Action == 2 {
 				continue
 			}
-			if math.Hypot(p.X-item.X, p.Z-item.Z) <= .85 {
+			if referenceDistance(p.X-item.X, p.Z-item.Z) <= 16 {
 				who = i
 				break
 			}
 		}
 		if who >= 0 {
 			s.pickup(who, item.Kind)
+		}
+		if slot < 6 {
+			if who >= 0 {
+				s.spawnPickup(slot)
+			}
+			continue
 		}
 		if who >= 0 || item.Life <= 0 {
 			s.PickupSerial++

@@ -1,3 +1,4 @@
+import { spawnPickup } from "./pickup-spawn.js";
 import { movementSpeed, velocityUnit } from "./attributes.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -187,7 +188,7 @@ test("fatal falls finish before medical scoring, clock pause and reserve rotatio
     assert.equal(s.reserves[1], 3);
   }
 });
-test("pickups are collected once, respawn, cycle all powers and expose equipment", () => {
+test("pickups are collected once, respawn, randomize powers and expose equipment", () => {
   const s = isolated(),
     p = s.pickups[0];
   Object.assign(p, { x: 4, z: 0, wait: 0, kind: 13 });
@@ -197,13 +198,9 @@ test("pickups are collected once, respawn, cycle all powers and expose equipment
   assert.equal(s.credits[0], 10);
   assert.ok(p.wait > 0);
   const kinds = new Set();
-  for (let n = 0; n < 12; n++) {
-    for (const q of s.pickups.slice(0, 2)) {
-      q.wait = 0;
-      q.life = 0;
-    }
-    featureStep(s, dt);
-    for (const q of s.pickups.slice(0, 2)) kinds.add(q.kind);
+  for (let n = 0; n < 256; n++) {
+    spawnPickup(s, 0);
+    kinds.add(s.pickups[0].kind);
   }
   assert.equal(kinds.size, 12);
   for (let k = 14; k <= 21; k++) {

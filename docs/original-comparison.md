@@ -1106,3 +1106,30 @@ BALL LAUNCH and clock 01:30. Corrected two invalid UTF-8 separator bytes in the
 restart HUD. Existing celebration durations and the modern launcher height curve
 remain adaptations; original goal-pose/frame-order and camera-gate timing still
 need a deeper comparison. No full original-game parity is claimed.
+
+
+## Power-up and coin spawning (2026-09-09)
+
+Amiga randomise_powerup_positions (0x11612) uses 16-unit-aligned positions
+starting at terrain 72, with the two slots in opposite longitudinal halves.
+randomise_coin_position (0x11646) assigns the four coin slots separate quadrants.
+These Amiga positions differ from the supplied WIP's Atari 32-unit grid at 80;
+the new Go and JS implementation uses the Amiga layout. Initial coin timers are
+shared after their independent initialization draws, matching Match setup.
+
+Power-up kind selection now rejection-samples the upper random-word nibble
+for the twelve valid effects rather than cycling kinds. Power-up waits are
+128..255 reference ticks; coin waits are 32..63 ticks. Both remain visible until
+collected, instead of expiring after fourteen seconds. Collection now uses the
+original distance function and 16-unit limit, replacing the broad 0.85-world-unit
+circle. Newly visible items can be collected on their first visible tick.
+
+180 JavaScript tests, Go tests/vet and production build pass. Tests cover regions,
+grid alignment, waiting ranges, all twelve sampled types, persistent floor items
+and collection boundaries. Existing RNG arithmetic/failed-roll tests now set
+their seed explicitly because match initialization correctly consumes draws.
+
+Remaining pickup gaps: armor drop/recollection lifecycle still uses the old
+respawn mechanism, match coin-income caps are not implemented, reverse-control
+exclusion for original solo modes is not applied, and appearance sound events
+are not yet emitted. Full spawn-order/frame-order parity remains unverified.

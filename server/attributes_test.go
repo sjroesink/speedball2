@@ -74,7 +74,7 @@ func TestAmigaTackleAndDamageRules(t *testing.T) {
 	}
 }
 func TestAmigaRandomTrace(t *testing.T) {
-	s := initial()
+	s := State{RNG: [2]uint32{0x31415926, 0x53589793}}
 	for _, expected := range []uint32{2224703967, 3051111946, 980885458, 4032023480, 717936405, 454968731, 1172912480, 1627913718} {
 		if s.randomByte() != int(expected&255) || s.RNG[0] != expected {
 			t.Fatal("word-register trace", expected, s.RNG)
@@ -83,6 +83,7 @@ func TestAmigaRandomTrace(t *testing.T) {
 }
 func TestFailedTackleDoesNotReroll(t *testing.T) {
 	s := isolated()
+	s.RNG = [2]uint32{0x31415926, 0x53589793}
 	s.Players[16] = Player{Stats: defaultStats(), Health: 100, Team: 1, X: .7, FX: -1, Cooldown: 10}
 	s.Ball = Ball{Owner: 16, X: .7, H: 1}
 	s.step(dt, [2]Input{{Tackle: true, X: 1}, {}})

@@ -1,8 +1,10 @@
+import { spawnPickup } from "./pickup-spawn.js";
 import { beginRestart } from "./restart.js";
 import { createMedical, advanceMedical } from "./medical.js";
 import { emit } from "./events.js";
 import { warpBall, setBallSpeed, startFlight } from "./ball.js";
 import {
+  referenceDistance,
   fallDuration,
   defaultStats,
   velocityUnit,
@@ -54,6 +56,9 @@ export function initFeatures(s) {
     wait: 2 + i * 1.5,
     life: 14,
   }));
+  for (const slot of [2, 3, 4, 5]) spawnPickup(s, slot);
+  for (const slot of [3, 4, 5]) s.pickups[slot].wait = s.pickups[2].wait;
+  for (const slot of [0, 1]) spawnPickup(s, slot);
 }
 export const active = (s, k, t) =>
   s.effect.time > 0 &&
@@ -242,20 +247,25 @@ export function featureStep(s, dt) {
     const item = s.pickups[slot];
     if (item.wait > 0) {
       item.wait = Math.max(0, item.wait - dt);
-      continue;
+      if (item.wait > 1e-9) continue;
+      item.wait = 0;
     }
-    item.life -= dt;
+    if (slot === 6) item.life -= dt;
     let who = -1;
     // Entity item handlers test team 1's selected player before team 2's.
     for (const i of s.controlled) {
       const p = s.players[i];
       if (!p || p.stun > 0 || p.health <= 0 || p.action === 2) continue;
-      if (Math.hypot(p.x - item.x, p.z - item.z) <= 0.85) {
+      if (referenceDistance(p.x - item.x, p.z - item.z) <= 16) {
         who = i;
         break;
       }
     }
     if (who >= 0) pickup(s, who, item.kind);
+    if (slot < 6) {
+      if (who >= 0) spawnPickup(s, slot);
+      continue;
+    }
     if (who >= 0 || item.life <= 0) {
       s.pickupSerial++;
       const n = s.pickupSerial + slot;

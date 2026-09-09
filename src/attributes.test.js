@@ -34,7 +34,7 @@ test("Amiga tackle thresholds cover every facing, keeper bonus and jumping", () 
 });
 
 test("reference RNG matches word-register trace including carries", () => {
-  const s = initial();
+  const s = { rng: [0x31415926, 0x53589793] };
   for (const expected of [
     2224703967, 3051111946, 980885458, 4032023480, 717936405, 454968731,
     1172912480, 1627913718,
@@ -46,6 +46,7 @@ test("reference RNG matches word-register trace including carries", () => {
 
 test("failed tackle consumes its contact without a retry on later frames", () => {
   const s = initial();
+  s.rng = [0x31415926, 0x53589793];
   s.players.forEach((p) => (p.stun = 10));
   Object.assign(s.players[7], { x: 0, z: 0, stun: 0, fx: 1, fz: 0 });
   Object.assign(s.players[16], {
