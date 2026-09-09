@@ -16,6 +16,11 @@ export function eventPan(state, event, view) {
 
 // Each layer is [waveform, start Hz, end Hz, seconds, gain, delay seconds].
 export const cues = {
+  // Floor-item appearance, matching original sound 0x25 timing.
+  21: [
+    ["sine", 1040, 1560, 0.11, 0.1, 0],
+    ["triangle", 2080, 2080, 0.12, 0.04, 0.045],
+  ],
   20: [["noise", 1800, 700, 0.1, 0.1, 0]],
   // Landing and slide recovery: original event timing, newly synthesized timbres.
   18: [

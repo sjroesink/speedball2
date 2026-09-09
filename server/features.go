@@ -236,6 +236,9 @@ func (s *State) featureStep(dt float64) {
 				continue
 			}
 			item.Wait = 0
+			if item.Kind != 0 {
+				s.event(21, -1, -1, item.X, item.Z, .1)
+			}
 		}
 		if item.Kind == 0 {
 			continue

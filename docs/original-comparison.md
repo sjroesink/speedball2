@@ -1194,3 +1194,21 @@ available. Tests use constructed RNG seeds to select every source table index,
 check the exact extra draw after a rejected freeze, and sample the complete
 11-effect solo pool using the normal seed. 185 JS tests and production build
 pass. No full match RNG/frame-order equivalence is claimed.
+
+
+## Floor-item appearance audio (2026-09-09)
+
+Amiga spawn_cash, spawn_powerup and spawn_armour play sound 0x25 when the
+appearance countdown reaches zero. Added a shared synthesized chime at that
+transition in JS and Go (event 21). Hidden coins suppressed by cash limits do
+not announce themselves; held equipment stays silent. Zero-timer floor items
+and dropped equipment do not produce repeated appearance cues. Events use the
+existing bounded snapshot history and spatial audio path without replacing HUD
+match notifications or increasing packet size.
+
+187 JS tests, Go tests/vet and production build pass. Tests cover all seven
+floor slots, timer boundaries, silent suppressed items and repeated-snapshot
+sound deduplication. Real browser OfflineAudioContext rendering passed all cues;
+the appearance chime measured peak 0.0161, RMS 0.00088 over the three-second
+render, with zero remaining voices. Subjective listening/mix balance remains
+unverified; this is newly synthesized audio, not original commercial samples.

@@ -268,6 +268,7 @@ export function featureStep(s, dt) {
         continue;
       }
       item.wait = 0;
+      if (item.kind) emit(s, 21, -1, -1, item.x, item.z, 0.1);
     }
     if (!item.kind) continue;
     let who = -1;
