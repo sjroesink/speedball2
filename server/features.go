@@ -54,10 +54,10 @@ func (s *State) damage(i, j int) bool {
 	// The renderer exposes energy as a percentage; original full energy is 128.
 	q.Health = math.Max(0, q.Health-float64(hit)*100/128)
 	deteriorate(q, hit)
-	q.Stun = 26. / 25
+	q.Stun = fallDuration
 	q.fallX, q.fallZ = 0, 0
 	q.Action = 4
-	q.ActionTime = 26. / 25
+	q.ActionTime = fallDuration
 	s.Charge[q.Team] = 0
 	if s.Ball.Owner == j {
 		s.Ball = Ball{X: q.X, Z: q.Z, H: .5, VX: p.FX * 5, VZ: p.FZ * 5, VH: 3, Owner: -1, LastTouch: i, Lock: .12}

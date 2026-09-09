@@ -148,14 +148,14 @@ func TestTackleFallMotion(t *testing.T) {
 	q.ActionTime = .3
 	s.Ball.Owner = 7
 	s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
-	if p.Stun != 26./25 || math.Abs(p.X) > 1e-9 {
+	if p.Stun != 35./25 || math.Abs(p.X) > 1e-9 {
 		t.Fatal("initial fall", p.X, p.Stun)
 	}
 	q.Stun = 100
-	for n := 1; n < 25; n++ {
+	for n := 1; n < 34; n++ {
 		s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
 	}
-	if math.Abs(p.X-96*unit) > 1e-9 {
+	if math.Abs(p.X-132*unit) > 1e-9 {
 		t.Fatal("fall speed", p.X)
 	}
 	x := p.X
@@ -173,18 +173,18 @@ func TestLateFallContactHoldsRecovery(t *testing.T) {
 	s := tackleFixture(20)
 	p := &s.Players[7]
 	p.Action = 4
-	p.ActionTime = 9. / 25
-	p.Stun = 9. / 25
+	p.ActionTime = 18. / 25
+	p.Stun = 18. / 25
 	p.fallX = 4 * velocityUnit
 	p.fallZ = 0
 	for n := 0; n < 4; n++ {
 		s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
-		if p.Stun != 8./25 || p.ActionTime != 8./25 || p.fallX != 0 || p.X != 0 {
+		if p.Stun != 17./25 || p.ActionTime != 17./25 || p.fallX != 0 || p.X != 0 {
 			t.Fatal("late fall contact", p)
 		}
 	}
 	s.Players[16].X = 10
-	for n := 0; n < 8; n++ {
+	for n := 0; n < 17; n++ {
 		s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
 	}
 	if p.Stun != 0 || p.Action != 0 {

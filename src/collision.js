@@ -1,4 +1,4 @@
-import { referenceDistance } from "./attributes.js";
+import { referenceDistance, fallRecovery } from "./attributes.js";
 const unit = 22.4 / 576;
 export function contactDistances(players) {
   return players.map((p) =>
@@ -13,9 +13,9 @@ export function blockPlayerMovement(players, i, distances, dt) {
     const q = players[j];
     if (q.team === p.team || q.stun > 0 || q.health <= 0 || distances[j] > 30)
       continue;
-    if (p.action === 4 && p.stun <= 8 / 25 + 1e-9) {
+    if (p.action === 4 && p.stun <= fallRecovery + 1e-9) {
       p.fallX = p.fallZ = p.moveX = p.moveZ = 0;
-      p.stun = p.actionTime = 8 / 25;
+      p.stun = p.actionTime = fallRecovery;
     }
     const dx = Math.round(q.x / unit) - Math.round(p.x / unit);
     const dz = Math.round(q.z / unit) - Math.round(p.z / unit);

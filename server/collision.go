@@ -20,9 +20,9 @@ func blockPlayerMovement(players *[18]Player, i int, distances *[18]int, dt floa
 		if q.Team == p.Team || q.Stun > 0 || q.Health <= 0 || distances[j] > 30 {
 			continue
 		}
-		if p.Action == 4 && p.Stun <= 8./25+1e-9 {
+		if p.Action == 4 && p.Stun <= fallRecovery+1e-9 {
 			p.fallX, p.fallZ, p.moveX, p.moveZ = 0, 0, 0, 0
-			p.Stun, p.ActionTime = 8./25, 8./25
+			p.Stun, p.ActionTime = fallRecovery, fallRecovery
 		}
 		dx := int(math.Round(q.X/unit) - math.Round(p.X/unit))
 		dz := int(math.Round(q.Z/unit) - math.Round(p.Z/unit))

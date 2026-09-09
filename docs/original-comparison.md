@@ -534,3 +534,19 @@ WEBTRANSPORT CONNECTED and the same 01:20 match clock. Neither tab reported
 browser errors during this check. This is a local connection/rendering smoke
 test, not a latency/load test or proof of complete original gameplay equivalence.
 Audio activation was checked, but the sound mix was not assessed by listening.
+
+
+### Correction: original fall sequence versus the WIP memory image
+
+A direct cross-check found that the WIP ZIP's Amiga.dmp contains an early
+0xfffb terminator at 0x72ca (index 26), followed by remaining lying sprites
+and a second terminator at 0x72dc. The supplied original Amiga disassembly
+instead describes a 36-word array at 0x7296: 35 sprite entries and the final
+terminator at 0x72dc. There is no early terminator in that disassembly.
+The reason for the WIP image's difference has not been established; it must
+not define original timing. The earlier 26-frame conclusions in this log are
+therefore superseded: fall recovery now uses 35 frames (1.4 seconds), and
+resetting to index 18 leaves a 17-frame tail. Shared constants drive both hit
+recovery and late-contact handling. Paired fall/electroball tests now assert
+these original-sequence timings and the corresponding free movement distance.
+Standing-catch analysis remains pending while this source discrepancy is fixed.

@@ -124,11 +124,11 @@ test("tackled player moves at original fall speed then stops before recovery", (
   s.ball.owner = 7;
   step(s, simulationStep, {}, [true, true]);
   const p = s.players[7];
-  assert.equal(p.stun, 26 / 25);
+  assert.equal(p.stun, 35 / 25);
   assert.ok(Math.abs(p.x) < 1e-9, "near attacker blocks initial fall movement");
   s.players[16].stun = 100;
-  for (let n = 1; n < 25; n++) step(s, simulationStep, {}, [true, true]);
-  assert.ok(Math.abs(p.x - 96 * unit) < 1e-9);
+  for (let n = 1; n < 34; n++) step(s, simulationStep, {}, [true, true]);
+  assert.ok(Math.abs(p.x - 132 * unit) < 1e-9);
   const x = p.x;
   step(s, simulationStep, {}, [true, true]);
   assert.equal(p.x, x, "final fall frame stops velocity");
@@ -143,20 +143,20 @@ test("late fall contact holds recovery until the standing opponent leaves", () =
   const p = s.players[7];
   Object.assign(p, {
     action: 4,
-    actionTime: 9 / 25,
-    stun: 9 / 25,
+    actionTime: 18 / 25,
+    stun: 18 / 25,
     fallX: 4 * 25 * unit,
     fallZ: 0,
   });
   for (let n = 0; n < 4; n++) {
     step(s, simulationStep, {}, [true, true]);
-    assert.equal(p.stun, 8 / 25);
-    assert.equal(p.actionTime, 8 / 25);
+    assert.equal(p.stun, 17 / 25);
+    assert.equal(p.actionTime, 17 / 25);
     assert.equal(p.fallX, 0);
     assert.equal(p.x, 0);
   }
   s.players[16].x = 10;
-  for (let n = 0; n < 8; n++) step(s, simulationStep, {}, [true, true]);
+  for (let n = 0; n < 17; n++) step(s, simulationStep, {}, [true, true]);
   assert.equal(p.stun, 0);
   assert.equal(p.action, 0);
 });
