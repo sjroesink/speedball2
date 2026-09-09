@@ -68,3 +68,49 @@ test("jump has two landing frames and retains direction while busy", () => {
     assert.ok(Math.abs(jumpHeight(p)) < 1e-9);
   }
 });
+
+test("landing clears airborne privileges after that tick's catch check", () => {
+  for (const [firstDistance, stage, expectedOwner] of [
+    [0, 3, 7],
+    [8, 3, -1],
+    [8, 2, 7],
+  ]) {
+    const s = initial();
+    for (const q of s.players) q.stun = 10;
+    const p = s.players[7];
+    Object.assign(p, {
+      x: 0,
+      z: 0,
+      fx: 1,
+      fz: 0,
+      stun: 0,
+      action: 2,
+      jumping: true,
+      actionTime: 3 / 25,
+    });
+    Object.assign(s.ball, {
+      owner: -1,
+      x: firstDistance,
+      z: 0,
+      flightKind: 2,
+      flightStage: 3,
+      h: 3,
+    });
+    step(s, simulationStep, {});
+    assert.equal(p.jumping, false);
+    assert.equal(p.action, 2);
+    if (firstDistance === 0) assert.equal(s.ball.owner, expectedOwner);
+    else {
+      Object.assign(s.ball, {
+        owner: -1,
+        x: p.x,
+        z: p.z,
+        flightKind: 2,
+        flightStage: stage,
+        h: 3,
+      });
+      step(s, simulationStep, {});
+      assert.equal(s.ball.owner, expectedOwner);
+    }
+  }
+});

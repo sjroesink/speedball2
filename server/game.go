@@ -14,6 +14,7 @@ const (
 
 // Actions are replicated, including misses: 1 slide, 2 jump, 3 throw, 4 hit.
 type Player struct {
+	jumping                     bool
 	aiWait, aiX, aiZ            float64
 	aiTarget                    bool
 	keeperBlock                 bool
@@ -303,6 +304,9 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			p.ActionTime = 0
 			p.Action = 0
 		}
+		if p.Action != 2 {
+			p.jumping = false
+		}
 	}
 	slowBall(b, dt)
 	inMultiplier := b.Owner < 0 && s.multiplierStep(dt)
@@ -326,6 +330,10 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		i := order/2 + (1-order%2)*9
 		p := &s.Players[i]
 		s.catchBallAt(i, &catchDistances)
+		// Catching precedes jumping_action_fn clearing the airborne flag.
+		if p.Action == 2 && p.ActionTime <= 2./25+1e-9 {
+			p.jumping = false
+		}
 		if p.Stun > 0 {
 			p.moveX, p.moveZ = 0, 0
 			continue
@@ -447,6 +455,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		if pressed && b.Owner != i && p.Cooldown <= 0 && p.ActionTime <= 0 {
 			if canJumpAtBall(p, b, catchDistances[i], inMultiplier) && !u.Tackle {
 				p.Action = 2
+				p.jumping = true
 				p.ActionTime = actionDuration(2, p.Stats[3])
 				p.Cooldown = p.ActionTime
 				s.event(2, i, -1, p.X, p.Z, 0)
@@ -609,7 +618,7 @@ func (s *State) catchBallAt(only int, distances *[18]int) {
 			if s.Controlled[team] != i || p.Stun > 0 || p.Health <= 0 || p.Action == 3 {
 				continue
 			}
-			if b.FlightKind != 0 && b.FlightStage > 2 && p.Action != 2 || b.FlightKind == 0 && b.H > 1.25+jumpHeight(*p) {
+			if b.FlightKind != 0 && b.FlightStage > 2 && !(p.Action == 2 && p.jumping) || b.FlightKind == 0 && b.H > 1.25+jumpHeight(*p) {
 				continue
 			}
 			distance := referenceDistance(p.X-b.X, p.Z-b.Z)

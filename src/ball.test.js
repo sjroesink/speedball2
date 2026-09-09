@@ -216,6 +216,7 @@ test("peak lob clears standing players but jumping players can catch it", () => 
       stun: 0,
       action: jumping ? 2 : 0,
       actionTime: jumping ? 0.4 : 0,
+      jumping,
       cooldown: 10,
     });
     Object.assign(s.ball, { owner: -1, x: 4, z: 0, vx: 0, vz: 0, lock: 0 });

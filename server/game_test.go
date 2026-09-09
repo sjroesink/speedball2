@@ -95,6 +95,7 @@ func TestLobPassesOverStandingPlayer(t *testing.T) {
 	}
 	s.Players[7].Action = 2
 	s.Players[7].ActionTime = .35
+	s.Players[7].jumping = true
 	s.Ball.H = 2.7
 	s.Ball.VH = 0
 	s.step(dt, [2]Input{})

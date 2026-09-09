@@ -82,3 +82,29 @@ func TestJumpDurationAndDirection(t *testing.T) {
 		}
 	}
 }
+
+func TestLandingCatchOrder(t *testing.T) {
+	for _, tc := range [][3]int{{0, 3, 7}, {8, 3, -1}, {8, 2, 7}} {
+		s := initial()
+		for i := range s.Players {
+			s.Players[i].Stun = 10
+		}
+		p := &s.Players[7]
+		p.X, p.Z, p.FX, p.FZ, p.Stun = 0, 0, 1, 0, 0
+		p.Action = 2
+		p.jumping = true
+		p.ActionTime = 3. / 25
+		s.Ball = Ball{Owner: -1, X: float64(tc[0]), FlightKind: 2, FlightStage: 3, H: 3, LastTouch: -1}
+		s.simulate(simulationStep, [2]Input{}, [2]bool{true, false})
+		if p.jumping || p.Action != 2 {
+			t.Fatal("landing must clear jumping but remain busy")
+		}
+		if tc[0] != 0 {
+			s.Ball = Ball{Owner: -1, X: p.X, Z: p.Z, FlightKind: 2, FlightStage: tc[1], H: 3, LastTouch: -1}
+			s.simulate(simulationStep, [2]Input{}, [2]bool{true, false})
+		}
+		if s.Ball.Owner != tc[2] {
+			t.Fatal("landing catch", tc, s.Ball.Owner)
+		}
+	}
+}

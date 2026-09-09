@@ -142,6 +142,7 @@ export function resetPitch(s) {
       actionTime: 0,
       cooldown: 0,
       action: 0,
+      jumping: false,
     };
   });
   s.ball = {
@@ -366,6 +367,7 @@ export function step(
     if (p.cooldown < 1e-9) p.cooldown = 0;
     p.aiWait = Math.max(0, (p.aiWait || 0) - dt);
     if (p.actionTime < 1e-9) p.action = p.actionTime = 0;
+    if (p.action !== 2) p.jumping = false;
   }
   slowBall(b, dt);
   const inMultiplier =
@@ -393,6 +395,8 @@ export function step(
     const i = Math.floor(order / 2) + (order % 2 === 0 ? 9 : 0);
     const p = s.players[i];
     catchBall(s, i, catchDistances);
+    // Catching precedes jumping_action_fn, which clears jumping on landing.
+    if (p.action === 2 && p.actionTime <= 2 / 25 + 1e-9) p.jumping = false;
     if (p.stun > 0) {
       p.moveX = p.moveZ = 0;
       continue;
@@ -510,6 +514,7 @@ export function step(
     if (pressed && b.owner !== i && p.cooldown <= 0 && p.actionTime <= 0) {
       if (canJumpAtBall(p, b, catchDistances[i], inMultiplier) && !u.tackle) {
         p.action = 2;
+        p.jumping = true;
         p.actionTime = actionDuration(2, p.stats[3]);
         p.cooldown = p.actionTime;
         event(s, 2, i, -1, p.x, p.z, 0);
@@ -692,7 +697,7 @@ export function catchBall(s, only = -1, distances = null) {
         continue;
       if (
         b.flightKind
-          ? b.flightStage > 2 && p.action !== 2
+          ? b.flightStage > 2 && !(p.action === 2 && p.jumping)
           : b.h > 1.25 + jumpHeight(p)
       )
         continue;

@@ -40,8 +40,13 @@ func TestAmigaTackleAndDamageRules(t *testing.T) {
 		t.Fatal("front or goalkeeper threshold")
 	}
 	q.Action = 2
+	q.jumping = true
 	if tackleThreshold(p, q, true) != 139 {
 		t.Fatal("jump penalty")
+	}
+	q.jumping = false
+	if tackleThreshold(p, q, true) != 123 {
+		t.Fatal("landing retains jump penalty")
 	}
 	q.Action = 0
 	q.FX = 1

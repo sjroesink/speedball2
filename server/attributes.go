@@ -99,7 +99,7 @@ func tackleThreshold(p, q *Player, keeper bool) int {
 	if p.Action == 1 {
 		defense -= 16
 	}
-	if q.Action == 2 {
+	if q.Action == 2 && q.jumping {
 		defense -= 32
 	}
 	return ((p.Stats[1] + 256 - (defense & 255)) >> 1) & 255

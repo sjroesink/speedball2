@@ -27,7 +27,10 @@ test("Amiga tackle thresholds cover every facing, keeper bonus and jumping", () 
   q.fz = 0;
   assert.equal(tackleThreshold(p, q, true), 123);
   q.action = 2;
+  q.jumping = true;
   assert.equal(tackleThreshold(p, q, true), 139);
+  q.jumping = false;
+  assert.equal(tackleThreshold(p, q, true), 123);
 });
 
 test("reference RNG matches word-register trace including carries", () => {

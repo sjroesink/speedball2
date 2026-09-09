@@ -344,3 +344,19 @@ while jumping. Remaining action differences include standing punches,
 separate jumping/busy flags and their ordering around catches and tackles,
 original collision response, and exact Blender clip timing. These tests
 establish the timing change, not complete action-system equivalence.
+
+
+### Airborne flag during jump recovery
+
+The simulations now keep the original airborne flag separately from the busy
+jump action. `jumping_action_fn` clears this flag when switching to animation
+index 18, while busy persists through the two landing frames. Per-player
+catching runs before that flag transition, matching `sub_D520` followed by
+`Think` in the reference. A high flight-stage ball can therefore be caught on
+the transition tick but not on the following landing tick. Low balls remain
+catchable during recovery. The jump defense modifier also uses the flag rather
+than the animation action. Paired tests cover these three catch cases and the
+restored landing defense. The flag is simulation-only; the existing action and
+remaining time still drive the browser's visual pose, so wire format 6 is
+unchanged. Non-sprite launch-drop height handling and collision-pass ordering
+remain approximations.

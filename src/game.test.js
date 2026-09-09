@@ -72,7 +72,7 @@ test("high ball clears standing player, can be caught while jumping", () => {
   Object.assign(s.ball, { x: 0, z: 0, h: 3, owner: -1 });
   step(s, dt, {});
   assert.equal(s.ball.owner, -1);
-  Object.assign(s.players[7], { action: 2, actionTime: 0.35 });
+  Object.assign(s.players[7], { action: 2, jumping: true, actionTime: 0.35 });
   s.ball.h = 2.7;
   s.ball.vh = 0;
   step(s, dt, {});

@@ -198,6 +198,7 @@ func TestFlightStageCatchAndGoal(t *testing.T) {
 		if jumping {
 			s.Players[16].Action = 2
 			s.Players[16].ActionTime = .4
+			s.Players[16].jumping = true
 		}
 		s.Ball = Ball{Owner: -1, X: 4}
 		startFlight(&s.Ball, true)

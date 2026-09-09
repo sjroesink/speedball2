@@ -72,7 +72,7 @@ export function tackleThreshold(p, q, keeper) {
     (defense -
       [32, 24, 16, 8, 0, 8, 16, 24][(dir(q) - dir(p) + 8) & 7] -
       (p.action === 1 ? 16 : 0) -
-      (q.action === 2 ? 32 : 0)) &
+      (q.action === 2 && q.jumping ? 32 : 0)) &
     255;
   return ((p.stats[1] + 256 - defense) >>> 1) & 255;
 }
