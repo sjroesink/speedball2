@@ -694,6 +694,11 @@ export function catchBall(s, only = -1, distances = null) {
         !shielded(s, p.team)
       ) {
         if (damage(s, b.lastTouch, i)) {
+          // sub_D632 uses nominal ball direction, not the thrower's facing.
+          [p.fx, p.fz] =
+            b.dirX || b.dirZ ? eightWay(b.dirX, b.dirZ) : eightWay(b.vx, b.vz);
+          p.fallX = p.fx * 3 * velocityUnit;
+          p.fallZ = p.fz * 3 * velocityUnit;
           b.electric--;
           b.electricBudget = b.electric;
           continue;

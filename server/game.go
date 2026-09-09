@@ -612,6 +612,13 @@ func (s *State) catchBallAt(only int, distances *[18]int) {
 			}
 			if b.Charged && b.Electric > 0 && b.LastTouch >= 0 && p.Team != s.Players[b.LastTouch].Team && !s.active(10, p.Team) {
 				if s.damage(b.LastTouch, i) {
+					// sub_D632 uses nominal ball direction, not the thrower's facing.
+					if b.DirX != 0 || b.DirZ != 0 {
+						p.FX, p.FZ = eightWay(b.DirX, b.DirZ)
+					} else {
+						p.FX, p.FZ = eightWay(b.VX, b.VZ)
+					}
+					p.fallX, p.fallZ = p.FX*3*velocityUnit, p.FZ*3*velocityUnit
 					b.Electric--
 					b.ElectricBudget = b.Electric
 					continue

@@ -493,3 +493,17 @@ fall frame before control returns. Paired tests trace the initial displacement,
 adapted medical sequence. Electric-hit direction/speed, standing punches,
 late-fall collision stopping, and animation-index differences when the victim
 has already had its thinking turn remain to be implemented.
+
+
+### Electric-ball fall direction
+
+`sub_D632` copies the ball's nominal direction to the victim and starts the
+shared fall animation with velocity level three. Both simulations now set that
+fall velocity on a charged-ball hit. It follows the nominal ball direction even
+when release steering adds drift on the unused axis, and does not follow the
+thrower's current facing. Paired checks cover all eight directions, axial drift,
+26-frame recovery and charge consumption. The existing global fall movement
+applies the velocity. Direction fallback to current ball velocity supports
+states without a recorded nominal direction; normal runtime throws and wall
+reflections retain the nominal direction. Late-fall collision stopping and the
+adapted medical sequence remain separate outstanding differences.
