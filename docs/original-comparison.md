@@ -1932,3 +1932,15 @@ Inspected the exported court in the orbitable art study and fullscreen training
 at 3456x1408 using the higher ball-follow camera. The study has a wider court
 framing and separate fog range so the entire arena can be reviewed. Production
 build passes. Character anatomy and surface wear remain unfinished.
+
+
+### Contoured athlete equipment
+
+Blender-authored elliptical cross-sections replace slab-shaped shoulders,
+forearms, thighs and shins. The shells widen over muscle groups and narrow at
+wrists and ankles; the thigh shell leaves more separation at the knee guard.
+Both team models retain the existing animation hierarchy and hand grip.
+Inspected both exported athletes in the browser art study. All eight exported
+player animation tests and the production build pass. These changes refine
+armor silhouette; articulated elbows/knees and less rigid poses remain work
+for a later character animation pass.

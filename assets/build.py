@@ -72,6 +72,25 @@ def tapered_plate(name,loc,bottom,top,depth,height,material):
  obj.modifiers.new('Armor face normals','WEIGHTED_NORMAL')
  return obj
 
+def contoured_shell(name,loc,rings,material):
+ # Elliptical cross-sections give protective shells a shaped, wearable silhouette.
+ segments=12
+ vertices=[(math.cos(i*math.tau/segments)*width/2,
+            math.sin(i*math.tau/segments)*depth/2,z)
+           for z,width,depth in rings for i in range(segments)]
+ faces=[tuple(reversed(range(segments)))]
+ for row in range(len(rings)-1):
+  for i in range(segments):
+   a=row*segments+i;b=row*segments+(i+1)%segments
+   faces.append((a,b,b+segments,a+segments))
+ faces.append(tuple((len(rings)-1)*segments+i for i in range(segments)))
+ mesh=bpy.data.meshes.new(name);mesh.from_pydata(vertices,[],faces);mesh.update()
+ obj=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(obj)
+ obj.location=loc;mesh.materials.append(material)
+ for face in mesh.polygons: face.use_smooth=len(face.vertices)==4
+ obj.modifiers.new('Shell normals','WEIGHTED_NORMAL')
+ return obj
+
 def build_players():
  # Dedicated athlete materials leave the stadium and medical equipment intact.
  athlete_steel=mat('Satin athlete plate',(.43,.50,.52),.72)
@@ -105,11 +124,11 @@ def build_players():
   limbs=[]
   for side in [-1,1]:
    before=set(bpy.context.scene.objects)
-   shoulder=cube('Silver shoulder pad',(side*.46,0,1.40),(.39,.45,.26),athlete_steel,.065)
+   shoulder=contoured_shell('Silver shoulder pad',(side*.46,0,1.40),[(-.13,.30,.34),(-.07,.42,.46),(.06,.40,.43),(.13,.25,.29)],athlete_steel)
    cube('Shoulder crown inlay',(side*.46,0,1.54),(.20,.29,.025),color,.035)
    cube('Shoulder team band',(side*.5,-.235,1.40),(.27,.04,.085),color,.02)
    bicep=sphere('Bicep',(side*.49,0,1.13),.16,athlete_skin);bicep.scale.z=1.35
-   cube('Forearm armor',(side*.49,-.06,.98),(.25,.30,.33),athlete_steel,.045)
+   contoured_shell('Forearm armor',(side*.49,-.06,.98),[(-.165,.18,.21),(-.10,.23,.27),(.07,.28,.30),(.165,.23,.25)],athlete_steel)
    sphere('Hand',(side*.49,-.12,.78),.13,athlete_skin)
    parts=set(bpy.context.scene.objects)-before
    bpy.ops.object.empty_add(location=(side*.43,0,1.42));joint=bpy.context.object;joint.name='Arm_'+str(side)
@@ -121,9 +140,9 @@ def build_players():
     grip.matrix_parent_inverse=joint.matrix_world.inverted()
    limbs.append((joint,side,True))
    before=set(bpy.context.scene.objects)
-   tapered_plate('Thigh',(side*.22,0,.54),.25,.31,.34,.37,athlete_steel)
+   contoured_shell('Thigh',(side*.22,0,.56),[(-.15,.22,.26),(-.06,.28,.32),(.09,.33,.36),(.165,.28,.31)],athlete_steel)
    cube('Knee guard',(side*.22,-.15,.36),(.24,.15,.19),steel,.055)
-   tapered_plate('Shin',(side*.22,-.015,.23),.23,.27,.28,.30,athlete_steel)
+   contoured_shell('Shin',(side*.22,-.015,.23),[(-.14,.18,.22),(-.07,.20,.25),(.07,.27,.30),(.13,.23,.25)],athlete_steel)
    cube('Boot',(side*.22,-.12,.10),(.30,.49,.18),rubber,.035)
    cube('Steel toe',(side*.22,-.32,.14),(.28,.15,.13),athlete_steel,.025)
    parts=set(bpy.context.scene.objects)-before
