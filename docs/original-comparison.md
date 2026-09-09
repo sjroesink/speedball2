@@ -2281,3 +2281,22 @@ corrected retained-event test rerun; five long JS/Go parity scenarios passed.
 Go tests, vet and build passed. Timbre is unchanged from the previously rendered
 audio probe; subjective whole-match mix review remains pending. Local server
 restarted; commit remains local for the hourly push batch.
+
+
+### Throw onset replication under delayed snapshots
+
+Room N495YU exercised two real WebTransport clients, rendering client 2 with
+160 ms added snapshot delay and five of each 25 snapshots omitted. At stop,
+ticks were 1163/1159 with 924 identical paired snapshots, zero state mismatches,
+zero missing shared events and 234 deliberately dropped client-2 snapshots.
+Both clients recorded 30 windup events, 30 physical releases and exactly 30
+throw cue dispatches. Each received state was passed twice to the production
+ArenaAudio observer to check deduplication; its play method was instrumented
+to count dispatches rather than producing audible sound. This verifies event
+routing, not audible mixing or speaker output.
+
+The rendered delayed client recorded 17 visible release transitions, with a
+maximum release-frame step of 0.607 world units and zero held-ball grip error.
+Not every release must appear as a distinct rendered transition when snapshots
+are omitted. This short probe does not establish WAN or reconnection behavior.
+Both clients were stopped. Instrumentation remains in network-playtest.html.
