@@ -26,6 +26,8 @@ export function applyPowerStats(s, kind, team) {
       if (kind === 6 && i !== 3) continue;
       p.statBackup[i] = p.stats[i];
       p.stats[i] = kind === 3 || kind === 6 ? 100 : 250;
+      // Modern bugfix: dropping held gear must restore the current power layer.
+      if (p.gear === i + 14) p.gearPowerBackup = p.stats[i];
     }
   }
 }

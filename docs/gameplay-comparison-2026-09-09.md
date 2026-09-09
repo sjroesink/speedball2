@@ -385,3 +385,23 @@ host restoration. It does not cover every permutation: power acquired after
 already holding equipment and repeated power replacement still need separate
 source-level assessment. The targeted JS test and Go test pass; production
 code is unchanged, so the prior full-suite/build result remains applicable.
+
+### Modern bugfix: power applied after already holding equipment
+
+Reproduced equipment -> team boost -> impact restoring 100 instead of the
+still-active 250 boost. Equipment acquired without a power does not initialize
+gearPowerBackup; later power application previously left it untouched. The
+same source hazard exists in apply_armour 0x116de..0x11702 and tackle_drop_armour
+0x1175c..0x11774: the latter can read the retained 0x5a byte when a power starts
+after equipment acquisition. The remake already substituted 100 for zero,
+but that fallback incorrectly cancelled one boosted attribute after impact.
+
+Deliberate modernization, not instruction-for-instruction parity: applying an
+attribute power to a geared attribute now updates the gear's temporary restore
+value to that active power. Losing gear retains the current temporary effect;
+final expiry restores the original underlying attribute. Both hosts implement
+this change. New tests cover powers 3/4/5/6 and all eight gear attributes (32
+cases per host), alongside the earlier 64-case reverse-order matrix. The JS
+regression failed before the fix at boost 4/equipment 14 (100 versus 250).
+Validation: 283 JS tests, Go tests, go vet and production build pass. Repeated
+replacement sequences still require explicit lifecycle coverage.

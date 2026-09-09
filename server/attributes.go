@@ -37,6 +37,10 @@ func (s *State) applyPowerStats(kind, team int) {
 			if kind == 3 || kind == 6 {
 				p.Stats[i] = 100
 			}
+			// Modern bugfix: dropping gear restores the current power layer.
+			if p.Gear == i+14 {
+				p.GearPowerBackup = p.Stats[i]
+			}
 		}
 	}
 }
