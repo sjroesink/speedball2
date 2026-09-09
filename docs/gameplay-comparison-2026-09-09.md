@@ -230,3 +230,15 @@ Fifteen targeted audio/contact tests pass. The browser offline renderer passes
 peaks were 0.0450..0.0464, stress peak 0.1998, all voices released, and mute/pause/
 reset/zero-volume tails were silent. Build passes. These measurements do not
 prove subjective mix quality; the sound-check page provides playable previews.
+
+### Last-thrower identity timing
+
+The original get_ball (0xeb9c..0xed10) does not replace player_last_with_ball.
+Human windup sets it at 0x10c24; AI windup at 0x107ae. The remake previously
+replaced lastTouch on catch, then only again at release. JS/Go now preserve it
+through catching and update it when the new windup starts, before physical
+release. The direct throw helper continues assigning it for standalone throws.
+Both-team regressions prove catch identity and pre-release windup identity.
+The 273-test existing JS suite and Go suite pass after the code change; the new
+identity tests pass separately, as do vet and build. The long trace includes
+lastTouch and remains aligned. Complete original event sequencing is still open.

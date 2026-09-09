@@ -230,6 +230,8 @@ export function selectPlayers(s, distances = possessionDistances(s)) {
 // Modes: 1 samples human input at release, 2 forces low, 3 forces high.
 function beginThrow(s, i, mode) {
   const p = s.players[i];
+  // Original player_last_with_ball is assigned at windup, not on a catch.
+  s.ball.lastTouch = i;
   p.action = 3;
   p.actionTime = 8 / 25;
   p.throwMode = mode;
@@ -886,7 +888,6 @@ export function catchBall(s, only = -1, distances = null) {
       b.flightKind = 0;
       b.owner = i;
       b.heldJump = p.action===2&&p.jumping;
-      b.lastTouch = i;
       b.after = 0;
       // get_ball (0xece4): impact sound requires horizontal ball movement.
       if (b.vx || b.vz) event(s, 16, i, -1, b.x, b.z, b.h);

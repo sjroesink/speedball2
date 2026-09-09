@@ -253,6 +253,7 @@ func (s *State) selectPlayers() {
 // Modes: 1 samples human input at release, 2 forces low, 3 forces high.
 func (s *State) beginThrow(i, mode int) {
 	p := &s.Players[i]
+	s.Ball.LastTouch = i
 	p.Action = 3
 	p.ActionTime = 8. / 25
 	p.throwMode = mode
@@ -838,7 +839,6 @@ func (s *State) catchBallAt(only int, distances *[18]int) {
 			b.FlightKind = 0
 			b.Owner = i
 			b.heldJump = p.Action == 2 && p.jumping
-			b.LastTouch = i
 			b.After = 0
 			// get_ball (0xece4): impact sound requires horizontal ball movement.
 			if b.VX != 0 || b.VZ != 0 {
