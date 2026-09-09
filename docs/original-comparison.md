@@ -1846,3 +1846,25 @@ fall animation to word 15, shortening its recovery tail. This change restores
 counter-contact and possession behavior but still uses the existing 35-frame
 fall recovery. Exact callback-to-animation-tail timing remains to be implemented
 and verified; this does not establish full original tackle fidelity.
+
+### Athlete art direction: compact helmets and forged armor
+
+Compared the models against the original Amiga match screenshot at
+https://thekingofgrabs.com/2023/01/25/speedball-2-brutal-deluxe-amiga/speedball-2-brutal-deluxe-amiga-13/ .
+The reference informed silver equipment, colored helmets and broad shoulders;
+no reference pixels or commercial meshes are included in the assets.
+
+Both Blender athletes now have a tapered chest and waist, smaller helmet,
+separate face features, flatter forearm/knee protection, and narrower boots.
+Dedicated satin plate and skin materials reduce the uniform glossy finish.
+Upper back and lumbar plates keep silver armor visible from both directions,
+with team markings on the chest, back, helmet and shoulders. The mesh shells
+are authored in `assets/build.py`; both native Blend files and GLB exports are
+included. Each GLB is approximately 308 KB (previously 221 KB).
+
+The existing animation pivots and BallGrip attachment are retained. All eight
+asset animation tests pass, including both teams' throwing hand positions and
+30/60/144 FPS timing; production build passes. Inspected the release pose and
+both teams in a full-screen training match at 3456x1408. This is an initial
+silhouette/material refinement; the models remain stylized and the broader
+arena, motion polish and final visual acceptance remain outstanding.

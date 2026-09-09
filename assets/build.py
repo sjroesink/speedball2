@@ -60,28 +60,54 @@ def build_medics():
 if '--medic-only' in sys.argv:
  build_medics()
  raise SystemExit
+def tapered_plate(name,loc,bottom,top,depth,height,material):
+ # Author a trapezoidal armor shell directly in Blender, with machined edges.
+ vertices=[(x*w/2,y*depth/2,z*height/2) for z,w in [(-1,bottom),(1,top)] for x,y in [(-1,-1),(1,-1),(1,1),(-1,1)]]
+ mesh=bpy.data.meshes.new(name);mesh.from_pydata(vertices,[],[(3,2,1,0),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)]);mesh.update()
+ obj=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(obj);obj.location=loc;obj.data.materials.append(material)
+ bevel=obj.modifiers.new('Forged edge radius','BEVEL');bevel.width=.035;bevel.segments=3
+ obj.modifiers.new('Armor face normals','WEIGHTED_NORMAL')
+ return obj
+
 def build_players():
+ # Dedicated athlete materials leave the stadium and medical equipment intact.
+ athlete_steel=mat('Satin athlete plate',(.43,.50,.52),.72)
+ athlete_steel.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value=.52
+ athlete_skin=mat('Athlete skin',(.50,.255,.125))
+ athlete_skin.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value=.78
  for name,color in [('player-cyan',cyan),('player-orange',orange)]:
-  # Broad human silhouette: silver pads, enamel helmet, face, articulated limbs.
-  cube('Hip belt',(0,0,.72),(.58,.40,.24),rubber,.09)
-  cube('Ribbed breastplate',(0,0,1.13),(.66,.46,.65),armor,.14)
-  cube('Team breast stripe',(0,-.245,1.28),(.50,.04,.12),color,.03)
-  for z in [.91,1.01]: cube('Abdominal rib',(0,-.25,z),(.48,.055,.055),steel,.02)
-  sphere('Head',(0,-.035,1.65),.24,skin)
-  helmet=sphere('Open face helmet',(0,.015,1.75),.275,color);helmet.scale.z=.75
-  cube('Helmet crown stripe',(0,-.03,1.94),(.085,.29,.035),armor,.02)
-  cube('Brow guard',(0,-.245,1.76),(.38,.08,.085),armor,.035)
-  cube('Dark eye opening',(0,-.265,1.69),(.29,.04,.06),rubber,.015)
-  cube('Jaw',(0,-.22,1.57),(.23,.16,.13),skin,.06)
+  # Compact helmet, athletic torso and separate armor plates read at court scale.
+  cube('Hip belt',(0,0,.72),(.54,.38,.22),rubber,.045)
+  tapered_plate('Tapered torso',(0,.015,1.10),.46,.72,.39,.68,rubber)
+  tapered_plate('Breastplate',(0,-.09,1.22),.53,.75,.34,.40,athlete_steel)
+  cube('Team breast stripe',(0,-.272,1.27),(.47,.025,.075),color,.01)
+  tapered_plate('Upper back plate',(0,.21,1.22),.51,.68,.09,.38,athlete_steel)
+  cube('Back team stripe',(0,.262,1.28),(.38,.02,.075),color,.01)
+  for z,w in [(.90,.37),(1.01,.43)]:
+   cube('Lumbar plate',(0,.20,z),(w,.07,.085),athlete_steel,.025)
+  for z,w in [(.89,.40),(.99,.46)]:
+   tapered_plate('Abdominal plate',(0,-.09,z),w-.035,w,.31,.085,athlete_steel)
+  cube('Belt buckle',(0,-.215,.75),(.15,.035,.11),athlete_steel,.015)
+  neck=sphere('Neck',(0,0,1.49),.125,athlete_skin);neck.scale.z=1.1
+  head=sphere('Head',(0,-.045,1.66),.20,athlete_skin);head.scale=(.88,1,1.12)
+  helmet=sphere('Open face helmet',(0,.018,1.77),.23,color);helmet.scale=(1,1,.70)
+  cube('Helmet crown stripe',(0,.005,1.927),(.065,.25,.02),athlete_steel,.01)
+  cube('Brow guard',(0,-.21,1.76),(.32,.045,.055),athlete_steel,.018)
+  for side in [-1,1]:
+   cube('Eye socket',(side*.075,-.227,1.698),(.072,.02,.022),rubber,.006)
+   cube('Helmet temple',(side*.182,-.035,1.68),(.047,.18,.11),color,.018)
+  cube('Nose',(0,-.252,1.655),(.055,.05,.07),athlete_skin,.018)
+  cube('Jaw',(0,-.163,1.56),(.21,.15,.12),athlete_skin,.035)
+  cube('Chin strap',(0,-.237,1.53),(.16,.018,.035),rubber,.006)
   limbs=[]
   for side in [-1,1]:
    before=set(bpy.context.scene.objects)
-   shoulder=cube('Silver shoulder pad',(side*.47,0,1.39),(.43,.46,.30),armor,.105)
-   cube('Shoulder crown inlay',(side*.47,0,1.55),(.25,.33,.035),color,.035)
+   shoulder=cube('Silver shoulder pad',(side*.46,0,1.40),(.39,.45,.26),athlete_steel,.065)
+   cube('Shoulder crown inlay',(side*.46,0,1.54),(.20,.29,.025),color,.035)
    cube('Shoulder team band',(side*.5,-.235,1.40),(.27,.04,.085),color,.02)
-   bicep=sphere('Bicep',(side*.49,0,1.13),.18,skin);bicep.scale.z=1.2
-   cube('Forearm armor',(side*.49,-.06,.98),(.26,.33,.34),armor,.1)
-   sphere('Hand',(side*.49,-.12,.78),.14,skin)
+   bicep=sphere('Bicep',(side*.49,0,1.13),.16,athlete_skin);bicep.scale.z=1.35
+   cube('Forearm armor',(side*.49,-.06,.98),(.25,.30,.33),athlete_steel,.045)
+   sphere('Hand',(side*.49,-.12,.78),.13,athlete_skin)
    parts=set(bpy.context.scene.objects)-before
    bpy.ops.object.empty_add(location=(side*.43,0,1.42));joint=bpy.context.object;joint.name='Arm_'+str(side)
    for part in parts: part.parent=joint;part.matrix_parent_inverse=joint.matrix_world.inverted()
@@ -92,11 +118,11 @@ def build_players():
     grip.matrix_parent_inverse=joint.matrix_world.inverted()
    limbs.append((joint,side,True))
    before=set(bpy.context.scene.objects)
-   cube('Thigh',(side*.22,0,.54),(.31,.37,.37),armor,.10)
-   sphere('Knee',(side*.22,-.17,.36),.18,steel)
-   cube('Shin',(side*.22,0,.23),(.27,.31,.31),armor,.07)
-   cube('Boot',(side*.22,-.12,.10),(.34,.55,.20),rubber,.06)
-   cube('Steel toe',(side*.22,-.32,.14),(.32,.17,.15),armor,.04)
+   tapered_plate('Thigh',(side*.22,0,.54),.25,.31,.34,.37,athlete_steel)
+   cube('Knee guard',(side*.22,-.15,.36),(.24,.15,.19),steel,.055)
+   tapered_plate('Shin',(side*.22,-.015,.23),.23,.27,.28,.30,athlete_steel)
+   cube('Boot',(side*.22,-.12,.10),(.30,.49,.18),rubber,.035)
+   cube('Steel toe',(side*.22,-.32,.14),(.28,.15,.13),athlete_steel,.025)
    parts=set(bpy.context.scene.objects)-before
    bpy.ops.object.empty_add(location=(side*.22,0,.75));joint=bpy.context.object;joint.name='Leg_'+str(side)
    for part in parts: part.parent=joint;part.matrix_parent_inverse=joint.matrix_world.inverted()
