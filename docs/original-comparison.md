@@ -2698,3 +2698,21 @@ All 258 tests and the build pass, including both-team loop closure, floor
 clearance, ankle leveling and all unchanged action/ball-grip checks. An active
 browser full-match screenshot shows the exported run poses on the court.
 A 300-frame sample remained 32.6 ms median interval; no FPS gain is claimed.
+
+### Blender gait touchdown and cycle timing refinement
+
+The swing path now uses a Hermite return whose horizontal velocity matches
+the planted path at either boundary. Each Run NLA strip explicitly spans
+frames 0..24, removing the extra exported frame: GLB duration is now 0.4 s,
+matching the 1.2-unit cycle at 3 world units/second. Both native blend files
+and GLBs were rebuilt. Gameplay simulation and physical sprite timing are
+independent of this visual cycle and remain unchanged.
+
+The same geometry sampler reports 258 grounded intervals per team: median
+slip 0.00405, p95 1.22016, maximum 1.39163 world units/second. Minimum sole
+height is 0.00880; maximum swing sole height is 0.23000. Compared with the
+preceding version, median and transition slip both decrease. The <=0.04 sole
+criterion includes low swing portions; these measurements are not a guarantee
+of planted feet during turns, collisions or visual blending. All 14 exported
+animation tests and production build pass. The active browser renderer was
+inspected with the rebuilt assets. Full gameplay equivalence remains open.

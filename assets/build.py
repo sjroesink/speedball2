@@ -232,7 +232,10 @@ def build_players():
    phase=((frame-1)/24+(0 if side==1 else .5))%1
    if phase<=.5: y=-.30+1.2*phase;z=.10
    else:
-    swing=(phase-.5)*2;y=.30*math.cos(math.pi*swing);z=.10+.22*math.sin(math.pi*swing)
+    swing=(phase-.5)*2
+    # Hermite return matches the stance velocity at both touchdown boundaries.
+    y=.30+.60*swing-3.60*swing*swing+2.40*swing**3
+    z=.10+.22*math.sin(math.pi*swing)
    bob=.01*math.sin((frame-1)/24*math.tau)**2;pitch=.06+bob;root_height=-.10+bob
    local_y=y*math.cos(pitch)+(z-root_height)*math.sin(pitch)
    local_z=-y*math.sin(pitch)+(z-root_height)*math.cos(pitch)
@@ -316,7 +319,9 @@ def build_players():
   for obj in bpy.context.scene.objects:
    if obj.animation_data:
     for track in obj.animation_data.nla_tracks:
-     if track.name=='Run': track.strips[0].frame_start=0
+     if track.name=='Run':
+      track.strips[0].frame_start=0
+      track.strips[0].frame_end=24
   root.rotation_euler=(0,0,0);root.location=(0,0,0);bpy.context.scene.render.fps=60
   export(name,apply_modifiers=True)
 if '--players-only' in sys.argv:
