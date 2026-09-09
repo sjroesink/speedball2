@@ -1,10 +1,12 @@
-<!doctype html><html lang="en"><meta charset="utf-8"><title>Speedball match mix review</title><style>body{background:#101820;color:white;font:16px system-ui;padding:24px}button{padding:12px}audio{display:block;width:600px;max-width:100%;margin-top:20px}</style><h1>Match audio mix</h1><p>Thirty seconds of actual AI match events through the production sound engine. Rendered offline with its real voice limit and compressor.</p><button>Render match mix</button><p role="status">Ready</p><audio controls></audio><pre></pre><script type="module">
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Speedball match mix review</title><style>body{background:#101820;color:white;font:16px system-ui;padding:24px}button{padding:12px}audio{display:block;width:600px;max-width:100%;margin-top:20px}</style><h1>Match audio mix</h1><p>Thirty seconds of actual AI match events through the production sound engine. Rendered offline with its real voice limit and compressor. The optional fixtures place a ball beyond the goal line at 2 seconds and apply a fatal hit at 8 seconds; subsequent scoring and medical events use normal simulation.</p><label><input type="checkbox" id="medical"> Include goal and injury fixtures</label><button>Render match mix</button><p role="status">Ready</p><audio controls></audio><pre></pre><script type="module">
+import {damage} from '/src/features.js';
 import {ArenaAudio} from '/src/audio.js';import {createMatch,step} from '/src/game.js';
 function wav(buffer){const n=buffer.length,a=new ArrayBuffer(44+n*4),d=new DataView(a);const str=(o,t)=>[...t].forEach((v,i)=>d.setUint8(o+i,v.charCodeAt(0)));str(0,'RIFF');d.setUint32(4,a.byteLength-8,true);str(8,'WAVE');str(12,'fmt ');d.setUint32(16,16,true);d.setUint16(20,1,true);d.setUint16(22,2,true);d.setUint32(24,buffer.sampleRate,true);d.setUint32(28,buffer.sampleRate*4,true);d.setUint16(32,4,true);d.setUint16(34,16,true);str(36,'data');d.setUint32(40,n*4,true);for(let i=0;i<n;i++)for(let ch=0;ch<2;ch++)d.setInt16(44+(i*2+ch)*2,Math.max(-1,Math.min(1,buffer.getChannelData(ch)[i]))*32767,true);return new Blob([a],{type:'audio/wav'});}
 
 document.querySelector('button').onclick=async()=>{
  const button=document.querySelector('button'),status=document.querySelector('[role=status]');button.disabled=true;status.textContent='Rendering match events';
  try{
+ const medical=document.querySelector('#medical').checked;
  const duration=30,rate=44100,c=new OfflineAudioContext(2,rate*(duration+2),rate);
  const adapter=new Proxy(c,{get(target,key){if(key==='state')return 'running';if(key==='resume')return async()=>{};const v=Reflect.get(target,key,target);return typeof v==='function'?v.bind(target):v}});
  const audio=new ArenaAudio(()=>adapter);await audio.enable(true);audio.setActive(true);
@@ -12,14 +14,25 @@ document.querySelector('button').onclick=async()=>{
  function observe(){audio.observe(s,true);maxVoices=Math.max(maxVoices,audio.voices.size);for(const e of s.events??[]){if(e.id>lastEvent){lastEvent=e.id;kinds.set(e.kind,(kinds.get(e.kind)||0)+1)}}}
  observe();let suspended=c.suspend(.04);const rendering=c.startRendering();
  for(let tick=1;tick<=duration*25;tick++){
-  await suspended;step(s,.04,{},[false,false]);observe();
+  await suspended;
+  if(medical&&tick===50){
+   // Seed a low ball beyond the goal line; normal simulation awards the goal.
+   s.pause=0;s.restartPhase=0;
+   Object.assign(s.ball,{owner:-1,lastTouch:7,x:21.6,z:0,h:.25,vx:8,vz:0,vh:0,flightKind:0,charged:false});
+  }
+  if(medical&&tick===200){
+   // Seed a fatal impact; normal fall completion starts the medical sequence.
+   Object.assign(s.players[7],{health:1,stun:0,action:0,actionTime:0,x:0,z:0});
+   damage(s,16,7);
+  }
+  step(s,.04,{},[false,false]);observe();
   if(tick<duration*25)suspended=c.suspend((tick+1)/25);
   await c.resume();
  }
  const buffer=await rendering;let peak=0,sum=0,finite=true;
  for(let ch=0;ch<2;ch++)for(const value of buffer.getChannelData(ch)){finite&&=Number.isFinite(value);peak=Math.max(peak,Math.abs(value));sum+=value*value;}
- const rms=Math.sqrt(sum/(buffer.length*2)),passed=finite&&peak>0&&peak<1&&maxVoices<=32&&audio.voices.size===0;
- status.textContent=`${passed?'PASS':'FAIL'} | peak ${peak.toFixed(4)} | RMS ${rms.toFixed(5)} | maximum active voices ${maxVoices} | remaining voices ${audio.voices.size}`;
+ const rms=Math.sqrt(sum/(buffer.length*2)),passed=finite&&peak>0&&peak<1&&maxVoices<=32&&audio.voices.size===0&&(!medical||[7,14,15].every(kind=>kinds.has(kind)));
+ status.textContent=`${passed?'PASS':'FAIL'} | peak ${peak.toFixed(4)} | RMS ${rms.toFixed(5)} | maximum active voices ${maxVoices} | remaining voices ${audio.voices.size} | required goal/injury/substitution ${medical?[7,14,15].map(k=>`${k}:${kinds.has(k)}`).join(", "):"not requested"}`;
  document.querySelector('pre').textContent='Event kind: count\n'+[...kinds].map(([k,v])=>`${k}: ${v}`).join('\n');
  const player=document.querySelector('audio');if(player.src)URL.revokeObjectURL(player.src);player.src=URL.createObjectURL(wav(buffer));
  }catch(e){status.textContent='ERROR: '+e.message}finally{button.disabled=false}

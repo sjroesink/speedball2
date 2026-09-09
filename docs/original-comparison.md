@@ -2385,3 +2385,19 @@ counts are possible when throws are interrupted or remain pending at the end.
 This trace contained no goals, injuries or substitutions, so it does not prove
 balance during those sequences. Offline rendering establishes finite unclipped
 output and voice cleanup; subjective listening/mix approval remains pending.
+
+
+### Goal and medical audio mix coverage
+
+The optional goal/injury fixture in audio-match-playtest seeds a low ball beyond
+the goal line at two seconds and a fatal impact at eight seconds. All subsequent
+goal awards, fall completion, evacuation, replacement and restart behavior runs
+through the normal simulation. The result now additionally requires event kinds
+7, 14 and 15 to occur; missing coverage cannot produce PASS in this mode.
+
+Browser result: PASS, peak 0.6528, RMS 0.01113, maximum 32 active voices, zero
+remaining voices. Counts included one goal, one injury, one replacement and
+three launcher/release sequences. This extends the earlier ordinary AI trace
+with actual goal and medical event sequencing and unclipped rendered output at
+the voice limit. It still does not prove subjective prominence or pleasantness
+of the mix; the generated WAV is available in the page's audio player.
