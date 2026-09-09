@@ -684,6 +684,8 @@ function simulateStep(
   } else if (inMultiplier) {
     // The original multiplier animation owns the ball position while inside.
   } else {
+    // step_sprites advances ball animation before goals and wall constraints.
+    const tableFlight = flightStep(b, dt);
     // constrain_sprites (0xe5f4): high stages use a 24-unit wall inset, low 32.
     const inset = (b.flightKind ? b.flightStage > 2 : b.h > 1.25) ? 24 : 32;
     const wallX = (576 - inset) * terrainUnit, wallZ = (320 - inset) * terrainUnit;
@@ -713,7 +715,7 @@ function simulateStep(
     }
     b.x += b.vx * dt;
     b.z += b.vz * dt;
-    if (!flightStep(b, dt)) {
+    if (!tableFlight) {
       b.h += b.vh * dt;
       b.vh -= 18 * dt;
       if (b.h < 0.25) {

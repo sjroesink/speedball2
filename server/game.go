@@ -624,6 +624,8 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 	} else if inMultiplier {
 		// The original multiplier animation owns the ball position while inside.
 	} else {
+		// step_sprites advances ball animation before goals and wall constraints.
+		tableFlight := flightStep(b, dt)
 		// constrain_sprites (0xe5f4): high stages use a 24-unit wall inset, low 32.
 		inset := 32.
 		if b.FlightKind != 0 && b.FlightStage > 2 || b.FlightKind == 0 && b.H > 1.25 {
@@ -655,7 +657,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 
 		b.X += b.VX * dt
 		b.Z += b.VZ * dt
-		if !flightStep(b, dt) {
+		if !tableFlight {
 			b.H += b.VH * dt
 			b.VH -= gravity * dt
 			if b.H < .25 {

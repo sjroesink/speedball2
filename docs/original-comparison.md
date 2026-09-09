@@ -1630,3 +1630,23 @@ the mixed-human scenario; the changed two-human trajectory has no goal in this
 seed. Warp and medical coverage remain required elsewhere in the same test.
 The original animation-before-constraint ordering still requires a separate
 boundary-frame audit; this change establishes the height-specific geometry.
+
+
+### Flight-stage ordering at wall and goal contact (2026-09-09)
+
+`step_match` calls `step_sprites` (0xcf5c), `handle_score_goal` (0xcf60), then
+`constrain_sprites` (0xcf64). Inside `step_sprites`, the ball animation advances
+at 0xe852..0xe856; `step_sprite_animations` writes the current sprite index at
+0x10d1a. Goal eligibility (0xdb38) and wall inset selection (0xe5f6) therefore
+use that newly advanced flight stage. Our simulations previously advanced the
+flight table only after those checks and ball movement.
+
+Both now advance table-driven flight immediately before goal/wall handling.
+A ball crossing from stage 2 to 3 uses the high boundary immediately; a ball
+crossing from 3 to 2 can score or hit the low side boundary on the same tick.
+Regression tests cover both transitions at all four walls, including both goal
+directions. The full four-match browser/server comparison still passes without
+changing its event requirements. The modern non-table gravity fallback remains
+separate; this verifies the original flight-table path.
+
+Validation: 209 JavaScript tests, Go tests, Go vet and production build pass.

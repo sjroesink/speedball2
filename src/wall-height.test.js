@@ -18,3 +18,19 @@ test("high and low balls use original wall insets on all four walls",()=>{
   assert.ok(Math.abs(s.ball[axis]-expected)<1e-8);
  }
 });
+
+test("wall and goal decisions use this tick's rising or falling flight stage",()=>{
+ for(const rising of [false,true])for(const axis of ["x","z"])for(const sign of [-1,1]){
+  const s=initial();for(const p of s.players)p.stun=100;
+  const center=axis==="x"?576:320;
+  Object.assign(s.ball,{owner:-1,lastTouch:-1,x:0,z:0,h:rising?1.25:1.75,flightKind:2,flightStage:rising?2:3,flightIndex:rising?4:41,flightFraction:0,vx:0,vz:0,speedTimer:100,nextSlowdown:0});
+  s.ball[axis]=sign*(center-28)*unit;s.ball["v"+axis]=sign*8*velocityUnit;
+  step(s,.04,{},[true,true]);
+  if(axis==="x"&&!rising)assert.equal(s.score[sign>0?0:1],10,"descending ball can score immediately");
+  else {
+   assert.deepEqual(s.score,[0,0]);
+   assert.equal(s.ball.flightStage,rising?3:2);
+   assert.equal(Math.sign(s.ball["v"+axis]),rising?sign:-sign);
+  }
+ }
+});
