@@ -98,3 +98,38 @@ function finishCare(s) {
   for (let i = 0; s.medical && i < 1000; i++) medicalStep(s, 1 / 25);
   assert.equal(s.medical, null);
 }
+
+test("medical anchor takes the ball from any carrier and stays behind during evacuation", () => {
+  for (const owner of [-1, 7, 16]) {
+    const s = initial();
+    Object.assign(s.players[7], { health: 0, actionTime: 0, x: 4, z: -2 });
+    Object.assign(s.ball, {
+      owner,
+      x: -8,
+      z: 8,
+      vx: 4,
+      vz: 5,
+      vh: 2,
+      flightKind: 2,
+      multiplierPath: 1,
+    });
+    s.charge = [1, 1];
+    assert.equal(startInjury(s, 7), true);
+    const anchor = [s.players[7].x, s.players[7].z];
+    for (let i = 0; i < 300; i++) medicalStep(s, 1 / 25);
+    assert.deepEqual([s.ball.x, s.ball.z], anchor);
+    assert.equal(s.ball.owner, -1);
+    assert.deepEqual(
+      [
+        s.ball.vx,
+        s.ball.vz,
+        s.ball.vh,
+        s.ball.flightKind,
+        s.ball.multiplierPath,
+      ],
+      [0, 0, 0, 0, 0],
+    );
+    assert.deepEqual(s.charge, [0, 0]);
+    assert.notEqual(s.players[7].z, anchor[1]);
+  }
+});

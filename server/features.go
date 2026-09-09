@@ -134,6 +134,14 @@ func (s *State) startInjury(i int) bool {
 	p.X, p.Z = float64(576-y)*unit, float64(x-320)*unit
 	p.Injury, p.Stun, p.ActionTime = 1, 1, 1
 	s.Medical = createMedical(i, x, y)
+	// start_injury 0x10ea6 transfers possession to a stationary injury anchor.
+	b := &s.Ball
+	b.Owner, b.X, b.Z, b.H = -1, p.X, p.Z, .25
+	b.VX, b.VZ, b.VH, b.DirX, b.DirZ = 0, 0, 0, 0, 0
+	b.FlightKind, b.FlightIndex, b.FlightStage, b.FlightFraction = 0, 0, 0, 0
+	b.MultiplierPath, b.MultiplierIndex, b.MultiplierFraction = 0, 0, 0
+	b.Lock, b.After = 0, 0
+	s.Charge = [2]float64{}
 	p.Action = 4
 	p.moveX, p.moveZ, p.fallX, p.fallZ = 0, 0, 0, 0
 	s.Controlled[p.Team] = i

@@ -164,6 +164,29 @@ export function startInjury(s, i) {
   p.z = (x - 320) * unit;
   p.injury = p.stun = p.actionTime = 1;
   s.medical = createMedical(i, x, y);
+  // start_injury 0x10ea6: the stationary injury anchor takes possession.
+  // Medical state owns the ball until play can restart, never a roster player.
+  Object.assign(s.ball, {
+    owner: -1,
+    x: p.x,
+    z: p.z,
+    h: 0.25,
+    vx: 0,
+    vz: 0,
+    vh: 0,
+    dirX: 0,
+    dirZ: 0,
+    flightKind: 0,
+    flightIndex: 0,
+    flightStage: 0,
+    flightFraction: 0,
+    multiplierPath: 0,
+    multiplierIndex: 0,
+    multiplierFraction: 0,
+    lock: 0,
+    after: 0,
+  });
+  s.charge = [0, 0];
   p.action = 4;
   p.moveX = p.moveZ = p.fallX = p.fallZ = 0;
   s.controlled[p.team] = i;

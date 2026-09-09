@@ -112,3 +112,26 @@ func finishCare(t *testing.T, s *State) {
 		t.Fatal("medical did not finish")
 	}
 }
+
+func TestMedicalBallAnchor(t *testing.T) {
+	for _, owner := range []int{-1, 7, 16} {
+		s := initial()
+		p := &s.Players[7]
+		p.Health, p.ActionTime, p.X, p.Z = 0, 0, 4, -2
+		s.Ball.Owner, s.Ball.X, s.Ball.Z = owner, -8, 8
+		s.Ball.VX, s.Ball.VZ, s.Ball.VH = 4, 5, 2
+		s.Ball.FlightKind, s.Ball.MultiplierPath = 2, 1
+		s.Charge = [2]float64{1, 1}
+		if !s.startInjury(7) {
+			t.Fatal("medical start")
+		}
+		x, z := p.X, p.Z
+		for i := 0; i < 300; i++ {
+			s.medicalStep(1. / 25)
+		}
+		b := s.Ball
+		if b.X != x || b.Z != z || b.Owner != -1 || b.VX != 0 || b.VZ != 0 || b.VH != 0 || b.FlightKind != 0 || b.MultiplierPath != 0 || s.Charge != [2]float64{} || p.Z == z {
+			t.Fatal("ball followed carrier or retained flight", b)
+		}
+	}
+}

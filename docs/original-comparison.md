@@ -956,3 +956,25 @@ Go-to-JavaScript decoding of off-court medic coordinates. This checkpoint has
 not received a visual playthrough of the complete medical sequence. The original
 injury ball-launch/resume behavior remains a separate fidelity gap; this change
 retains the existing paused ball state. Full gameplay parity is not claimed.
+
+
+## Injury ball ownership audit (2026-09-09)
+
+Amiga start_injury 0x10ea6 transfers player_with_ball to sprite_nowhere,
+marks that anchor busy, and stores the aligned injury coordinates at 0x10eb4.
+step_injury_3 clears the anchor's busy flag at 0x112ea. While the clock is
+paused, step_prepare_ball_launch 0xd73c waits for that flag to clear, moves
+the anchor to (320,576), waits for all visible players to reach their launch
+positions and face their starting direction, and triggers the central launcher.
+The WIP Match.HandleAnimGoalToInitLaunch follows the same structure.
+
+Implemented the first transition in both simulations: medical care removes any
+roster carrier, places the ball at the stationary injury anchor, clears release
+input, flight and multiplier movement. The ball stays there while the medics
+carry the player away. Regression cases cover a free ball, injured carrier and
+unrelated carrier, including stale high-flight and multiplier state.
+
+All 171 JavaScript tests, Go tests/vet and production build pass. Remaining:
+return-to-formation and central launcher phases after evacuation are still
+missing; current completion still releases the anchor ball in place. This is
+not the original restart sequence and remains an explicit gameplay gap.
