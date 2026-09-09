@@ -257,3 +257,20 @@ test("slowdown bounds use integer terrain coordinates despite float conversion n
   assert.ok(Math.abs(b.vx-(inside?7:8)*velocityUnit)<1e-9);
  }
 });
+
+test("throw release preserves the carried position in every direction", () => {
+ for (let facing=0;facing<8;facing++) for (const lob of [false,true]) {
+  const s=initial(),p=s.players[7];
+  p.fx=Math.round(Math.cos(facing*Math.PI/4));
+  p.fz=Math.round(Math.sin(facing*Math.PI/4));
+  Object.assign(s.ball,{owner:7,x:p.x+.31,z:p.z-.27});
+  const {x,z}=s.ball;
+  throwBall(s,7,lob);
+  assert.equal(s.ball.x,x);
+  assert.equal(s.ball.z,z);
+  assert.equal(s.ball.owner,-1);
+  assert.equal(s.ball.flightKind,lob?2:1);
+  assert.equal(s.event.x,x);
+  assert.equal(s.event.z,z);
+ }
+});

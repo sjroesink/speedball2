@@ -1476,3 +1476,22 @@ friendly catches and interceptions. The tackle-only parity scenario no longer
 requires impact event 16 because it never throws; the other three complete
 match scenarios still require it. The peak vertical catch fixture explicitly
 asserts silence rather than assuming any successful catch makes a sound.
+
+
+### Preserve ball position at throw release (2026-09-09)
+
+The complete `throwing_action_fn` at 0x107be..0x108de changes possession,
+velocity, flight animation, charge budget and release steering without writing
+ball coordinates. The carried coordinates are assigned in `step_match` at
+0xcff4..0xd03e using the current player animation. Our release instead reset
+the ball to 0.9 world units ahead of the player, whereas the carried offset
+was 0.5, creating an extra forward jump. Both simulations now retain the
+existing ball coordinates at release. The modern carried-ball pose still uses
+a fixed offset; original per-sprite hand positioning is not yet reproduced.
+
+All eight directions and both throw heights have regression tests for position
+continuity and the release audio location. Complete-match comparison still
+covers four scenarios. With corrected release positions, AI-only play covers
+warps and side scores; the mixed and two-human scenarios cover goals, and the
+tackle-only scenario retains injury/replacement coverage. Event requirements
+follow those observed scenarios, preserving aggregate feature coverage.

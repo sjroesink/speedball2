@@ -244,3 +244,22 @@ func TestSlowdownTerrainBoundary(t *testing.T) {
 		}
 	}
 }
+
+func TestThrowPreservesCarriedPosition(t *testing.T) {
+	for facing := 0; facing < 8; facing++ {
+		for _, lob := range []bool{false, true} {
+			s := initial()
+			p := &s.Players[7]
+			p.FX = math.Round(math.Cos(float64(facing) * math.Pi / 4))
+			p.FZ = math.Round(math.Sin(float64(facing) * math.Pi / 4))
+			s.Ball.Owner = 7
+			s.Ball.X = p.X + .31
+			s.Ball.Z = p.Z - .27
+			x, z := s.Ball.X, s.Ball.Z
+			s.throw(7, lob)
+			if s.Ball.X != x || s.Ball.Z != z || s.Ball.Owner != -1 || s.Event.X != x || s.Event.Z != z {
+				t.Fatal("release moved ball", facing, lob)
+			}
+		}
+	}
+}

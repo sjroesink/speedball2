@@ -242,7 +242,8 @@ func (s *State) throw(i int, lob bool, release ...Input) {
 		vh = 11
 	}
 	fx, fz := eightWay(p.FX, p.FZ)
-	*b = Ball{X: p.X + p.FX*.9, Z: p.Z + p.FZ*.9, H: 1, DirX: fx, DirZ: fz, VX: fx * speed, VZ: fz * speed, VH: vh, Owner: -1, LastTouch: i, Lock: .18, After: 0}
+	// throwing_action_fn preserves the current carried-ball position.
+	*b = Ball{X: b.X, Z: b.Z, H: 1, DirX: fx, DirZ: fz, VX: fx * speed, VZ: fz * speed, VH: vh, Owner: -1, LastTouch: i, Lock: .18, After: 0}
 	b.ElectricBudget = 1
 	if p.Team == 0 && s.Multiplier > 0 || p.Team == 1 && s.Multiplier < 0 {
 		b.ElectricBudget += int(math.Abs(float64(s.Multiplier)))

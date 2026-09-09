@@ -236,8 +236,7 @@ export function throwBall(s, i, lob, input = {}) {
   ensureStats(p);
   const [fx, fz] = eightWay(p.fx, p.fz);
   Object.assign(b, {
-    x: p.x + p.fx * 0.9,
-    z: p.z + p.fz * 0.9,
+    // throwing_action_fn preserves the current carried-ball position.
     h: 1,
     dirX: fx,
     dirZ: fz,
