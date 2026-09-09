@@ -204,6 +204,23 @@ def build_players():
     part.matrix_parent_inverse=new_world[part.parent].inverted()
     part.matrix_basis=new_world[part]
   bpy.context.view_layer.update()
+  # Merge rigid surfaces sharing a parent and material before animation export.
+  # Keep hand/boot meshes addressable for grip and ground-clearance validation.
+  rigid_groups={}
+  for part in list(bpy.context.scene.objects):
+   if part.type!='MESH' or part.name.startswith(('Hand','Boot')): continue
+   key=(part.parent,tuple(part.data.materials))
+   rigid_groups.setdefault(key,[]).append(part)
+  for (parent,materials),surfaces in rigid_groups.items():
+   if len(surfaces)<2: continue
+   bpy.ops.object.select_all(action='DESELECT')
+   for surface in surfaces:
+    bpy.context.view_layer.objects.active=surface
+    for modifier in list(surface.modifiers): bpy.ops.object.modifier_apply(modifier=modifier.name)
+    surface.select_set(True)
+   bpy.context.view_layer.objects.active=surfaces[0]
+   bpy.ops.object.join()
+   bpy.context.object.name='Rigid surface '+materials[0].name
   # Native Blender animation clips, played by the browser's AnimationMixer.
   parts=list(bpy.context.scene.objects)
   bpy.ops.object.empty_add(type='PLAIN_AXES');root=bpy.context.object;root.name='AthletePose'

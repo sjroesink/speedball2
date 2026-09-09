@@ -2073,3 +2073,15 @@ Inspected the exported models in the browser and corrected a team stripe that
 initially intersected the new chest contour. Thirteen animation tests pass with
 the final exports; production build passed for the code in this pass. This is
 an incremental anatomical refinement, not final character art acceptance.
+
+### Rigid player surface batching
+
+The Blender builder joins meshes sharing both a material and an immediate
+parent before animation export. Hand and boot meshes stay separate for grip
+and ground-clearance checks. Joint transforms and clips remain separate.
+
+Each team GLB now has 28 primitives instead of 59, with exactly 8,032 triangles
+before and after. Cyan is 353,220 bytes; red is 353,256 bytes. This reduces
+potential draw submissions without simplifying geometry; no FPS improvement
+has been measured. Inspected standing/running in the browser. Thirteen
+animation tests, production build and diff checks pass.
