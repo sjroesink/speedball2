@@ -67,13 +67,13 @@ export async function start() {
         .catch(() => {});
   }
   addEventListener("keydown", (e) => {
-    if (["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) return;
     if (e.code === "Escape" && inGame) {
       if (e.repeat) return;
       e.preventDefault();
       toggleMenu();
       return;
     }
+    if (["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) return;
     if (!inGame || menu) return;
     if (
       ["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(
@@ -120,6 +120,8 @@ export async function start() {
     clearControls(keys, state, team, online, input);
     send();
     $("pauseMenu").classList.toggle("hidden", !menu);
+    if (menu) $("resume").focus();
+    else document.activeElement.blur();
     $("pauseText").textContent = online
       ? "The online match continues."
       : "Training is paused.";

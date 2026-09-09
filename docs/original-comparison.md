@@ -2749,3 +2749,16 @@ remaining voices, and a nonzero new-cue segment (overall peak 0.1188). Stress
 peak was 0.2274; all samples were finite and below clipping. The diagnostic
 renders playable WAVs for perceptual review; signal tests do not replace that
 review or prove a final sound mix suitable for every output device.
+
+### Match-menu keyboard focus
+
+Escape is now handled before the editable-control guard while in a match.
+The new volume range input had otherwise swallowed the menu shortcut. Opening
+the menu focuses Resume; closing it blurs the menu control so hidden input
+focus cannot block subsequent movement keys. Existing held-input clearing
+continues to run on both transitions.
+
+Browser verification focused the volume slider, changed it with Home and
+pressed Escape: the menu closed. Reopening showed Resume focused and the
+selected zero volume retained. All four existing keyboard/input-reset tests
+and the production build pass. This change affects menu controls only.
