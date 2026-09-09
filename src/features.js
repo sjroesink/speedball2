@@ -90,6 +90,7 @@ export function damage(s, i, j, ignoreShield = false) {
   q.stun = fallDuration;
   q.fallAttack = 0;
   q.fallAttackTime = 0;
+  q.fallFinishing = false;
   q.fallX = q.fallZ = 0;
   q.action = 4;
   q.actionTime = fallDuration;

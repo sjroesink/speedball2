@@ -21,6 +21,7 @@ type Player struct {
 	fallX, fallZ                               float64
 	fallAttack                                 int
 	fallAttackTime                             float64
+	fallFinishing                              bool
 	slideEnding                                bool
 	throwMode                                  int
 	throwSteer                                 float64
@@ -312,9 +313,6 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		}
 		p.ActionTime = math.Max(0, p.ActionTime-dt)
 		p.fallAttackTime = math.Max(0, p.fallAttackTime-dt)
-		if p.fallAttackTime < 1e-9 {
-			p.fallAttack = 0
-		}
 		p.Cooldown = math.Max(0, p.Cooldown-dt)
 		if p.Cooldown < 1e-9 {
 			p.Cooldown = 0
@@ -323,6 +321,10 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		if p.ActionTime < 1e-9 {
 			p.ActionTime = 0
 			p.Action = 0
+		}
+		if p.Action != 4 {
+			p.fallAttack = 0
+			p.fallFinishing = false
 		}
 		if p.Action != 2 {
 			p.jumping = false
@@ -365,7 +367,17 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			s.event(19, i, -1, p.X, p.Z, 0)
 		}
 		if p.Stun > 0 {
+			// complete_action_fn jumps the retained fall animation to word 15.
+			finishFall := p.Action == 4 && (p.fallAttack == 1 || p.fallFinishing) && p.fallAttackTime <= 1./25+1e-9
+			if finishFall {
+				p.Stun, p.ActionTime = 20./25, 20./25
+				p.fallFinishing = false
+				s.event(19, i, -1, p.X, p.Z, 0)
+			}
 			s.resolveTackle(i, &contacts[i])
+			if finishFall {
+				p.fallAttack = 0
+			}
 			p.moveX, p.moveZ = 0, 0
 			if p.Action == 4 && p.Health > 0 {
 				p.moveX, p.moveZ = p.fallX, p.fallZ
@@ -792,6 +804,9 @@ func (s *State) resolveTackle(i int, distances *[18]int) {
 			continue
 		}
 		p.tackleResolved = true
+		if falling {
+			p.fallFinishing = true
+		}
 		// do_tackle plays contact (0x06) before the success roll.
 		s.event(29, i, j, q.X, q.Z, 0)
 		attacker := *p
@@ -801,12 +816,9 @@ func (s *State) resolveTackle(i int, distances *[18]int) {
 		}
 		hadBall := s.Ball.Owner == j
 		released := s.Ball
-		counter, counterTime := 0, fallDuration
+		counter, counterTime := 0, actionDuration(1, q.Stats[3])
 		if !q.tackleResolved && !(q.Action == 1 && q.slideEnding) && (q.Action == 1 || q.Action == 7) {
 			counter = q.Action
-			if counter == 1 {
-				counterTime = actionDuration(1, q.Stats[3])
-			}
 		}
 		if s.damage(i, j) {
 			q.fallAttack = counter

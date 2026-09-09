@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { AnimationMixer, Vector3 } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { playPlayerAction, startsPlayerAction, runningAnimationDelta, settleRunningPose } from "./player-animation.js";
+import { playPlayerAction, startsPlayerAction, runningAnimationDelta, settleRunningPose, syncFallRecovery } from "./player-animation.js";
 
 async function player(team = "cyan") {
   const bytes = await readFile(new URL(`../public/assets/player-${team}.glb`, import.meta.url));
@@ -204,4 +204,17 @@ test("stopping a run settles the lifted leg without advancing the stride", async
   assert.ok(knee.quaternion.angleTo(rest)<raised.angleTo(rest));
   mixer.update(.061);
   assert.ok(knee.quaternion.angleTo(rest)<1e-5,"rest pose restored after fade");
+});
+
+
+test("fall recovery jumps seek the exported clip and resume a clamped pose", async()=>{
+ const model=await player(),mixer=new AnimationMixer(model.scene);
+ const clip=model.animations.find(c=>c.name==='Hit'),action=mixer.clipAction(clip);
+ action.clampWhenFinished=true;playPlayerAction(action,4,1.4);
+ syncFallRecovery(action,1.16,.8);mixer.update(0);
+ assert.ok(Math.abs(action.time/clip.duration-3/7)<1e-6);
+ mixer.update(.9);assert.equal(action.paused,true);
+ syncFallRecovery(action,.04,.8);mixer.update(.04);
+ assert.ok(action.isRunning());
+ assert.ok(Math.abs(action.time/clip.duration-(.6+.04)/1.4)<1e-6);
 });

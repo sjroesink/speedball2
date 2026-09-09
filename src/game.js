@@ -23,7 +23,6 @@ import {
 } from "./ball.js";
 import {
   actionDuration,
-  fallDuration,
   canJumpAtBall,
   defaultStats,
   tackleThreshold,
@@ -379,11 +378,11 @@ function simulateStep(
     if (p.stun < 1e-9) p.stun = 0;
     p.actionTime = Math.max(0, p.actionTime - dt);
     p.fallAttackTime = Math.max(0, (p.fallAttackTime || 0) - dt);
-    if (p.fallAttackTime < 1e-9) p.fallAttack = 0;
     p.cooldown = Math.max(0, p.cooldown - dt);
     if (p.cooldown < 1e-9) p.cooldown = 0;
     p.aiWait = Math.max(0, (p.aiWait || 0) - dt);
     if (p.actionTime < 1e-9) p.action = p.actionTime = 0;
+    if (p.action !== 4) { p.fallAttack = 0; p.fallFinishing = false; }
     if (p.action !== 2) p.jumping = false;
   }
   slowBall(b, dt);
@@ -427,7 +426,17 @@ function simulateStep(
       event(s, 19, i, -1, p.x, p.z, 0);
     }
     if (p.stun > 0) {
+      // complete_action_fn jumps the retained fall animation to word 15.
+      // A slide still checks contact on this final callback invocation.
+      const finishFall = p.action === 4 && (p.fallAttack === 1 || p.fallFinishing) &&
+        p.fallAttackTime <= 1 / 25 + 1e-9;
+      if (finishFall) {
+        p.stun = p.actionTime = (35 - 15) / 25;
+        p.fallFinishing = false;
+        event(s, 19, i, -1, p.x, p.z, 0);
+      }
       resolveTackle(s, i, contacts[i]);
+      if (finishFall) p.fallAttack = 0;
       p.moveX = p.moveZ = 0;
       if (p.action === 4 && p.health > 0) {
         p.moveX = p.fallX || 0;
@@ -862,6 +871,7 @@ function resolveTackle(s, i, distances) {
     )
       continue;
     p.tackleResolved = true;
+    if (falling) p.fallFinishing = true;
     // do_tackle plays contact (0x06) before the success roll.
     event(s, 29, i, j, q.x, q.z, 0);
     if (randomByte(s) > tackleThreshold({ ...p, action: attack }, q, j % 9 === 0)) return;
@@ -870,7 +880,7 @@ function resolveTackle(s, i, distances) {
     // do_tackle retains only an unresolved slide/punch callback on the victim.
     const counter = !q.tackleResolved && !(q.action === 1 && q.slideEnding) &&
       (q.action === 1 || q.action === 7) ? q.action : 0;
-    const counterTime = counter === 1 ? actionDuration(1, q.stats[3]) : fallDuration;
+    const counterTime = actionDuration(1, q.stats[3]);
     if (damage(s, i, j)) {
       q.fallAttack = counter;
       q.fallAttackTime = counter ? counterTime : 0;

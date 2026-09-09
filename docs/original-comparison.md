@@ -2195,3 +2195,23 @@ its remaining snapshots by 160 ms. At ticks 462/458, both clients showed credits
 paired snapshots, zero mismatches, zero missing shared events and 94 dropped
 client-2 snapshots. This session was also stopped. This confirms live field
 item replication in these local probes, not WAN/reconnection reliability.
+
+### Retained fall recovery timing integrated
+
+The previously deferred fall-recovery work is integrated with the current
+renderer. Source complete_action_fn (0x10a28) compares sustain-1 and seeks word
+15; sliding_action_fn (0x10a82) still invokes contact after that completion call.
+Retained slides and completed falling contacts now enter the twenty-tick tail,
+rather than always running the entire thirty-five-tick fall. Ordinary unresolved
+punch falls retain their full animation. A late completed contact can extend
+the remaining recovery, matching the seek-back behavior.
+
+JS and Go tests cover retained slide/punch completion. Additional JS checks cover
+ordinary punch falls and late recovery extension; an exported Blender clip test
+checks forward/backward seeks and resuming a previously clamped fall pose.
+All 236 JS tests pass, including five 10,000-tick JS/Go parity scenarios, plus Go
+tests, vet and build. The dedicated fifth scenario preserves explicit warp
+coverage after the changed tackle timing alters earlier scripted match paths.
+The local Go server was restarted with the changes at 12:15. These timings still
+need live visual review under delayed snapshots. The original stash remains as
+a backup and must not be blindly reapplied. Changes are not pushed yet.

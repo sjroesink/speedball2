@@ -32,3 +32,26 @@ test("ordinary falls and attacks whose contact was already resolved cannot count
   assert.equal(s.ball.owner,16);
  }
 });
+
+function recovering(attack=1,finishing=false,remaining=1.4) {
+ const s=initial();for(const p of s.players){p.stun=100;p.x=20;p.z=10}
+ Object.assign(s.players[7],{x:0,z:0,stun:remaining,action:4,actionTime:remaining,fallAttack:attack,fallAttackTime:.32,fallFinishing:finishing});
+ return s;
+}
+test('retained slide and completed punch enter the twenty-tick recovery tail',()=>{
+ for(const [attack,finishing] of [[1,false],[7,true]]) {
+  const s=recovering(attack,finishing),p=s.players[7];
+  for(let i=0;i<6;i++)step(s,.04,{},[true,true],{});
+  assert.ok(p.actionTime>.8);step(s,.04,{},[true,true],{});
+  assert.ok(Math.abs(p.actionTime-.8)<1e-9);assert.equal(p.fallAttack,0);
+  for(let i=0;i<20;i++)step(s,.04,{},[true,true],{});
+  assert.equal(p.stun,0);assert.notEqual(p.action,4);
+ }
+});
+test('an unresolved punch fall runs normally while a late completed contact extends recovery',()=>{
+ const ordinary=recovering(7),p=ordinary.players[7];
+ for(let i=0;i<8;i++)step(ordinary,.04,{},[true,true],{});
+ assert.ok(Math.abs(p.actionTime-1.08)<1e-9);
+ const late=recovering(7,true,.16),q=late.players[7];q.fallAttackTime=0;
+ step(late,.04,{},[true,true],{});assert.ok(Math.abs(q.actionTime-.8)<1e-9);
+});

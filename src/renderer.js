@@ -1,5 +1,5 @@
 import { addArenaLights } from "./lighting.js";
-import { playPlayerAction, startsPlayerAction, runningAnimationDelta, settleRunningPose } from "./player-animation.js";
+import { playPlayerAction, startsPlayerAction, runningAnimationDelta, settleRunningPose, syncFallRecovery } from "./player-animation.js";
 import { centeredBall } from "./ball-model.js";
 import {
   cameraExtent,
@@ -247,6 +247,10 @@ export class ArenaRenderer {
           playPlayerAction(action, visualAction, p.actionTime, p.stats?.[3] ?? 100);
           if (visualAction === 5) action.fadeIn(.12);
         }
+      }
+      if (visualAction === 4) {
+        const hit = Object.entries(actor.clips).find(([key]) => key.includes("Hit"))?.[1];
+        syncFallRecovery(hit, actor.remaining, p.actionTime);
       }
       actor.remaining = p.actionTime;
       const run = visualAction === 5

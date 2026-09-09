@@ -63,3 +63,29 @@ func TestOrdinaryFallsCannotCounter(t *testing.T) {
 		}
 	}
 }
+
+func TestRetainedFallRecoveryTail(t *testing.T) {
+	for _, attack := range []int{1, 7} {
+		s := initial()
+		for i := range s.Players {
+			s.Players[i].Stun = 100
+			s.Players[i].X = 20
+			s.Players[i].Z = 10
+		}
+		p := &s.Players[7]
+		p.X, p.Z, p.Stun, p.Action, p.ActionTime = 0, 0, 1.4, 4, 1.4
+		p.fallAttack, p.fallAttackTime, p.fallFinishing = attack, .32, attack == 7
+		for i := 0; i < 7; i++ {
+			s.simulate(.04, [2]Input{}, [2]bool{true, true})
+		}
+		if p.ActionTime != .8 || p.fallAttack != 0 {
+			t.Fatal("recovery tail", attack, p.ActionTime, p.fallAttack)
+		}
+		for i := 0; i < 20; i++ {
+			s.simulate(.04, [2]Input{}, [2]bool{true, true})
+		}
+		if p.Stun != 0 || p.Action == 4 {
+			t.Fatal("still falling", attack)
+		}
+	}
+}

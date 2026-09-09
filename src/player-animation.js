@@ -34,3 +34,12 @@ export function settleRunningPose(action) {
   action.paused = true;
   action.fadeOut(.12);
 }
+
+// A retained attack callback can jump forward or backward within the fall.
+export function syncFallRecovery(action, previousRemaining, remaining) {
+  if (!action || !Number.isFinite(previousRemaining) ||
+      Math.abs(previousRemaining - remaining) <= .12) return;
+  action.time = action.getClip().duration *
+    Math.max(0, Math.min(1, (fallDuration - remaining) / fallDuration));
+  if (remaining > 0) { action.enabled = true; action.paused = false; action.play(); }
+}

@@ -6,8 +6,8 @@ test("browser and Go stay aligned through seeded AI and scripted-input matches",
  const r=spawnSync("go",["test","./server","-run","^TestSimulationParityTrace$","-v"],{encoding:"utf8",maxBuffer:8*1024*1024});
  assert.equal(r.status,0,r.stdout+r.stderr);
  const traces=JSON.parse(r.stdout.match(/TRACE:(.+)/)[1]);
- for(let scenario=0;scenario<4;scenario++){
- const rows=traces[scenario],s=createMatch();let sample=0;const seen=new Set();
+ for(let scenario=0;scenario<5;scenario++){
+ const rows=traces[scenario],s=createMatch();if(scenario===4){s.restartPhase=0;Object.assign(s.ball,{x:206*22.4/576,z:11.2,h:.25,vx:0,vz:6,owner:-1,lastTouch:7});}let sample=0;const seen=new Set();
  for(let tick=0;tick<10000;tick++) {
   const inputs=[0,1].map(team=>{
     const p=s.players[s.controlled[team]];
@@ -28,6 +28,6 @@ test("browser and Go stay aligned through seeded AI and scripted-input matches",
  assert.equal(s.period,2);
  for(const kind of (scenario===3?[4,6,11,22,23]:[3,4,6,11,16,22,23])) assert.ok(seen.has(kind),`scenario ${scenario} missing event ${kind}`);
  if(scenario===1)for(const kind of [7,14,15])assert.ok(seen.has(kind),`scenario ${scenario} missing goal/medical event ${kind}`);
- if(scenario===3)for(const kind of [12])assert.ok(seen.has(kind),`missing warp/medical coverage ${kind}`);
+ if(scenario===4)for(const kind of [12])assert.ok(seen.has(kind),`missing warp/medical coverage ${kind}`);
  }
 });
