@@ -1,4 +1,4 @@
-import { playPlayerAction } from "./player-animation.js";
+import { playPlayerAction, startsPlayerAction } from "./player-animation.js";
 import { centeredBall } from "./ball-model.js";
 import {
   cameraExtent,
@@ -237,7 +237,7 @@ export class ArenaRenderer {
       actor.hasFacing = true;
       const moving = Math.hypot(dx, dz) > 0.045;
       const visualAction = p.action || (moving ? 5 : 0);
-      if (actor.active !== visualAction) {
+      if (startsPlayerAction(actor.active, visualAction, actor.remaining, p.actionTime, p.health > 0)) {
         actor.mixer.stopAllAction();
         actor.model.position.set(0, 0, 0);
         actor.model.rotation.set(0, 0, 0);
@@ -259,6 +259,7 @@ export class ArenaRenderer {
           playPlayerAction(action, visualAction, p.actionTime, p.stats?.[3] ?? 100);
         }
       }
+      actor.remaining = p.actionTime;
       actor.mixer.update(dt);
       o.visible = p.health > 0 || p.action === 4 || p.injury > 1;
       actor.model.rotation.x = p.health <= 0 ? Math.PI / 2 : 0;

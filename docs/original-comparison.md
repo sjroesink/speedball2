@@ -1683,3 +1683,22 @@ unknown attribution and a scoring multiplier. Points still go to the team
 attacking that goal, including for own goals. No wire layout or audio changes
 are required. Original goal-scorer statistics and end-of-match player ratings
 are separate features, not implemented by this notification change.
+
+
+### Repeated actions across omitted idle snapshots (2026-09-09)
+
+The renderer previously restarted a clip only when the action kind changed.
+If an idle snapshot between two tackles was omitted, the second tackle could
+retain a finished first clip. A newly increased remaining action time now
+restarts Slide, Jump, Throw, Catch or Punch even if the kind is unchanged.
+A 15 ms margin ignores tiny rounding differences; the wire timer itself has
+1 ms precision. Repeated/decreasing timers, looping Run and medical Hit holds
+do not trigger this path. Player speed attributes were confirmed present in
+the decoded snapshot, so sustain timing does not need a protocol change.
+
+An actual-GLB test finishes a tackle, skips its idle state and introduces a
+second tackle snapshot; playback resumes near the start of the new clip.
+Other tests cover unchanged snapshots, rounding and medical holds. This
+handles an observed timer increase, not arbitrary complete actions lost during
+long outages or cases where a new action arrives with a lower timer.
+Validation: 212 JavaScript tests and production build pass.

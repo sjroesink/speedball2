@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { AnimationMixer, Vector3 } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { playPlayerAction } from "./player-animation.js";
+import { playPlayerAction, startsPlayerAction } from "./player-animation.js";
 
 async function player(team = "cyan") {
   const bytes = await readFile(new URL(`../public/assets/player-${team}.glb`, import.meta.url));
@@ -100,4 +100,28 @@ test("fall animation remains active through recovery and seeks late snapshots", 
   assert.ok(Math.abs(action.time/clip.duration-30/35)<1e-6);
   mixer.update(5/25+1e-8);
   assert.equal(action.isRunning(),false);
+});
+
+test("a repeated tackle restarts its clip when the idle snapshot was omitted", async () => {
+  const model=await player(), mixer=new AnimationMixer(model.scene);
+  const clip=model.animations.find(c=>c.name.includes("Slide")), action=mixer.clipAction(clip);
+  playPlayerAction(action,1,.04,170);
+  mixer.update(.04+1e-8);
+  assert.equal(action.isRunning(),false);
+  assert.equal(startsPlayerAction(1,1,.04,.36),true);
+  playPlayerAction(action,1,.36,170);
+  assert.ok(action.isRunning());
+  assert.ok(Math.abs(action.time/clip.duration-.1)<1e-6,"new tackle starts near the beginning");
+});
+
+test("snapshot repetition, timer rounding and medical holds do not restart clips",()=>{
+ for(const kind of [1,2,3,6,7]) {
+  assert.equal(startsPlayerAction(kind,kind,.2,.2),false);
+  assert.equal(startsPlayerAction(kind,kind,.2,.16),false);
+  assert.equal(startsPlayerAction(kind,kind,.2,.21),false);
+  assert.equal(startsPlayerAction(kind,kind,.04,.3),true);
+ }
+ assert.equal(startsPlayerAction(4,4,.04,1,false),false);
+ assert.equal(startsPlayerAction(5,5,0,.4),false);
+ assert.equal(startsPlayerAction(1,0,.04,0),true);
 });

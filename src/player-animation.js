@@ -16,3 +16,10 @@ export function playPlayerAction(action, kind, remaining = 0, speed = 100) {
   }
   action.play();
 }
+
+// An idle snapshot can be omitted between two actions of the same kind.
+export function startsPlayerAction(previousKind, kind, previousRemaining, remaining, healthy = true) {
+  if (previousKind !== kind) return true;
+  return healthy && [1, 2, 3, 6, 7].includes(kind) &&
+    Number.isFinite(previousRemaining) && remaining > previousRemaining + .015;
+}
