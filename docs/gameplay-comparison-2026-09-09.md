@@ -297,22 +297,23 @@ This local transport run does not establish WAN behavior or exercise a midair
 stat change; dedicated simulation, wire and exported-clip tests cover that case.
 Final full JS suite: 277 passed. Go tests and go vet also pass.
 
-### Correct unsigned stationary-keeper pursuit branch
+### Stationary-keeper comparison audit and correction of the audit
 
-The selected keeper's stationary-target decision was inverted in both hosts.
-At 0xfd46..0xfd4a the original loads aggression and halves it. CMP.B D0,
-(0x43,A5) at 0xfd4c compares the stored random byte against that half; BLS at
-0xfd50 branches to normal positioning when random <= half-aggression. Direct
-stationary pursuit at 0xfd54 therefore requires random > half-aggression.
-The previous code required random < half-aggression. This supersedes the older
-stationary pursuit description in original-comparison.md around line 710.
+Commit 3e7c9db incorrectly reversed a previously correct keeper comparison.
+The follow-up opcode audit found that 0xfd4c contains B0 2D 00 43, decoded as
+CMP.B (0x43,A5),D0: D0 is the destination, not the random byte in memory.
+D0 contains half-aggression. BLS at 0xfd50 therefore takes ordinary positioning
+when half-aggression <= random; stationary pursuit requires random < half.
+The erroneous reversal has been removed from both hosts. The older description
+in original-comparison.md around line 710 was correct and remains applicable.
 
-At aggression 100, the corrected branch pursues for decision bytes 51..255,
-retaining ordinary positioning for 0..50. Previously it pursued for 0..49.
-Reach-triggered attacks still take precedence; moving targets still fall back
-to normal positioning outside attack reach. Browser and Go now agree with the
-unsigned source branch. Regressions enumerate all 256 bytes for aggression
-100/101/200/250, both teams and both halves, with an additional moving-target
-check. Existing reach, equality and simulation initiation tests also pass.
-Full validation: 278 JS tests, Go tests, go vet and production build pass.
-This establishes this branch, not exhaustive keeper or match fidelity.
+At aggression 100, pursuit occurs for bytes 0..49; 50..255 retain ordinary
+positioning. The audit's initial passing tests had repeated its wrong operand
+order, so they did not establish source fidelity. Corrected regressions record
+the exact opcode and destination explicitly, enumerate all 256 bytes at
+aggression 100/101/200/250 for both teams and halves, and verify that moving
+balls do not trigger stationary pursuit even with a qualifying decision byte.
+The neighboring field-player comparisons at 0xeed0 and 0xeeec use the same
+operand order; their existing strict half-aggression > random tests agree.
+
+Validation after restoring the correct branch: 278 JS tests, Go tests, go vet and production build pass.

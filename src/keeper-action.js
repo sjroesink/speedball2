@@ -29,7 +29,7 @@ export function keeperAction(s, i, distance, random) {
     x += dx * 2 ** shift;
     y += dy * 2 ** shift;
   } else {
-    if (vx || vz || random <= Math.floor(p.stats[0] / 2)) return null;
+    if (vx || vz || Math.floor(p.stats[0] / 2) <= random) return null;
     x = Math.max(160, Math.min(480, x));
     y = Math.max(ymin, Math.min(ymax, y));
   }

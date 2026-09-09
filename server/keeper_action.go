@@ -37,7 +37,7 @@ func (s *State) keeperAction(i, distance, random int) (*interaction, float64, fl
 		x += dx * (1 << shift)
 		y += dy * (1 << shift)
 	} else {
-		if vx != 0 || vz != 0 || random <= p.Stats[0]/2 {
+		if vx != 0 || vz != 0 || p.Stats[0]/2 <= random {
 			return nil, 0, 0
 		}
 		x = max(160, min(480, x))
