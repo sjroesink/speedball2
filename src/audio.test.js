@@ -188,3 +188,21 @@ test("medical whistle waits through evacuation, formation and launcher", () => {
   a.observe(s, true);
   assert.deepEqual(heard, ["kickoff"]);
 });
+
+test("collision storms preserve whistles and medical announcements within the voice limit", async () => {
+  const audio = new ArenaAudio(() => context());
+  await audio.enable(true);
+  audio.setActive(true);
+  audio.play("fulltime");
+  audio.play(14);
+  const announcements = [...audio.voices];
+  for (let i = 0; i < 50; i++) audio.play(i % 2 ? 4 : 5);
+  assert.equal(audio.voices.size, 32);
+  for (const voice of announcements) assert.ok(audio.voices.has(voice));
+  audio.stop();
+  assert.equal(audio.voices.size, 0);
+  for (let i = 0; i < 32; i++) audio.play("kickoff");
+  const voices = [...audio.voices];
+  audio.play(5);
+  assert.deepEqual([...audio.voices], voices);
+});

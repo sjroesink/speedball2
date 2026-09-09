@@ -1,3 +1,4 @@
+import { notificationPriority } from "./events.js";
 // Original synthesized effects: no samples from the commercial game are used.
 const terrainUnit = 22.4 / 576;
 const arenaCues = new Set([6, 7, 14, 15]);
@@ -37,12 +38,19 @@ export const cues = {
     ["sine", 380, 120, 0.08, 0.1, 0],
   ],
   4: [
-    ["noise", 900, 120, 0.25, 0.24, 0],
-    ["sine", 130, 38, 0.22, 0.3, 0],
+    ["noise", 900, 120, 0.25, 0.2, 0],
+    ["sine", 130, 38, 0.22, 0.26, 0],
+    // Brief armor rattle over the low body impact.
+    ["noise", 3400, 1500, 0.045, 0.07, 0.008],
+    ["sine", 720, 690, 0.08, 0.035, 0.01],
   ],
   5: [
-    ["triangle", 1350, 650, 0.15, 0.15, 0],
-    ["sine", 2130, 1700, 0.09, 0.06, 0],
+    // Inharmonic resonances distinguish steel contact from body impact.
+    ["noise", 4200, 2400, 0.025, 0.07, 0],
+    ["sine", 950, 950, 0.18, 0.11, 0],
+    ["sine", 1430, 1430, 0.13, 0.06, 0],
+    ["sine", 2130, 2130, 0.09, 0.035, 0],
+    ["sine", 2981, 2981, 0.065, 0.02, 0],
   ],
   6: [
     ["sine", 1800, 1770, 0.24, 0.1, 0],
@@ -173,9 +181,17 @@ export class ArenaAudio {
   play(kind, pan = 0) {
     const c = this.context;
     if (!this.enabled || !this.active || !c || c.state !== "running") return;
+    const priority =
+      typeof kind === "string" ? 3 : Math.max(0, notificationPriority(kind));
     for (const layer of cues[kind] ?? []) {
-      // Bound polyphony during collisions and rapid repeated score contacts.
-      if (this.voices.size >= 32) this.voices.values().next().value.stop();
+      // Keep whistles and match announcements audible through dense collisions.
+      if (this.voices.size >= 32) {
+        let victim;
+        for (const voice of this.voices)
+          if (!victim || voice.priority < victim.priority) victim = voice;
+        if (victim.priority > priority) continue;
+        victim.stop();
+      }
       const [wave, from, to, duration, volume, delay] = layer;
       const start = c.currentTime + delay;
       const source =
@@ -212,6 +228,7 @@ export class ArenaAudio {
         this.voices.delete(voice);
       };
       const voice = {
+        priority,
         stop: () => {
           if (stopped) return;
           stopped = true;
