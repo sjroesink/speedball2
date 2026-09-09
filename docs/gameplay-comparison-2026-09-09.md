@@ -368,3 +368,20 @@ it does not prove full-match animation timing or waiting-time progression.
 Existing lifecycle unit coverage and source helper review support the stat
 and drop behavior. Power/equipment interaction across every ordering remains
 part of the broader fidelity audit.
+
+### Equipment acquired during temporary attribute powers
+
+Added a 64-case lifecycle matrix in each simulation: all eight equipment
+attributes, powers 3/4/5/6, and expiry before versus after impact. Each case
+uses the real pickup/damage handlers with underlying attributes 173 rather
+than default 100, so a hard-coded reset cannot pass unnoticed. The held
+attribute remains 250 at expiry; impact restores the active power value or
+underlying value as appropriate; final expiry clears the backup and restores
+173. All matrix cases pass in JS and Go without a production change.
+
+This checks the acquisition-under-power path reflected by WIP Entity.cs
+EquipEquipment_Helper and Player.cs UnequipEquipment_Helper, plus current
+host restoration. It does not cover every permutation: power acquired after
+already holding equipment and repeated power replacement still need separate
+source-level assessment. The targeted JS test and Go test pass; production
+code is unchanged, so the prior full-suite/build result remains applicable.
