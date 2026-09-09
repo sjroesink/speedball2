@@ -9,9 +9,12 @@ type interaction struct {
 
 func (s *State) localInteraction(i int, distances *[18]int, random int) *interaction {
 	p := &s.Players[i]
+	if !s.worldInViewport(p.X, p.Z, 0) {
+		return nil
+	}
 	const unit = 22.4 / 576
 	for j, q := range s.Players {
-		if q.Team == p.Team || q.Stun > 0 || q.Health <= 0 || distances[j] > 30 {
+		if q.Team == p.Team || q.Stun > 0 || q.Health <= 0 || distances[j] > 30 || !s.worldInViewport(q.X, q.Z, 0) {
 			continue
 		}
 		attack := s.Ball.Owner != i && (i%9 == 0 || s.Ball.Owner == j || p.Stats[0] > random)

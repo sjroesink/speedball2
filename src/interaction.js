@@ -1,11 +1,19 @@
 import { predictedTarget } from "./steering.js";
+import { worldInViewport } from "./visibility.js";
 const unit = 22.4 / 576;
 // sub_E854: first nearby opponent decides attack or avoidance.
 export function localInteraction(s, i, distances, random) {
   const p = s.players[i];
+  if (!worldInViewport(s, p)) return null;
   for (let j = 0; j < s.players.length; j++) {
     const q = s.players[j];
-    if (q.team === p.team || q.stun > 0 || q.health <= 0 || distances[j] > 30)
+    if (
+      q.team === p.team ||
+      q.stun > 0 ||
+      q.health <= 0 ||
+      distances[j] > 30 ||
+      !worldInViewport(s, q)
+    )
       continue;
     const attack =
       s.ball.owner !== i &&

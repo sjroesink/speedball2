@@ -662,3 +662,10 @@ Both simulations now retain the original logical viewport, initialized at terrai
 Selected pursuit now checks visible, active pickups in original order: token 1, token 2, equipment, coins 1–4 (current slots 0,1,6,2,3,4,5). Coincident candidates are excluded because the original empty blocked-direction masks reject zero direction. The first eligible candidate is used only when its distance to the ball is no greater than the player ball distance; failure does not retry lower-priority pickups. Offscreen selected field players follow the ball without attacking or seeking pickups. Pickup placement/respawn and per-sprite origin offsets remain separate fidelity gaps.
 
 Tests cover viewport dead zone, scroll cap, limits, inclusive visibility boundaries, pickup priority, offscreen rejection and first-candidate distance failure. All 136 JavaScript tests, Go tests, Go vet and the production build pass.
+
+
+### Visibility of local AI interactions
+
+WIP `sub_E854` exits for an offscreen actor and skips offscreen opponents before choosing attack or avoidance. Both simulations now apply those checks through the retained logical viewport. The full inclusive viewport is used, not the 16-unit inset used by selected-player pursuit. Tests place actor and opponent on either side of the boundary and then scroll the viewport to reveal them. All 137 JavaScript tests, Go tests, Go vet and the production build pass.
+
+This ports eligibility for local AI decisions only. Hit resolution, movement collision and human-to-AI control handoff still need their own original visibility checks. The renderer continues to show a wider 3D view, so logical visibility does not equal browser clipping.

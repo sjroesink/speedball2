@@ -2,6 +2,32 @@ package main
 
 import "testing"
 
+func TestLocalInteractionVisibility(t *testing.T) {
+	const u = 22.4 / 576
+	s := interactionSetup()
+	var d [18]int
+	for i := range d {
+		d[i] = 100
+	}
+	d[9] = 20
+	s.Players[1].X, s.Players[9].X = 91*u, 93*u
+	if s.localInteraction(1, &d, 0) != nil {
+		t.Fatal("offscreen opponent")
+	}
+	s.Players[9].X = 92 * u
+	if a := s.localInteraction(1, &d, 0); a == nil || !a.attack {
+		t.Fatal("inclusive edge")
+	}
+	s.Players[1].X = 93 * u
+	if s.localInteraction(1, &d, 0) != nil {
+		t.Fatal("offscreen actor")
+	}
+	s.logicalView = [2]int{160, 480}
+	if a := s.localInteraction(1, &d, 0); a == nil || !a.attack {
+		t.Fatal("scroll did not reveal actor")
+	}
+}
+
 func TestSelectedInteractionPrediction(t *testing.T) {
 	s := interactionSetup()
 	var d [18]int

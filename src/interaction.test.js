@@ -2,6 +2,22 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { initial, step } from "./game.js";
 import { localInteraction } from "./interaction.js";
+
+test("local AI excludes either offscreen participant but accepts the viewport edge", () => {
+  const s = setup(),
+    d = Array(18).fill(100),
+    u = 22.4 / 576;
+  d[9] = 20;
+  s.players[1].x = 91 * u;
+  s.players[9].x = 93 * u;
+  assert.equal(localInteraction(s, 1, d, 0), null);
+  s.players[9].x = 92 * u;
+  assert.equal(localInteraction(s, 1, d, 0).attack, true);
+  s.players[1].x = 93 * u;
+  assert.equal(localInteraction(s, 1, d, 0), null);
+  s.logicalView = [160, 480];
+  assert.equal(localInteraction(s, 1, d, 0).attack, true);
+});
 function setup() {
   const s = initial();
   for (const p of s.players) p.stun = 100;
