@@ -90,3 +90,27 @@ func TestOriginalTackleMeasurements(t *testing.T) {
 		}
 	}
 }
+
+func TestOriginalDamageMeasurements(t *testing.T) {
+	for _, r := range originalMeasurements(t, "original-damage", "power,stamina,energy,base,remaining,agr,att,def,spd,thr,pow,sta,int", 1536, 4) {
+		s := initial()
+		p, q := &s.Players[7], &s.Players[16]
+		p.Stats[5] = r[0]
+		for a := range q.Stats {
+			q.Stats[a] = r[3]
+		}
+		q.Stats[6] = r[1]
+		q.Health = float64(r[2]) * 100 / 128
+		if !s.damage(7, 16) {
+			t.Fatal("missing damage")
+		}
+		if math.Abs(q.Health-float64(r[4])*100/128) > 1e-9 {
+			t.Fatalf("input %v: energy mismatch %v", r[:4], q.Health)
+		}
+		for a, v := range q.Stats {
+			if v != r[5+a] {
+				t.Fatalf("input %v: stat %d got %d original %d", r[:4], a, v, r[5+a])
+			}
+		}
+	}
+}

@@ -129,3 +129,24 @@ The Go reader rejects malformed counts/headers, duplicate inputs and noninteger
 cells. Regeneration still requires the local original reference and emulator;
 these tests do not themselves rerun the Amiga code. All four Go comparisons
 pass. No server/client production logic changed in this integration.
+
+## Damage and attribute deterioration
+
+`CompareOriginalDamage.java` executes 0x1061a..0x10668, stopping before the
+separate equipment-drop callback. It reads the victim's energy and all eight
+attributes from emulated memory after execution. A 128-instruction bound
+applies to every case. The 1,536 cases combine eight power and stamina values,
+six starting energies (1/8/16/64/127/128), and four underlying attribute values
+(100/101/173/250), covering minimum loss, depletion and attribute-floor clamps.
+
+```text
+node tools/compare-original-damage.mjs docs/original-damage.csv
+```
+
+The comparator invokes the production JS damage handler on an unequipped
+victim and converts original energy units to the remake's percentage display.
+Result: zero differences. Go checks the same corpus through its damage handler.
+Both are included in normal tests, increasing reference cases per host to
+21,660. Equipment dropping, shields, fall animation and injury/substitution
+scheduling are outside the executed original range and remain separate checks.
+No production change was necessary for these measured cases.
