@@ -1,0 +1,18 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Speedball ball presentation</title>
+<style>body{margin:0;background:#101820;color:white;font:14px system-ui}nav{padding:10px;display:flex;gap:15px;align-items:center}button{padding:10px}#stage{height:85vh}</style>
+<nav><strong>Ball presentation</strong><button id="warp" disabled>Check warp transition</button><output>Loading</output></nav><div id="stage"></div>
+<script type="module">
+import {ArenaRenderer} from '/src/renderer.js';import {createMatch} from '/src/game.js';import {sideFeature} from '/src/features.js';
+const s=createMatch({training:true}),view=new ArenaRenderer(document.querySelector('#stage')),status=document.querySelector('output');
+await view.load();view.setFollow(true);view.resize();let frozen=false;
+Object.assign(s.ball,{owner:-1,lastTouch:7,x:206*22.4/576,z:10,h:.25,vx:0,vz:6,flightKind:0});
+view.draw(s,.04,0);for(let n=0;n<10;n++){s.ball.z+=.1;view.draw(s,1/60,0)}
+document.querySelector('button').disabled=false;status.textContent='Approaching the low-ball warp gate';
+document.querySelector('button').onclick=()=>{
+ s.ball.z=11.3;const warped=sideFeature(s);view.draw(s,1/60,0);
+ const error=Math.hypot(view.ball.position.x-s.ball.x,view.ball.position.y-s.ball.h,view.ball.position.z-s.ball.z);
+ status.textContent=`Warp ${warped?'PASS':'FAIL'} | Rendered position error ${error.toFixed(6)} | Trail points after warp ${view.trailPositions.length} | Expected one fresh point`;
+ frozen=true;document.querySelector('button').disabled=true;
+};
+let last=performance.now();function draw(now){view.draw(s,frozen?0:Math.min(.05,(now-last)/1000),0);last=now;requestAnimationFrame(draw)}requestAnimationFrame(draw);
+</script></html>

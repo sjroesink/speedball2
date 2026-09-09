@@ -2336,3 +2336,16 @@ sample positions. Additional checks cover clearing on possession, a position
 jump above five world units, a frame gap above 250 ms, and zero elapsed time.
 Both targeted tests and production build pass. These checks establish sampling
 behavior, not a claim of constant measured browser FPS or final visual approval.
+
+
+### Rendered warp and trail transition
+
+Added tools/ball-presentation-playtest.html as a reproducible browser fixture.
+It builds a trail approaching the real low-ball warp boundary, invokes the
+production sideFeature handler and draws the result with ArenaRenderer. The
+browser check reports Warp PASS, rendered position error 0.000000 and exactly
+one fresh trail point. Thus the existing large-distance snap and the new trail
+reset cooperate without interpolating a visible trail across the court.
+The fixture freezes on the exit transition itself, where wall geometry can
+occlude the ball; this is position/trail verification, not a complete moving
+warp visibility review. High-throw presentation still needs separate review.
