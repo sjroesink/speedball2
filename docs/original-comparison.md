@@ -1889,3 +1889,31 @@ Production build and diff checks pass. Visually inspected the final scene in a
 3456x1408 training match, including the airborne ball/shadow, players, floor
 fasteners and a score dome. Surface wear, stadium dressing and wider lighting
 coverage still need further art work; this is not final visual acceptance.
+
+### Graphics-first direction and higher match overview
+
+The user asked to prioritize graphic direction and supplied a screenshot with a
+more distant, higher camera. Match coverage now has a minimum half-height of
+7.5 and half-width of 13.5 world units. The follow camera looks down from a
+32-unit rise with a 12-unit setback (previously 18), while retaining ball tracking
+and edge clamping. Portrait views center when the whole court fits; widescreen
+views show additional surrounding space. Camera tests cover the new minimum
+coverage across portrait, landscape and ultrawide aspect ratios.
+
+The current art study uses neutral warm stadium light, subdued green-gray steel,
+ivory markings and satin metal goal frames. Blue/red light is confined near the
+goals, with reduced intensity/range. Shared `src/lighting.js` keeps the game and
+`tools/art-direction.html` study consistent. The local study provides orbitable
+player and court views, palette notes and an explicit work-in-progress label.
+It is a Vite development page, not a separately published production route.
+
+Inspected the zoomed-out game at 3456x1408 and the interactive art study in the
+browser. All five camera/presentation tests and production build pass. The final
+arena export includes thin goal-apron stripes that are excluded from the goal
+floor alignment rule so they do not expand into a full colored floor panel.
+
+Gameplay recovery work is deferred in Git stash
+`WIP fall recovery timing - deferred for graphics direction` at the user's
+request. Do not resume it ahead of the visual direction work. The art remains a
+prototype: character anatomy, material wear, stadium dressing and user visual
+acceptance are still outstanding.

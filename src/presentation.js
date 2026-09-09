@@ -1,8 +1,6 @@
-const unit = 22.4 / 576;
-
-// Preserve useful court coverage while filling portrait and wide displays.
+// Show the court width and nearby formations from a higher match overview.
 export function cameraExtent(aspect) {
-  const halfHeight = Math.max(92 * unit, (160 * unit) / aspect);
+  const halfHeight = Math.max(7.5, 13.5 / aspect);
   return { halfWidth: halfHeight * aspect, halfHeight };
 }
 

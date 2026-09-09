@@ -10,12 +10,12 @@ def mat(name,color,metal=0,glow=0):
  p=m.node_tree.nodes.get('Principled BSDF'); p.inputs['Base Color'].default_value=(*color,1); p.inputs['Metallic'].default_value=metal; p.inputs['Roughness'].default_value=.36
  if glow: p.inputs['Emission Color'].default_value=(*color,1); p.inputs['Emission Strength'].default_value=glow
  return m
-steel=mat('Graphite titanium',(.075,.105,.14),.8)
-floor=mat('Arena brushed steel',(.20,.28,.30),.45)
+steel=mat('Graphite titanium',(.06,.075,.07),.75)
+floor=mat('Arena brushed steel',(.15,.19,.175),.45)
 floor.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value=.65
 fastener=mat('Recessed steel fasteners',(.19,.23,.24),.60)
 fastener.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value=.60
-line=mat('Pitch markings',(.38,.56,.56),.3)
+line=mat('Pitch markings',(.50,.53,.44),.1)
 cyan=mat('Cobalt enamel',(.035,.20,.58),.45,.08)
 orange=mat('Vermilion enamel',(.65,.065,.035),.45,.08)
 white=mat('Chrome',(.72,.80,.84),.65,.15)
@@ -196,9 +196,10 @@ for y in [-8.6,8.6]:
 for x in [-14.2,14.2]:
  for y in [-5,5]: cube('End wall',(x,y,.5),(.5,7.3,1),steel)
  c=cyan if x<0 else orange
- cube('Goal floor',(x,0,.1),(1.4,2.7,.12),c)
- for y in [-1.35,1.35]: cube('Goal upright',(x,y,1.05),(.2,.2,2.1),c)
- cube('Goal crossbar',(x,0,2.05),(.2,2.9,.2),c)
+ cube('Goal floor',(x,0,.1),(1.4,2.7,.12),steel)
+ for y in [-1.15,1.15]: cube('Goal apron stripe',(x,y,.17),(1.1,.10,.02),c,.005)
+ for y in [-1.35,1.35]: cube('Goal upright',(x,y,1.05),(.2,.2,2.1),armor)
+ cube('Goal crossbar',(x,0,2.05),(.2,2.9,.2),armor)
  for y in [-7,-5,5,7]: cube('End rail',(x,y,1),(.08,1.5,.06),c)
 cube('Halfway line',(0,0,.074),(.065,16,.012),line,0)
 for y in [-8,8]: cube('Touchline',(0,y,.075),(27,.05,.012),line,0)

@@ -11,10 +11,10 @@ test("camera fills portrait, landscape and ultrawide viewports without shrinking
   for (const aspect of [9 / 16, 1, 16 / 9, 21 / 9, 32 / 9]) {
     const extent = cameraExtent(aspect);
     assert.ok(Math.abs(extent.halfWidth / extent.halfHeight - aspect) < 1e-12);
-    assert.ok(extent.halfWidth >= (160 * 22.4) / 576 - 1e-12);
-    assert.ok(extent.halfHeight >= (92 * 22.4) / 576 - 1e-12);
+    assert.ok(extent.halfWidth >= 13.5 - 1e-12);
+    assert.ok(extent.halfHeight >= 7.5 - 1e-12);
     const target = cameraTarget(100, -100, extent);
-    assert.ok(target.x + extent.halfHeight <= 23.2 + 1e-12);
+    assert.ok(target.x + extent.halfHeight <= Math.max(23.2, extent.halfHeight) + 1e-12);
     assert.ok(
       target.z - extent.halfWidth >= -Math.max(12, extent.halfWidth) - 1e-12,
     );

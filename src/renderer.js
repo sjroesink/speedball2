@@ -1,3 +1,4 @@
+import { addArenaLights } from "./lighting.js";
 import { playPlayerAction, startsPlayerAction } from "./player-animation.js";
 import { centeredBall } from "./ball-model.js";
 import {
@@ -35,30 +36,7 @@ export class ArenaRenderer {
     this.follow = false;
     this.renderViewport = [0, 0, 1, 1];
     this.extent = cameraExtent(1);
-    this.scene.add(new THREE.HemisphereLight(0xbcddff, 0x233341, 2.4));
-    const l = new THREE.DirectionalLight(0xd5edff, 2.6);
-    l.position.set(-10, 30, 5);
-    l.castShadow = true;
-    l.shadow.mapSize.set(2048, 2048);
-    // Offset shadow lookups slightly above the surface to prevent self-shadow
-    // striping on the broad metal floor and armor plates.
-    l.shadow.normalBias = 0.025;
-    l.shadow.bias = -0.0001;
-    Object.assign(l.shadow.camera, {
-      left: -27,
-      right: 27,
-      top: 27,
-      bottom: -27,
-    });
-    this.scene.add(l);
-    for (const [x, color] of [
-      [-19, 0x00cfff],
-      [19, 0xff4b1b],
-    ]) {
-      const p = new THREE.PointLight(color, 45, 16);
-      p.position.set(x, 3, 0);
-      this.scene.add(p);
-    }
+    addArenaLights(this.scene);
     this.marker = new THREE.Mesh(
       new THREE.RingGeometry(0.68, 0.82, 40),
       new THREE.MeshBasicMaterial({ color: 0xb0f16c, side: THREE.DoubleSide }),
@@ -193,7 +171,7 @@ export class ArenaRenderer {
     // Tilt expands the ground footprint; retain square pixels and clamp that footprint.
     this.groundExtent = {
       ...this.extent,
-      halfHeight: (this.extent.halfHeight * Math.hypot(32, 18)) / 32,
+      halfHeight: (this.extent.halfHeight * Math.hypot(32, 12)) / 32,
     };
     this.camera.bottom = -this.camera.top;
     this.renderViewport = [0, 0, w, h];
@@ -468,7 +446,7 @@ export class ArenaRenderer {
         halfWidth: this.extent.halfWidth,
       };
       this.camera.up.set(1, 0, 0);
-      this.camera.position.set(this.focus.x - 18, 32, this.focus.z);
+      this.camera.position.set(this.focus.x - 12, 32, this.focus.z);
       this.camera.lookAt(this.focus.x, 0, this.focus.z);
     } else {
       this.camera.up.set(0, 1, 0);
