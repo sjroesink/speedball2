@@ -2367,3 +2367,21 @@ The warp exit review at 200 ms placed the ball at (8.01,-9.64), with ten trail
 points and zero offscreen frames; the screenshot showed the ball visibly back
 inside the court by the left gate. This resolves the earlier exit-only fixture's
 occlusion ambiguity for that sampled time, not every possible warp/camera state.
+
+
+### Actual AI match audio render
+
+Added tools/audio-match-playtest.html. It runs thirty seconds of createMatch /
+step with both teams controlled by AI and feeds events to production ArenaAudio.
+OfflineAudioContext suspension advances the actual audio clock between simulation
+ticks, retaining the real voice lifecycle, stereo graph and compressor. Two
+seconds of tail are rendered after simulation ends. A WAV player allows review.
+
+Browser output: PASS, peak 0.3235, RMS 0.01292, maximum 16 active voices and zero
+remaining voices. Observed events included 33 slides, 28 tackle contacts, 13
+hits, 19 throw onsets, 16 releases, 16 catches, two bonus scores, two multiplier
+changes, two pickups and one electrical event. The different onset/release
+counts are possible when throws are interrupted or remain pending at the end.
+This trace contained no goals, injuries or substitutions, so it does not prove
+balance during those sequences. Offline rendering establishes finite unclipped
+output and voice cleanup; subjective listening/mix approval remains pending.
