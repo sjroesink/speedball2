@@ -902,3 +902,34 @@ render frame rate. In particular the current strict viewport letterboxing and
 visibility-dependent human-control handoff need reconsidering for the updated
 objective. This checkpoint changes injury semantics, not those presentation
 constraints, and does not claim they are already resolved.
+
+
+### Modern viewport, rendering and control
+
+Removed the renderer's fixed 320:184 letterbox. The orthographic camera now
+fills the browser's actual aspect ratio while preserving minimum useful
+court coverage, and follows the displayed ball with smooth bounds at the
+arena edges. Players, jumping, free-ball display and camera use exponential
+real-time damping rather than frame-dependent linear gains. Carried-ball,
+selection-marker and aim positions follow the displayed player. The pixel
+ratio cap is now 2 for sharper rendering. These changes modernize presentation;
+they do not change the reference durations in authoritative simulation.
+
+Human input no longer hands control to the AI outside the old inset screen.
+Tackle resolution and player collision compensation no longer depend on the
+old viewport, so physically adjacent players interact regardless of display
+coverage. Removed the obsolete viewport argument from collision processing.
+The AI's existing tactical perception branches still use their logical view;
+this checkpoint does not claim every AI visibility rule has been redesigned.
+Audio action panning receives the displayed camera center and half-width,
+keeping it aligned as the camera moves or the screen aspect changes.
+
+Validation: 168 JavaScript tests, Go tests/vet and production build pass.
+Updated regressions cover human movement and immediate contact outside the
+old window. Presentation tests cover portrait through ultrawide aspect ratios,
+arena bounds, camera-relative stereo and equivalent damping at 30/60/144 FPS.
+These numerical checks do not measure actual GPU frame rate. Browser training
+rendered successfully; its canvas bounds and drawing buffer were both exactly
+3456x1408 at (0,0), matching the current viewport without letterboxing. The
+server was restarted with the gameplay changes. Graphics/animation refinement,
+complete medical transport and audio listening comparison remain outstanding.

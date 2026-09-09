@@ -234,7 +234,7 @@ export async function start() {
         state = msg.state;
         team = msg.team;
         playing = msg.started && !state.over;
-        audio.observe(state, playing);
+        audio.observe(state, playing, view.audioView);
         $("homeName").textContent = msg.names[0];
         $("awayName").textContent = msg.names[1];
         $("roomShare").classList.remove("hidden");
@@ -273,11 +273,11 @@ export async function start() {
       acc += dt;
       while (acc >= simulationStep) {
         step(state, simulationStep, input());
-        audio.observe(state, true);
+        audio.observe(state, true, view.audioView);
         acc -= simulationStep;
       }
     }
-    audio.observe(state, playing);
+    audio.observe(state, playing, view.audioView);
     view.draw(state, dt, team);
     const p = state.players[state.controlled[team]],
       owned = state.ball.owner === state.controlled[team];

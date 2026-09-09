@@ -58,7 +58,7 @@ func TestPunchFallVelocity(t *testing.T) {
 	}
 }
 
-func TestHitVisibility(t *testing.T) {
+func TestHitIndependentOfViewport(t *testing.T) {
 	const u = 22.4 / 576
 	for _, actorOutside := range []bool{false, true} {
 		s := punchSetup()
@@ -71,12 +71,8 @@ func TestHitVisibility(t *testing.T) {
 		}
 		s.Ball.Owner = 16
 		s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
-		if s.Ball.Owner != 16 || p.tackleResolved || s.RNG != [2]uint32{} {
-			t.Fatal("offscreen hit consumed attempt")
-		}
-		s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
 		if s.Ball.Owner != 7 || !p.tackleResolved {
-			t.Fatal("visible hit missing")
+			t.Fatal("offscreen hit missing")
 		}
 	}
 }

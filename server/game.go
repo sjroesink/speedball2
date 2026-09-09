@@ -343,13 +343,13 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			p.moveX, p.moveZ = 0, 0
 			if p.Action == 4 && p.Health > 0 {
 				p.moveX, p.moveZ = p.fallX, p.fallZ
-				blockPlayerMovement(&s.Players, i, &contacts[i], dt, s.logicalView)
+				blockPlayerMovement(&s.Players, i, &contacts[i], dt)
 			}
 			continue
 		}
 		s.resolveTackle(i, &contacts[i])
 		t := p.Team
-		human := humans[t] && s.Controlled[t] == i && s.worldInViewport(p.X, p.Z, 16)
+		human := humans[t] && s.Controlled[t] == i
 		u := inputs[t]
 		dx, dz := u.X, u.Z
 		if human && s.active(2, 1-t) {
@@ -567,7 +567,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			speed = 0
 		}
 		p.moveX, p.moveZ = dx*speed, dz*speed
-		blockPlayerMovement(&s.Players, i, &contacts[i], dt, s.logicalView)
+		blockPlayerMovement(&s.Players, i, &contacts[i], dt)
 	}
 	// Original movement follows the complete player-thinking pass.
 	for i := range s.Players {
@@ -728,12 +728,12 @@ func (s *State) catchBallAt(only int, distances *[18]int) {
 // Existing slides resolve contact during thinking, before later players act.
 func (s *State) resolveTackle(i int, distances *[18]int) {
 	p := &s.Players[i]
-	if (p.Action != 1 && p.Action != 7) || p.tackleResolved || !s.worldInViewport(p.X, p.Z, 0) {
+	if (p.Action != 1 && p.Action != 7) || p.tackleResolved {
 		return
 	}
 	for j := range s.Players {
 		q := &s.Players[j]
-		if q.Team == p.Team || q.Stun > 0 || q.Health <= 0 || s.active(10, q.Team) || distances[j] > 30 || !s.worldInViewport(q.X, q.Z, 0) {
+		if q.Team == p.Team || q.Stun > 0 || q.Health <= 0 || s.active(10, q.Team) || distances[j] > 30 {
 			continue
 		}
 		p.tackleResolved = true

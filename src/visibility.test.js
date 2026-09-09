@@ -4,16 +4,16 @@ import { scrollViewport, inViewport } from "./visibility.js";
 import { initial, step, simulationStep } from "./game.js";
 import { velocityUnit } from "./attributes.js";
 
-test("human control includes the inset edge; AI takes over one unit outside", () => {
+test("human control stays active beyond the old inset viewport", () => {
   const u = 22.4 / 576;
-  for (const distance of [76, 77]) {
+  for (const distance of [76, 77, 300]) {
     const s = initial();
     for (const p of s.players) p.stun = 100;
     const p = s.players[7];
     Object.assign(p, { x: distance * u, z: 0, stun: 0 });
     Object.assign(s.ball, { x: 0, z: 0, h: 4, owner: -1 });
     step(s, simulationStep, { x: 1 });
-    assert.equal(Math.sign(p.x - distance * u), distance === 76 ? 1 : -1);
+    assert.equal(Math.sign(p.x - distance * u), 1);
   }
 });
 

@@ -2,9 +2,9 @@ package main
 
 import "testing"
 
-func TestHumanViewportHandoff(t *testing.T) {
+func TestHumanControlBeyondOldViewport(t *testing.T) {
 	const u = 22.4 / 576
-	for _, distance := range []int{76, 77} {
+	for _, distance := range []int{76, 77, 300} {
 		s := initial()
 		for i := range s.Players {
 			s.Players[i].Stun = 100
@@ -14,8 +14,8 @@ func TestHumanViewportHandoff(t *testing.T) {
 		s.Ball.X, s.Ball.Z, s.Ball.H, s.Ball.Owner = 0, 0, 4, -1
 		before := p.X
 		s.simulate(simulationStep, [2]Input{{X: 1}, {}}, [2]bool{true, false})
-		if (distance == 76 && p.X <= before) || (distance == 77 && p.X >= before) {
-			t.Fatal("handoff boundary", distance, p.X)
+		if p.X <= before {
+			t.Fatal("human movement lost", distance, p.X)
 		}
 	}
 }

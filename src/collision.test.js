@@ -117,7 +117,7 @@ test("later player's blocking uses positions before the global movement pass", (
   );
 });
 
-test("offscreen opponents do not block motion or hold fallen players down", () => {
+test("physical contact is independent of the old viewport", () => {
   const p = fixture(93);
   Object.assign(p[0], {
     x: 91 * unit,
@@ -128,8 +128,8 @@ test("offscreen opponents do not block motion or hold fallen players down", () =
   });
   blockPlayerMovement(p, 0, [0, 2], 1 / 25);
   assert.equal(p[0].x, 91 * unit);
-  assert.equal(p[0].stun, 0.5);
-  assert.equal(p[0].fallX, 25 * unit);
+  assert.equal(p[0].stun, 17 / 25);
+  assert.equal(p[0].fallX, 0);
   p[1].x = 92 * unit;
   blockPlayerMovement(p, 0, [0, 1], 1 / 25);
   assert.equal(p[0].stun, 17 / 25);
@@ -138,7 +138,7 @@ test("offscreen opponents do not block motion or hold fallen players down", () =
   q[0].x = 93 * unit;
   q[0].moveX = -25 * unit;
   blockPlayerMovement(q, 0, [0, 2], 1 / 25);
-  assert.equal(q[0].x, 93 * unit);
+  assert.ok(Math.abs(q[0].x - 94 * unit) < 1e-12);
 });
 
 test("tackled player moves at original fall speed then stops before recovery", () => {

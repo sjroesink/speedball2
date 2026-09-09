@@ -3,12 +3,13 @@ const terrainUnit = 22.4 / 576;
 const arenaCues = new Set([6, 7, 14, 15]);
 
 // Match announcements stay centered; action sounds follow the visible court.
-export function eventPan(state, event) {
+export function eventPan(state, event, view) {
   if (arenaCues.has(event.kind)) return 0;
-  const centerZ = ((state.logicalView?.[0] ?? 160) - 160) * terrainUnit;
+  const centerZ =
+    view?.centerZ ?? ((state.logicalView?.[0] ?? 160) - 160) * terrainUnit;
   return Math.max(
     -0.8,
-    Math.min(0.8, (event.z - centerZ) / (160 * terrainUnit)),
+    Math.min(0.8, (event.z - centerZ) / (view?.halfWidth ?? 160 * terrainUnit)),
   );
 }
 
@@ -145,7 +146,7 @@ export class ArenaAudio {
     this.active = active;
   }
 
-  observe(state, playing) {
+  observe(state, playing, view) {
     const paused = state.pause > 0;
     if (
       playing &&
@@ -165,7 +166,7 @@ export class ArenaAudio {
         : []) {
       if (e.id <= this.lastEvent) continue;
       this.lastEvent = e.id;
-      this.play(e.kind, eventPan(state, e));
+      this.play(e.kind, eventPan(state, e, view));
     }
   }
 

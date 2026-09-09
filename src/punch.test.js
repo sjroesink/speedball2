@@ -41,7 +41,7 @@ test("punch contact starts next tick and uses lower fall velocity than slide", (
   assert.equal(s.players[16].fallX, 3 * velocityUnit);
 });
 
-test("offscreen hits wait for visibility without consuming the tackle attempt", () => {
+test("hits resolve immediately regardless of the old viewport", () => {
   const u = 22.4 / 576;
   for (const actorOutside of [false, true]) {
     const s = setup(),
@@ -55,10 +55,6 @@ test("offscreen hits wait for visibility without consuming the tackle attempt", 
     });
     Object.assign(q, { x: (actorOutside ? 91 : 93) * u, z: 0, stun: 0 });
     s.ball.owner = 16;
-    step(s, simulationStep, {}, [true, true]);
-    assert.equal(s.ball.owner, 16);
-    assert.ok(!p.tackleResolved);
-    assert.deepEqual(s.rng, [0, 0]);
     step(s, simulationStep, {}, [true, true]);
     assert.equal(s.ball.owner, 7);
     assert.ok(p.tackleResolved);

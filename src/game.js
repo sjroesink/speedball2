@@ -5,7 +5,7 @@ import { localInteraction } from "./interaction.js";
 import { pursuit } from "./pursuit.js";
 import { keeperAction } from "./keeper-action.js";
 import { defensivePass, defensivePunt } from "./defensive-pass.js";
-import { advanceViewport, worldInViewport } from "./visibility.js";
+import { advanceViewport } from "./visibility.js";
 import { contactDistances, blockPlayerMovement } from "./collision.js";
 import { steerToTarget } from "./steering.js";
 import { goalieTarget, deflectBall } from "./goalie.js";
@@ -406,13 +406,13 @@ function simulateStep(
       if (p.action === 4 && p.health > 0) {
         p.moveX = p.fallX || 0;
         p.moveZ = p.fallZ || 0;
-        blockPlayerMovement(s.players, i, contacts[i], dt, s.logicalView);
+        blockPlayerMovement(s.players, i, contacts[i], dt);
       }
       continue;
     }
     resolveTackle(s, i, contacts[i]);
     const t = p.team,
-      human = humans[t] && s.controlled[t] === i && worldInViewport(s, p, 16);
+      human = humans[t] && s.controlled[t] === i;
     let u = inputs[t],
       dx = u.x || 0,
       dz = u.z || 0;
@@ -623,7 +623,7 @@ function simulateStep(
       : movementSpeed(p, b.owner === i, keeperBlock);
     p.moveX = dx * speed;
     p.moveZ = dz * speed;
-    blockPlayerMovement(s.players, i, contacts[i], dt, s.logicalView);
+    blockPlayerMovement(s.players, i, contacts[i], dt);
   }
   // The original moves players only after every player's thinking has run.
   for (let i = 0; i < s.players.length; i++) {
@@ -812,12 +812,7 @@ export function catchBall(s, only = -1, distances = null) {
 // Invoked during the existing slide's thinking, before later players act.
 function resolveTackle(s, i, distances) {
   const p = s.players[i];
-  if (
-    (p.action !== 1 && p.action !== 7) ||
-    p.tackleResolved ||
-    !worldInViewport(s, p)
-  )
-    return;
+  if ((p.action !== 1 && p.action !== 7) || p.tackleResolved) return;
   for (let j = 0; j < s.players.length; j++) {
     const q = s.players[j];
     if (
@@ -825,8 +820,7 @@ function resolveTackle(s, i, distances) {
       q.stun > 0 ||
       q.health <= 0 ||
       shielded(s, q.team) ||
-      distances[j] > 30 ||
-      !worldInViewport(s, q)
+      distances[j] > 30
     )
       continue;
     p.tackleResolved = true;

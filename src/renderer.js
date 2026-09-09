@@ -1,3 +1,4 @@
+import { cameraExtent, cameraTarget, damping } from "./presentation.js";
 import { active } from "./features.js";
 import { recentEvents } from "./events.js";
 import * as THREE from "three";
@@ -11,7 +12,7 @@ export class ArenaRenderer {
     this.scene.background = new THREE.Color("#090f17");
     this.scene.fog = new THREE.Fog("#090f17", 55, 110);
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
+    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -26,6 +27,7 @@ export class ArenaRenderer {
     this.lastEvent = 0;
     this.follow = false;
     this.renderViewport = [0, 0, 1, 1];
+    this.extent = cameraExtent(1);
     this.scene.add(new THREE.HemisphereLight(0xbcddff, 0x233341, 2.4));
     const l = new THREE.DirectionalLight(0xd5edff, 2.6);
     l.position.set(-10, 30, 5);
@@ -173,14 +175,12 @@ export class ArenaRenderer {
     if (!w || !h) return;
     this.renderer.setSize(w, h);
     this.aspect = w / h;
-    const unit = 22.4 / 576;
-    this.camera.left = this.follow ? -160 * unit : -24 * this.aspect;
+    this.extent = cameraExtent(this.aspect);
+    this.camera.left = this.follow ? -this.extent.halfWidth : -24 * this.aspect;
     this.camera.right = -this.camera.left;
-    this.camera.top = this.follow ? 92 * unit : 24;
+    this.camera.top = this.follow ? this.extent.halfHeight : 24;
     this.camera.bottom = -this.camera.top;
-    const width = this.follow ? Math.min(w, (h * 320) / 184) : w;
-    const height = this.follow ? (width * 184) / 320 : h;
-    this.renderViewport = [(w - width) / 2, (h - height) / 2, width, height];
+    this.renderViewport = [0, 0, w, h];
     this.camera.updateProjectionMatrix();
   }
   setFollow(value) {
@@ -213,9 +213,9 @@ export class ArenaRenderer {
         o = actor.wrapper,
         dx = p.x - o.position.x,
         dz = p.z - o.position.z;
-      o.position.x += dx * (Math.abs(dx) > 5 ? 1 : Math.min(1, dt * 22));
-      o.position.z += dz * (Math.abs(dz) > 5 ? 1 : Math.min(1, dt * 22));
-      o.position.y = jumpHeight(p);
+      o.position.x += dx * (Math.abs(dx) > 5 ? 1 : damping(22, dt));
+      o.position.z += dz * (Math.abs(dz) > 5 ? 1 : damping(22, dt));
+      o.position.y += (jumpHeight(p) - o.position.y) * damping(30, dt);
       o.rotation.y = Math.atan2(p.fx, p.fz);
       const moving = Math.hypot(dx, dz) > 0.045;
       const visualAction = p.action || (moving ? 5 : 0);
@@ -323,13 +323,25 @@ export class ArenaRenderer {
         o.material.emissiveIntensity = b.charged ? 3 : 0.15;
       }
     });
-    this.ball.position.set(b.x, b.h - 0.25, b.z);
+    const ballTarget = new THREE.Vector3(b.x, b.h - 0.25, b.z);
+    if (b.owner >= 0) {
+      const carrier = this.players[b.owner].wrapper.position;
+      ballTarget.x += carrier.x - s.players[b.owner].x;
+      ballTarget.z += carrier.z - s.players[b.owner].z;
+    }
+    this.ball.position.lerp(
+      ballTarget,
+      b.owner >= 0 || this.ball.position.distanceTo(ballTarget) > 5
+        ? 1
+        : damping(30, dt),
+    );
     this.ball.rotation.z += dt * 8;
-    this.shadow.position.set(b.x, 0.11, b.z);
+    this.shadow.position.set(this.ball.position.x, 0.11, this.ball.position.z);
     this.shadow.scale.setScalar(1 + b.h * 0.08);
     this.shadow.material.opacity = clamp(0.65 - b.h * 0.06, 0.2, 0.65);
     const cp = s.players[s.controlled[team]];
-    this.marker.position.set(cp.x, 0.12, cp.z);
+    const displayedPlayer = this.players[s.controlled[team]].wrapper.position;
+    this.marker.position.set(displayedPlayer.x, 0.12, displayedPlayer.z);
     this.marker.material.color.setHex(
       cp.stun
         ? 0xff7048
@@ -341,7 +353,7 @@ export class ArenaRenderer {
     );
     this.marker.scale.setScalar(cp.action === 1 ? 1.4 : 1);
     this.aim.visible = b.owner === s.controlled[team];
-    this.aim.position.set(cp.x, 0.2, cp.z);
+    this.aim.position.set(displayedPlayer.x, 0.2, displayedPlayer.z);
     this.aim.setDirection(new THREE.Vector3(cp.fx, 0, cp.fz));
     this.aim.setLength(2.2 + Math.min(s.charge[team], 0.5) * 3, 0.6, 0.32);
     if (b.owner < 0 && Math.hypot(b.vx, b.vz) > 4) {
@@ -390,13 +402,18 @@ export class ArenaRenderer {
       }
     }
     if (this.follow) {
-      const view = s.logicalView ?? [160, 484],
-        unit = 22.4 / 576;
-      this.focus.set(
-        (576 - view[1] - 92) * unit,
-        0,
-        (view[0] + 160 - 320) * unit,
+      const target = cameraTarget(
+        this.ball.position.x,
+        this.ball.position.z,
+        this.extent,
       );
+      const factor = damping(10, dt);
+      this.focus.x += (target.x - this.focus.x) * factor;
+      this.focus.z += (target.z - this.focus.z) * factor;
+      this.audioView = {
+        centerZ: this.focus.z,
+        halfWidth: this.extent.halfWidth,
+      };
       this.camera.up.set(1, 0, 0);
       this.camera.position.set(this.focus.x, 32, this.focus.z);
       this.camera.lookAt(this.focus.x, 0, this.focus.z);
