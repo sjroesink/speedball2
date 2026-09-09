@@ -1667,3 +1667,19 @@ in browser and server. The browser audio playtest passed all 34 cases; new
 cues 26/27/28 peaked at 0.0292/0.0318/0.0303 and released every voice. This proves
 finite non-silent output and cleanup, not subjective resemblance or final mix.
 209 JavaScript tests, Go tests, Go vet and production build pass.
+
+
+### Own-goal feedback (2026-09-09)
+
+The original goal handler selects `str_overlay_own_goal` at 0xdbb4 when the
+last ball holder belongs to the team conceding. Goal event 7 now retains the
+last-touch player in its existing target field; its actor remains the team
+receiving the points. The HUD distinguishes OWN GOAL! from GOAL! using those
+event fields, so a delayed notification does not depend on current ball
+ownership. Unknown last touch remains an ordinary goal announcement.
+
+Browser/server tests cover both ends in both halves, both teams' last touches,
+unknown attribution and a scoring multiplier. Points still go to the team
+attacking that goal, including for own goals. No wire layout or audio changes
+are required. Original goal-scorer statistics and end-of-match player ratings
+are separate features, not implemented by this notification change.

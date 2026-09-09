@@ -648,7 +648,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 					scorer = 1
 				}
 				s.Score[scorer] += s.points(scorer, 10)
-				s.event(7, scorer, -1, b.X, b.Z, b.H)
+				s.event(7, scorer, b.LastTouch, b.X, b.Z, b.H)
 				s.beginRestart(1.4)
 				s.previous = inputs
 				return

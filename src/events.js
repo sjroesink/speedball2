@@ -30,3 +30,9 @@ export function emit(s, kind, actor, target, x = 0, z = 0, h = 0.5) {
   s.events = [...(s.events ?? []), event].slice(-eventHistoryLimit);
   return event;
 }
+
+// Goal actor is the scoring team; target retains the last player to touch it.
+export function isOwnGoal(event) {
+  return event.kind === 7 && event.target >= 0 && event.target < 18 &&
+    Math.floor(event.target / 9) !== event.actor;
+}

@@ -1,3 +1,4 @@
+import { isOwnGoal } from "./events.js";
 import { ArenaAudio } from "./audio.js";
 import { notificationEvent, notificationPriority } from "./events.js";
 import { powerNames } from "./features.js";
@@ -370,7 +371,7 @@ export async function start() {
               : e.kind === 6
                 ? "HALFTIME · SWITCH ENDS"
                 : e.kind === 7
-                  ? `GOAL! +${10 * ((e.actor === 0 && state.multiplier > 0) || (e.actor === 1 && state.multiplier < 0) ? 1 + Math.abs(state.multiplier) * 0.5 : 1)}`
+                  ? `${isOwnGoal(e) ? "OWN GOAL!" : "GOAL!"} +${10 * ((e.actor === 0 && state.multiplier > 0) || (e.actor === 1 && state.multiplier < 0) ? 1 + Math.abs(state.multiplier) * 0.5 : 1)}`
                   : e.kind === 8
                     ? `BONUS +${e.target}`
                     : e.kind === 9

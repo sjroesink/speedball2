@@ -703,7 +703,7 @@ function simulateStep(
       ) {
         const scorer = b.x * direction(s, 0) < 0 ? 1 : 0;
         s.score[scorer] += points(s, scorer, 10);
-        event(s, 7, scorer, -1, b.x, b.z, b.h);
+        event(s, 7, scorer, b.lastTouch, b.x, b.z, b.h);
         beginRestart(s, 1.4);
         s.previous = inputs.map((u) => ({ ...u }));
         return;
