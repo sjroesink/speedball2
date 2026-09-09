@@ -281,3 +281,18 @@ launch. Exported cyan/orange Slide clips are tested halfway through a captured
 0.32-second slide with current speed 250, at 30/60/144 FPS. All 18 animation/wire
 tests, Go suite and build pass, including maximum datagram size. The actual Go
 snapshot fixture checks both jump and slide durations at different current stats.
+
+### Live v9 action-duration verification
+
+Restarted the Go server at 18:33 local time with captured slide/jump encoding.
+The paired WebTransport fixture now visibly records received action durations.
+Room DYNHF9 stopped at ticks 563/559 with 160 ms delay and five dropped snapshots
+per 25 on client 2: 444 paired snapshots, zero state mismatches, zero missing
+shared events, and 114 deliberately dropped snapshots. Both clients observed
+jump:14f and slide:10f. Both dispatched seven windup cues; release counts were
+seven/six at stop because the delayed client had not reached the final release.
+Seven rendered releases had a largest frame displacement of 0.626 world units;
+held grip error remained zero. No medical sequence or recovery seek occurred.
+This local transport run does not establish WAN behavior or exercise a midair
+stat change; dedicated simulation, wire and exported-clip tests cover that case.
+Final full JS suite: 277 passed. Go tests and go vet also pass.
