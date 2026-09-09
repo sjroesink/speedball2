@@ -2450,3 +2450,27 @@ Inspection of the local Ghidra packed database did not recover complete raw
 animation arrays through simple ZIP expansion. The expanded database remains
 ignored research material. No missing array tails were guessed from truncated
 assembly rows, and no original executable data is shipped.
+
+
+### Complete animation data recovered from Ghidra
+
+A portable Ghidra 12.1.3 runtime with a private JDK 21 successfully imported the
+provided GZF database without reanalysis. JDK 25 failed in the script framework;
+JDK 21 worked after placing the temporary project outside a dot-prefixed path.
+The original system Java installation was not changed. Tools and raw research
+exports remain outside version control.
+
+ExportBallTables.java reads the exact memory region 0x3ff8-0x791f. The Python
+extractor now checks every previously extracted offset/origin and all 24 basic
+sequences against that memory before recovering 97 complete animation table
+blocks. It requires the memory export on regeneration, so missing raw data
+cannot silently replace the complete artifact with truncated text data.
+
+The held-ball table has 26 zero frames followed by -2. The north jump contains
+72,72, eighteen-stage sequence ending in 48,48 and then -3 (the artifact holds
+the exact twenty frames). North standing catch is 48,48,48 then -3. The
+ball-being-caught block contains an internal -2 before another sub-sequence:
+negative words must be interpreted as animation control, not sprite indices.
+This is why integration requires the opcode/phase semantics as well as data.
+The existing offset conversion test still passes with the memory-verified data.
+Simulation placement remains unchanged until that integration is completed.

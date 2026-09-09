@@ -955,6 +955,333 @@
     ]
   ],
   "animations": {
+    "anim_ball_high_throw": {
+      "address": "00006c32",
+      "frames": [
+        1,
+        1,
+        2,
+        2,
+        2,
+        3,
+        3,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        3,
+        3,
+        3,
+        2,
+        2,
+        2,
+        1,
+        1,
+        0
+      ],
+      "terminator": -2
+    },
+    "anim_ball_low_throw": {
+      "address": "00006c94",
+      "frames": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ],
+      "terminator": -2
+    },
+    "anim_ball_being_caught": {
+      "address": "00006cb8",
+      "frames": [
+        0,
+        0,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        0,
+        0,
+        -2,
+        0,
+        0,
+        6,
+        6,
+        6,
+        6,
+        0,
+        0
+      ],
+      "terminator": -2
+    },
+    "anim_ball_held": {
+      "address": "00006cf4",
+      "frames": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "terminator": -2
+    },
+    "anim_ball_on_multiplier": {
+      "address": "00006d2a",
+      "frames": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        8,
+        9,
+        10,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        10,
+        9,
+        8,
+        7,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        7,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "terminator": -2
+    },
+    "anim_ball_launch": {
+      "address": "00006d8a",
+      "frames": [
+        0,
+        7,
+        7,
+        8,
+        8,
+        9,
+        9,
+        10,
+        10,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        10,
+        10,
+        9,
+        9,
+        8,
+        8,
+        7,
+        7,
+        0
+      ],
+      "terminator": -2
+    },
+    "anim_ball_launcher": {
+      "address": "00006dcc",
+      "frames": [
+        3,
+        3,
+        4,
+        4,
+        5,
+        5,
+        6,
+        6,
+        7,
+        7,
+        8,
+        8,
+        9,
+        9,
+        10,
+        10,
+        11,
+        11,
+        12,
+        12,
+        11,
+        11,
+        11,
+        11,
+        10,
+        10,
+        9,
+        9,
+        8,
+        8,
+        7,
+        7,
+        6,
+        6,
+        5,
+        5,
+        4,
+        4,
+        3
+      ],
+      "terminator": -2
+    },
+    "anim_big_ball": {
+      "address": "00006e1c",
+      "frames": [
+        0,
+        0,
+        1,
+        1,
+        2,
+        2,
+        3,
+        3,
+        4,
+        4,
+        4
+      ],
+      "terminator": -4
+    },
+    "anim_coin_spin": {
+      "address": "00006e34",
+      "frames": [
+        67,
+        67,
+        68,
+        68,
+        69,
+        69,
+        70,
+        70,
+        71,
+        71,
+        72,
+        72,
+        73,
+        73,
+        74,
+        74,
+        75,
+        75,
+        76,
+        76,
+        77,
+        77,
+        78,
+        78
+      ],
+      "terminator": -1
+    },
     "anim_standing_player_n": {
       "address": "00006e66",
       "frames": [
@@ -1010,6 +1337,262 @@
         7
       ],
       "terminator": -1
+    },
+    "anims_sliding_player_n": {
+      "address": "00006e86",
+      "frames": [
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8
+      ],
+      "terminator": -3
+    },
+    "anims_sliding_player_ne": {
+      "address": "00006ea8",
+      "frames": [
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "terminator": -3
+    },
+    "anims_sliding_player_e": {
+      "address": "00006eca",
+      "frames": [
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10
+      ],
+      "terminator": -3
+    },
+    "anims_sliding_player_se": {
+      "address": "00006eec",
+      "frames": [
+        11,
+        11,
+        11,
+        11,
+        11,
+        11,
+        11,
+        11,
+        11,
+        11,
+        11,
+        11,
+        11,
+        11,
+        11,
+        11
+      ],
+      "terminator": -3
+    },
+    "anims_sliding_player_s": {
+      "address": "00006f0e",
+      "frames": [
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12
+      ],
+      "terminator": -3
+    },
+    "anims_sliding_player_sw": {
+      "address": "00006f30",
+      "frames": [
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13
+      ],
+      "terminator": -3
+    },
+    "anims_sliding_player_w": {
+      "address": "00006f52",
+      "frames": [
+        14,
+        14,
+        14,
+        14,
+        14,
+        14,
+        14,
+        14,
+        14,
+        14,
+        14,
+        14,
+        14,
+        14,
+        14,
+        14
+      ],
+      "terminator": -3
+    },
+    "anims_sliding_player_nw": {
+      "address": "00006f74",
+      "frames": [
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15
+      ],
+      "terminator": -3
+    },
+    "anims_hitting_player_n": {
+      "address": "00006f96",
+      "frames": [
+        49,
+        50,
+        50,
+        49
+      ],
+      "terminator": -3
+    },
+    "anims_hitting_player_ne": {
+      "address": "00006fa0",
+      "frames": [
+        52,
+        53,
+        53,
+        52
+      ],
+      "terminator": -3
+    },
+    "anims_hitting_player_e": {
+      "address": "00006faa",
+      "frames": [
+        55,
+        56,
+        56,
+        55
+      ],
+      "terminator": -3
+    },
+    "anims_hitting_player_se": {
+      "address": "00006fb4",
+      "frames": [
+        58,
+        59,
+        59,
+        58
+      ],
+      "terminator": -3
+    },
+    "anims_hitting_player_s": {
+      "address": "00006fbe",
+      "frames": [
+        61,
+        62,
+        62,
+        61
+      ],
+      "terminator": -3
+    },
+    "anims_hitting_player_sw": {
+      "address": "00006fc8",
+      "frames": [
+        64,
+        65,
+        65,
+        64
+      ],
+      "terminator": -3
+    },
+    "anims_hitting_player_w": {
+      "address": "00006fd2",
+      "frames": [
+        67,
+        68,
+        68,
+        67
+      ],
+      "terminator": -3
+    },
+    "anims_hitting_player_nw": {
+      "address": "00006fdc",
+      "frames": [
+        70,
+        71,
+        71,
+        70
+      ],
+      "terminator": -3
     },
     "anims_move_player_n": {
       "address": "00006fe6",
@@ -1234,6 +1817,837 @@
         70
       ],
       "terminator": -3
+    },
+    "anims_jumping_player_n": {
+      "address": "00007106",
+      "frames": [
+        72,
+        72,
+        73,
+        73,
+        73,
+        73,
+        73,
+        73,
+        73,
+        73,
+        73,
+        73,
+        73,
+        73,
+        73,
+        73,
+        73,
+        73,
+        48,
+        48
+      ],
+      "terminator": -3
+    },
+    "anims_jumping_player_ne": {
+      "address": "00007130",
+      "frames": [
+        74,
+        74,
+        75,
+        75,
+        75,
+        75,
+        75,
+        75,
+        75,
+        75,
+        75,
+        75,
+        75,
+        75,
+        75,
+        75,
+        75,
+        75,
+        51,
+        51
+      ],
+      "terminator": -3
+    },
+    "anims_jumping_player_e": {
+      "address": "0000715a",
+      "frames": [
+        76,
+        76,
+        77,
+        77,
+        77,
+        77,
+        77,
+        77,
+        77,
+        77,
+        77,
+        77,
+        77,
+        77,
+        77,
+        77,
+        77,
+        77,
+        54,
+        54
+      ],
+      "terminator": -3
+    },
+    "anims_jumping_player_se": {
+      "address": "00007184",
+      "frames": [
+        78,
+        78,
+        79,
+        79,
+        79,
+        79,
+        79,
+        79,
+        79,
+        79,
+        79,
+        79,
+        79,
+        79,
+        79,
+        79,
+        79,
+        79,
+        57,
+        57
+      ],
+      "terminator": -3
+    },
+    "anims_jumping_player_s": {
+      "address": "000071ae",
+      "frames": [
+        80,
+        80,
+        81,
+        81,
+        81,
+        81,
+        81,
+        81,
+        81,
+        81,
+        81,
+        81,
+        81,
+        81,
+        81,
+        81,
+        81,
+        81,
+        60,
+        60
+      ],
+      "terminator": -3
+    },
+    "anims_jumping_player_sw": {
+      "address": "000071d8",
+      "frames": [
+        82,
+        82,
+        83,
+        83,
+        83,
+        83,
+        83,
+        83,
+        83,
+        83,
+        83,
+        83,
+        83,
+        83,
+        83,
+        83,
+        83,
+        83,
+        63,
+        63
+      ],
+      "terminator": -3
+    },
+    "anims_jumping_player_w": {
+      "address": "00007202",
+      "frames": [
+        84,
+        84,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        66,
+        66
+      ],
+      "terminator": -3
+    },
+    "anims_jumping_player_nw": {
+      "address": "0000722c",
+      "frames": [
+        86,
+        86,
+        87,
+        87,
+        87,
+        87,
+        87,
+        87,
+        87,
+        87,
+        87,
+        87,
+        87,
+        87,
+        87,
+        87,
+        87,
+        87,
+        69,
+        69
+      ],
+      "terminator": -3
+    },
+    "anims_catching_player_n": {
+      "address": "00007256",
+      "frames": [
+        48,
+        48,
+        48
+      ],
+      "terminator": -3
+    },
+    "anims_catching_player_ne": {
+      "address": "0000725e",
+      "frames": [
+        51,
+        51,
+        51
+      ],
+      "terminator": -3
+    },
+    "anims_catching_player_e": {
+      "address": "00007266",
+      "frames": [
+        54,
+        54,
+        54
+      ],
+      "terminator": -3
+    },
+    "anims_catching_player_se": {
+      "address": "0000726e",
+      "frames": [
+        57,
+        57,
+        57
+      ],
+      "terminator": -3
+    },
+    "anims_catching_player_s": {
+      "address": "00007276",
+      "frames": [
+        60,
+        60,
+        60
+      ],
+      "terminator": -3
+    },
+    "anims_catching_player_sw": {
+      "address": "0000727e",
+      "frames": [
+        63,
+        63,
+        63
+      ],
+      "terminator": -3
+    },
+    "anims_catching_player_w": {
+      "address": "00007286",
+      "frames": [
+        66,
+        66,
+        66
+      ],
+      "terminator": -3
+    },
+    "anims_catching_player_nw": {
+      "address": "0000728e",
+      "frames": [
+        69,
+        69,
+        69
+      ],
+      "terminator": -3
+    },
+    "anim_tackled": {
+      "address": "00007296",
+      "frames": [
+        88,
+        88,
+        88,
+        89,
+        89,
+        89,
+        90,
+        90,
+        90,
+        91,
+        91,
+        91,
+        92,
+        92,
+        92,
+        93,
+        93,
+        93,
+        94,
+        94,
+        94,
+        94,
+        94,
+        94,
+        94,
+        94,
+        -5,
+        94,
+        94,
+        94,
+        94,
+        94,
+        94,
+        94,
+        94
+      ],
+      "terminator": -5
+    },
+    "anim_lying_down": {
+      "address": "000072de",
+      "frames": [
+        94
+      ],
+      "terminator": -1
+    },
+    "anim_picked_up_injured": {
+      "address": "000072e2",
+      "frames": [
+        94,
+        94,
+        95
+      ],
+      "terminator": -2
+    },
+    "anim_goal_scored_dir_s": {
+      "address": "000072ea",
+      "frames": [
+        96,
+        96,
+        96,
+        97,
+        97,
+        97,
+        96,
+        96,
+        96,
+        97,
+        97,
+        97,
+        96,
+        96,
+        96,
+        97,
+        97,
+        97,
+        96,
+        96,
+        96,
+        97,
+        97,
+        97,
+        96,
+        96,
+        96,
+        97,
+        97,
+        97,
+        96,
+        96,
+        96,
+        97,
+        97,
+        97,
+        96,
+        96,
+        96,
+        97,
+        97,
+        97,
+        96,
+        96,
+        96,
+        97,
+        97,
+        97
+      ],
+      "terminator": -3
+    },
+    "anim_goal_scored_dir_n": {
+      "address": "0000734c",
+      "frames": [
+        108,
+        108,
+        108,
+        109,
+        109,
+        109,
+        108,
+        108,
+        108,
+        109,
+        109,
+        109,
+        108,
+        108,
+        108,
+        109,
+        109,
+        109,
+        108,
+        108,
+        108,
+        109,
+        109,
+        109,
+        108,
+        108,
+        108,
+        109,
+        109,
+        109,
+        108,
+        108,
+        108,
+        109,
+        109,
+        109,
+        108,
+        108,
+        108,
+        109,
+        109,
+        109,
+        108,
+        108,
+        108,
+        109,
+        109,
+        109
+      ],
+      "terminator": -3
+    },
+    "anim_goal_scored_dir_s_scorer": {
+      "address": "000073ae",
+      "frames": [
+        32,
+        32,
+        33,
+        33,
+        34,
+        34,
+        35,
+        35,
+        32,
+        32,
+        33,
+        33,
+        34,
+        34,
+        35,
+        35,
+        32,
+        32,
+        33,
+        33,
+        34,
+        34,
+        35,
+        35,
+        98,
+        98,
+        98,
+        99,
+        99,
+        99,
+        98,
+        98,
+        98,
+        99,
+        99,
+        99,
+        98,
+        98,
+        98,
+        99,
+        99,
+        99,
+        98,
+        98,
+        98,
+        99,
+        99,
+        99
+      ],
+      "terminator": -3
+    },
+    "anim_goal_scored_dir_n_scorer": {
+      "address": "00007410",
+      "frames": [
+        16,
+        16,
+        17,
+        17,
+        18,
+        18,
+        19,
+        19,
+        16,
+        16,
+        17,
+        17,
+        18,
+        18,
+        19,
+        19,
+        16,
+        16,
+        17,
+        17,
+        18,
+        18,
+        19,
+        19,
+        110,
+        110,
+        110,
+        111,
+        111,
+        111,
+        110,
+        110,
+        110,
+        111,
+        111,
+        111,
+        110,
+        110,
+        110,
+        111,
+        111,
+        111,
+        110,
+        110,
+        110,
+        111,
+        111,
+        111
+      ],
+      "terminator": -3
+    },
+    "anims_diving_goalie_up_e": {
+      "address": "00007472",
+      "frames": [
+        118,
+        118,
+        118,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119
+      ],
+      "terminator": -3
+    },
+    "anims_diving_goalie_up_w": {
+      "address": "00007494",
+      "frames": [
+        117,
+        117,
+        117,
+        116,
+        116,
+        116,
+        116,
+        116,
+        116,
+        116,
+        116,
+        116,
+        116,
+        116,
+        116,
+        116
+      ],
+      "terminator": -3
+    },
+    "anims_goalie_diving_down_e": {
+      "address": "000074b6",
+      "frames": [
+        114,
+        114,
+        114,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115
+      ],
+      "terminator": -3
+    },
+    "anims_goalie_diving_down_w": {
+      "address": "000074d8",
+      "frames": [
+        113,
+        113,
+        113,
+        112,
+        112,
+        112,
+        112,
+        112,
+        112,
+        112,
+        112,
+        112,
+        112,
+        112,
+        112,
+        112
+      ],
+      "terminator": -3
+    },
+    "anim_medibot_dir_n": {
+      "address": "000074fa",
+      "frames": [
+        126
+      ],
+      "terminator": -1
+    },
+    "anim_medibot_dir_ne": {
+      "address": "000074fe",
+      "frames": [
+        127
+      ],
+      "terminator": -1
+    },
+    "anim_medibot_dir_se": {
+      "address": "00007502",
+      "frames": [
+        121
+      ],
+      "terminator": -1
+    },
+    "anim_medibot_dir_s": {
+      "address": "00007506",
+      "frames": [
+        122
+      ],
+      "terminator": -1
+    },
+    "anim_medibot_dir_sw": {
+      "address": "0000750a",
+      "frames": [
+        123
+      ],
+      "terminator": -1
+    },
+    "anim_medibot_dir_nw": {
+      "address": "0000750e",
+      "frames": [
+        125
+      ],
+      "terminator": -1
+    },
+    "anim_medibot_dir_e": {
+      "address": "00007512",
+      "frames": [
+        120
+      ],
+      "terminator": -1
+    },
+    "anim_medibot_dir_w": {
+      "address": "00007516",
+      "frames": [
+        124
+      ],
+      "terminator": -1
+    },
+    "anim_medibot_pick_up_l": {
+      "address": "0000751a",
+      "frames": [
+        120,
+        120,
+        128
+      ],
+      "terminator": -2
+    },
+    "anim_medibot_pick_up_r": {
+      "address": "00007522",
+      "frames": [
+        124,
+        124,
+        129
+      ],
+      "terminator": -2
+    },
+    "anim_standing_goalie_n": {
+      "address": "0000752a",
+      "frames": [
+        103
+      ],
+      "terminator": -1
+    },
+    "anims_move_goalie_up_side": {
+      "address": "0000752e",
+      "frames": [
+        104,
+        104,
+        103,
+        103,
+        105,
+        105,
+        103,
+        103
+      ],
+      "terminator": -1
+    },
+    "anims_catching_goalie_up_facing": {
+      "address": "00007540",
+      "frames": [
+        107,
+        107,
+        107
+      ],
+      "terminator": -3
+    },
+    "anim_standing_goalie_s": {
+      "address": "00007548",
+      "frames": [
+        100
+      ],
+      "terminator": -1
+    },
+    "anims_move_goalie_down_side": {
+      "address": "0000754c",
+      "frames": [
+        101,
+        101,
+        100,
+        100,
+        102,
+        102,
+        100,
+        100
+      ],
+      "terminator": -1
+    },
+    "anims_catching_goalie_down_facing": {
+      "address": "0000755e",
+      "frames": [
+        106,
+        106,
+        106
+      ],
+      "terminator": -3
+    },
+    "anims_move_goalie_up_s": {
+      "address": "00007566",
+      "frames": [
+        19,
+        19,
+        18,
+        18,
+        17,
+        17,
+        16,
+        16
+      ],
+      "terminator": -1
+    },
+    "anims_move_goalie_down_n": {
+      "address": "00007578",
+      "frames": [
+        35,
+        35,
+        34,
+        34,
+        33,
+        33,
+        32,
+        32
+      ],
+      "terminator": -1
+    },
+    "anim_zapper_left": {
+      "address": "0000758a",
+      "frames": [
+        0,
+        0,
+        0
+      ],
+      "terminator": -4
+    },
+    "anim_zapper_right": {
+      "address": "00007592",
+      "frames": [
+        1,
+        1,
+        1
+      ],
+      "terminator": -4
+    },
+    "anim_bumper_light_up": {
+      "address": "0000759a",
+      "frames": [
+        2,
+        2,
+        2
+      ],
+      "terminator": -4
     }
-  }
+  },
+  "completeMemoryExport": true
 }
