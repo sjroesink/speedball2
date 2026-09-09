@@ -2010,3 +2010,15 @@ travel at 30, 60 and 144 FPS, zero travel and relocation. Fullscreen training
 renders the updated gait; build and diff checks pass. This synchronizes overall
 cadence but does not lock a planted foot to a world-space contact point. The
 stride calibration and turn transitions still need visual refinement.
+
+### Running start and stop blending
+
+Run enters with a 120 ms blend. Stopping holds its current phase and fades the
+pose back to rest over 120 ms. The renderer now keeps mixer time in seconds and
+sets only the Run action's rate from travel, so a stopped player can finish
+blending even with zero displacement. Timed action playback remains in seconds.
+
+Thirteen animation tests pass. The new exported-model test checks a raised
+knee settles toward rest while the stride phase remains fixed, then reaches
+rest after the fade. Build passes and fullscreen training starts with the
+updated renderer. This is pose blending, not world-space foot locking.

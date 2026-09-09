@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { AnimationMixer, Vector3 } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { playPlayerAction, startsPlayerAction, runningAnimationDelta } from "./player-animation.js";
+import { playPlayerAction, startsPlayerAction, runningAnimationDelta, settleRunningPose } from "./player-animation.js";
 
 async function player(team = "cyan") {
   const bytes = await readFile(new URL(`../public/assets/player-${team}.glb`, import.meta.url));
@@ -189,4 +189,19 @@ test("running phase follows distance regardless of frame rate and ignores reloca
   }
   assert.equal(runningAnimationDelta(0,.4),0);
   assert.equal(runningAnimationDelta(25,.4,true),0);
+});
+
+
+test("stopping a run settles the lifted leg without advancing the stride", async () => {
+  const model=await player(), mixer=new AnimationMixer(model.scene);
+  const knee=model.scene.getObjectByName('Knee_1'),rest=knee.quaternion.clone();
+  const action=mixer.clipAction(model.animations.find(c=>c.name==='Run'));
+  playPlayerAction(action,5);mixer.update(.12);
+  const raised=knee.quaternion.clone(),phase=action.time;
+  assert.ok(raised.angleTo(rest)>.2);
+  settleRunningPose(action);mixer.update(.06);
+  assert.equal(action.time,phase,"the last stride pose is held during settling");
+  assert.ok(knee.quaternion.angleTo(rest)<raised.angleTo(rest));
+  mixer.update(.061);
+  assert.ok(knee.quaternion.angleTo(rest)<1e-5,"rest pose restored after fade");
 });

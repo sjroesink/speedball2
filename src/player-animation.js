@@ -29,3 +29,8 @@ export function runningAnimationDelta(distance, clipDuration, teleported = false
   if (teleported || !Number.isFinite(distance) || distance <= 0) return 0;
   return distance / 1.2 * clipDuration;
 }
+
+export function settleRunningPose(action) {
+  action.paused = true;
+  action.fadeOut(.12);
+}

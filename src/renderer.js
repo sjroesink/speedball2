@@ -1,5 +1,5 @@
 import { addArenaLights } from "./lighting.js";
-import { playPlayerAction, startsPlayerAction, runningAnimationDelta } from "./player-animation.js";
+import { playPlayerAction, startsPlayerAction, runningAnimationDelta, settleRunningPose } from "./player-animation.js";
 import { centeredBall } from "./ball-model.js";
 import {
   cameraExtent,
@@ -222,7 +222,11 @@ export class ArenaRenderer {
       const moving = Math.hypot(dx, dz) > 0.045;
       const visualAction = p.action || (moving ? 5 : 0);
       if (startsPlayerAction(actor.active, visualAction, actor.remaining, p.actionTime, p.health > 0)) {
-        actor.mixer.stopAllAction();
+        const stoppingRun = actor.active === 5 && visualAction === 0;
+        if (stoppingRun) {
+          const run = Object.entries(actor.clips).find(([name]) => name.includes("Run"))?.[1];
+          if (run) settleRunningPose(run);
+        } else actor.mixer.stopAllAction();
         actor.model.position.set(0, 0, 0);
         actor.model.rotation.set(0, 0, 0);
         actor.active = visualAction;
@@ -241,14 +245,17 @@ export class ArenaRenderer {
         )?.[1];
         if (name && action) {
           playPlayerAction(action, visualAction, p.actionTime, p.stats?.[3] ?? 100);
+          if (visualAction === 5) action.fadeIn(.12);
         }
       }
       actor.remaining = p.actionTime;
       const run = visualAction === 5
         ? Object.entries(actor.clips).find(([name]) => name.includes("Run"))?.[1] : null;
       const distance = Math.hypot(o.position.x - previousX, o.position.z - previousZ);
-      actor.mixer.update(run
-        ? runningAnimationDelta(distance, run.getClip().duration, teleported) : dt);
+      if (run) run.setEffectiveTimeScale(dt > 0
+        ? runningAnimationDelta(distance, run.getClip().duration, teleported) / dt : 0);
+      // Keep mixer time in seconds so pose blending is independent of travel speed.
+      actor.mixer.update(dt);
       o.visible = p.health > 0 || p.action === 4 || p.injury > 1;
       actor.model.rotation.x = p.health <= 0 ? Math.PI / 2 : 0;
       // Standing meshes originate at the feet; center the prone body on the stretcher.
