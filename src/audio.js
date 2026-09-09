@@ -16,6 +16,13 @@ export function eventPan(state, event, view) {
 
 // Each layer is [waveform, start Hz, end Hz, seconds, gain, delay seconds].
 export const cues = {
+  // Zap pickup activation (Amiga sound 0x12), distinct from electroball contact.
+  zap: [
+    ["noise", 4800, 600, .24, .19, 0],
+    ["sawtooth", 980, 95, .28, .08, 0],
+    ["noise", 3200, 1100, .055, .1, .06],
+    ["noise", 2200, 500, .065, .08, .15],
+  ],
   // Amiga wall contacts: high side 0x32, low end 0x33, high end 0x34.
   26: [["noise", 5100, 3200, 0.03, 0.08, 0], ["sine", 1800, 1800, 0.15, 0.12, 0], ["sine", 2710, 2710, 0.1, 0.05, 0]],
   27: [["noise", 850, 230, 0.08, 0.14, 0], ["sine", 240, 160, 0.18, 0.16, 0], ["triangle", 650, 440, 0.1, 0.05, 0]],
@@ -197,7 +204,7 @@ export class ArenaAudio {
         : []) {
       if (e.id <= this.lastEvent) continue;
       this.lastEvent = e.id;
-      this.play(e.kind, eventPan(state, e, view));
+      this.play(e.kind === 11 && e.target === 12 ? "zap" : e.kind, eventPan(state, e, view));
     }
   }
 
@@ -205,7 +212,7 @@ export class ArenaAudio {
     const c = this.context;
     if (!this.enabled || !this.active || !c || c.state !== "running") return;
     const priority =
-      typeof kind === "string" ? 3 : Math.max(0, notificationPriority(kind));
+      kind === "zap" ? 1 : typeof kind === "string" ? 3 : Math.max(0, notificationPriority(kind));
     for (const layer of cues[kind] ?? []) {
       // Keep whistles and match announcements audible through dense collisions.
       if (this.voices.size >= 32) {

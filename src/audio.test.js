@@ -206,3 +206,24 @@ test("collision storms preserve whistles and medical announcements within the vo
   audio.play(5);
   assert.deepEqual([...audio.voices], voices);
 });
+
+test("Zap pickup gets one spatial discharge instead of the generic pickup cue",()=>{
+ const audio=new ArenaAudio(),heard=[];audio.play=(...args)=>heard.push(args);
+ const event={id:1,kind:11,target:12,x:0,z:2,h:.5};
+ const s={over:false,pause:1,events:[event]};
+ audio.observe(s,true,{centerZ:0,halfWidth:4});
+ audio.observe(s,true,{centerZ:0,halfWidth:4});
+ assert.deepEqual(heard,[["zap",.5]]);
+ audio.observe({...s,events:[event,{...event,id:2,target:3}]},true,{centerZ:0,halfWidth:4});
+ assert.deepEqual(heard,[["zap",.5],[11,.5]]);
+});
+
+test("Zap is protected from collision noise but cannot displace match whistles",async()=>{
+ const a=new ArenaAudio(()=>context());await a.enable(true);a.setActive(true);
+ a.play("zap");const discharge=[...a.voices];
+ assert.equal(discharge.length,4);assert.ok(discharge.every(v=>v.priority===1));
+ for(let i=0;i<40;i++)a.play(4);
+ for(const voice of discharge)assert.ok(a.voices.has(voice));
+ a.stop();for(let i=0;i<32;i++)a.play("kickoff");const whistles=[...a.voices];
+ a.play("zap");assert.deepEqual([...a.voices],whistles);
+});

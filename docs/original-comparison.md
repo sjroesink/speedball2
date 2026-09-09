@@ -1740,3 +1740,19 @@ still contains both injury and substitution events.
 
 The source offscreen-victim exclusion and dedicated Zap sound remain separate
 fidelity items; this increment addresses movement and release only.
+
+
+### Dedicated Zap activation audio (2026-09-09)
+
+`powerup_zap` ends with sound 0x12 at 0x11a8a..0x11a8e. The existing pickup
+event carries token kind 12, so the audio observer now selects a dedicated
+synthesized discharge for that event instead of the generic pickup chime.
+No additional event or wire bytes are needed. Its stereo position remains
+at the pickup and its priority matches other power-ups, below match whistles.
+
+Tests cover one discharge per pickup despite repeated snapshots, ordinary
+pickup sound preservation and voice-priority behavior under collision load.
+The real browser audio playtest passed all 35 cases; Zap output peaked at
+0.0337 with RMS 0.00141 and zero remaining voices. These are technical audio
+checks; the final perceptual mix still needs listening review.
+Validation: 219 JavaScript tests and production build pass.
