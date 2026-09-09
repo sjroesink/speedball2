@@ -91,7 +91,7 @@ test("gesture unlock, mute, pause and polyphony bound all scheduled voices", asy
 });
 
 test("every game event has a finite bounded cue and unavailable audio fails silently", async () => {
-  for (let kind = 1; kind <= 19; kind++) {
+  for (let kind = 1; kind <= 20; kind++) {
     assert.ok(cues[kind]?.length);
     for (const [, from, to, duration, gain, delay] of cues[kind]) {
       assert.ok(from > 0 && to > 0 && duration > 0 && duration <= 2);

@@ -448,7 +448,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			p.aiWait = 1. / 25
 			dx, dz = eightWay(dx, dz)
 		}
-		if p.Action != 1 && p.Action != 2 && p.Action != 3 && p.Action != 6 && math.Hypot(dx, dz) > .01 {
+		if p.Action != 1 && p.Action != 2 && p.Action != 3 && p.Action != 6 && p.Action != 7 && math.Hypot(dx, dz) > .01 {
 			p.FX, p.FZ = normalized(dx, dz)
 		}
 		pressed := (u.Shoot && !s.previous[t].Shoot) || (u.Tackle && !s.previous[t].Tackle) || u.Fire > s.previous[t].Fire || u.TackleID > s.previous[t].TackleID
@@ -487,6 +487,13 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				p.ActionTime = actionDuration(2, p.Stats[3])
 				p.Cooldown = p.ActionTime
 				s.event(2, i, -1, p.X, p.Z, 0)
+			} else if math.Hypot(dx, dz) < .01 {
+				p.Action = 7
+				p.ActionTime = 4. / 25
+				p.Cooldown = p.ActionTime
+				p.tackleResolved = false
+				p.keeperBlock = false
+				s.event(20, i, -1, p.X, p.Z, 0)
 			} else {
 				p.Action = 1
 				p.tackleResolved = false
@@ -668,7 +675,7 @@ func (s *State) catchBallAt(only int, distances *[18]int) {
 // Existing slides resolve contact during thinking, before later players act.
 func (s *State) resolveTackle(i int, distances *[18]int) {
 	p := &s.Players[i]
-	if p.Action != 1 || p.tackleResolved {
+	if (p.Action != 1 && p.Action != 7) || p.tackleResolved {
 		return
 	}
 	for j := range s.Players {
@@ -686,7 +693,11 @@ func (s *State) resolveTackle(i int, distances *[18]int) {
 				s.giveBall(i)
 			}
 			q.FX, q.FZ = eightWay(p.FX, p.FZ)
-			q.fallX, q.fallZ = q.FX*4*velocityUnit, q.FZ*4*velocityUnit
+			speed := 3 * velocityUnit
+			if p.Action == 1 {
+				speed = 4 * velocityUnit
+			}
+			q.fallX, q.fallZ = q.FX*speed, q.FZ*speed
 		}
 		return
 	}

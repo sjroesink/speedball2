@@ -12,7 +12,7 @@ func TestInputPulseSurvivesShortTap(t *testing.T) {
 	s := isolated()
 	s.Ball.X = 8
 	s.Ball.Z = 8
-	s.step(dt, [2]Input{{TackleID: 1}, {}})
+	s.step(dt, [2]Input{{TackleID: 1, X: 1}, {}})
 	if s.Players[7].Action != 1 {
 		t.Fatal("a short tap between ticks was lost")
 	}
@@ -40,13 +40,13 @@ func TestVisibleTackleMissAndCooldown(t *testing.T) {
 	s := isolated()
 	s.Ball.X = 9
 	s.Ball.Z = 9
-	s.step(dt, [2]Input{{Tackle: true}, {}})
+	s.step(dt, [2]Input{{Tackle: true, X: 1}, {}})
 	p := s.Players[7]
 	if p.Action != 1 || p.ActionTime <= 0 || p.X < .075 || p.Cooldown <= 0 {
 		t.Fatal("tackle without contact must slide visibly")
 	}
 	for i := 0; i < 65; i++ {
-		s.step(dt, [2]Input{{Tackle: true}, {}})
+		s.step(dt, [2]Input{{Tackle: true, X: 1}, {}})
 	}
 	if s.Players[7].Action == 1 {
 		t.Fatal("holding tackle must not retrigger")
@@ -57,7 +57,7 @@ func TestTackleKnockdownAndPossession(t *testing.T) {
 	s.RNG = [2]uint32{}
 	s.Players[16] = Player{Health: 100, X: 1.1, Team: 1, FX: -1}
 	s.Ball = Ball{X: 1.1, H: 1, Owner: 16}
-	s.step(dt, [2]Input{{Tackle: true}, {}})
+	s.step(dt, [2]Input{{Tackle: true, X: 1}, {}})
 	s.step(dt, [2]Input{})
 	if s.Players[16].Stun < 1 || s.Players[16].Action != 4 || s.Ball.Owner != 7 {
 		t.Fatalf("no knockdown / possession transfer: %+v", s.Ball)
@@ -247,7 +247,7 @@ func TestTackleDirectPossessionSingleContact(t *testing.T) {
 	s.Players[17].Stun = 0
 	s.Players[17].Cooldown = 10
 	s.Ball = Ball{Owner: 16, LastTouch: 16, X: .7, H: 1}
-	s.step(dt, [2]Input{{Tackle: true}, {}})
+	s.step(dt, [2]Input{{Tackle: true, X: 1}, {}})
 	if s.Ball.Owner != 16 {
 		t.Fatal("slide hit before first thinking tick")
 	}

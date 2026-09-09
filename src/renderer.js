@@ -219,9 +219,16 @@ export class ArenaRenderer {
         actor.model.position.set(0, 0, 0);
         actor.model.rotation.set(0, 0, 0);
         actor.active = visualAction;
-        const name = ["", "Slide", "Jump", "Throw", "Hit", "Run", "Catch"][
-          visualAction
-        ];
+        const name = [
+          "",
+          "Slide",
+          "Jump",
+          "Throw",
+          "Hit",
+          "Run",
+          "Catch",
+          "Punch",
+        ][visualAction];
         const action = Object.entries(actor.clips).find(([key]) =>
           key.includes(name),
         )?.[1];
@@ -231,6 +238,7 @@ export class ArenaRenderer {
             visualAction === 5 ? Infinity : 1,
           );
           if (visualAction === 6) action.setDuration(3 / 25);
+          if (visualAction === 7) action.setDuration(4 / 25);
           action.reset().play();
         }
       }

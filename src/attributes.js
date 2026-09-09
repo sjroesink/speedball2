@@ -104,7 +104,7 @@ export function movementSpeed(p, carrying, keeperBlock = false) {
       (speed > 170 ? 1 : 0) +
       (speed > 200 ? 1 : 0);
   if (p.action === 1 && keeperBlock) level = 8;
-  if (p.action === 3 || p.action === 6) level = 0;
+  if (p.action === 3 || p.action === 6 || p.action === 7) level = 0;
   return level * velocityUnit;
 }
 

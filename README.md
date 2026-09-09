@@ -93,7 +93,7 @@ The Dockerfile builds the frontend and server in multiple stages. Publish `4433/
 
 ## Validation and scope
 
-Enable **SOUND ON** in the lobby or the full-screen toolbar. Original synthesized effects distinguish throws, catches, goalkeeper deflections, sliding, slide recovery, jumps, landings, impacts, wall rebounds, scoring, pickups, warps, electric balls, injuries and substitutions. Whistles mark kickoff, halftime and full time. Effects use stereo position across the court, bounded polyphony and a compressor. Muting, opening the menu or hiding the tab stops current sounds. Snapshots repeat the latest 16 gameplay events so short packet gaps do not drop retained sounds; repeated events play only once. Longer gaps can exceed this history. Audio starts only after pressing the sound button; no original commercial sound samples are included.
+Enable **SOUND ON** in the lobby or the full-screen toolbar. Original synthesized effects distinguish throws, catches, goalkeeper deflections, standing punches, sliding, slide recovery, jumps, landings, impacts, wall rebounds, scoring, pickups, warps, electric balls, injuries and substitutions. Whistles mark kickoff, halftime and full time. Effects use stereo position across the court, bounded polyphony and a compressor. Muting, opening the menu or hiding the tab stops current sounds. Snapshots repeat the latest 16 gameplay events so short packet gaps do not drop retained sounds; repeated events play only once. Longer gaps can exceed this history. Audio starts only after pressing the sound button; no original commercial sound samples are included.
 
 ```powershell
 go test ./server
@@ -107,3 +107,5 @@ Tests cover actions, throws, catches, collisions, scoring, power effects and exp
 This is an exhibition-match adaptation. Career/league management, transfers, persistent injuries between matches, ranked matchmaking, accounts, reconnect and touch controls are not included. Attribute values, damage, pickup timing and AI are tuned for this remake rather than emulated cycle for cycle. See [original-game comparison](docs/original-comparison.md) for source findings and differences.
 
 References: [webtransport-go](https://quic-go.net/docs/webtransport/), [WebTransport](https://developer.mozilla.org/en-US/docs/Web/API/WebTransport/WebTransport), [original coaching manual](https://retrogames.biz/games/c64/speedball-2/), [Amiga reverse engineering](https://github.com/simon-frankau/speedball2-re-amiga).
+
+Without possession, an action while stationary punches; moving while acting slides. High nearby balls can trigger a jump with the normal action button.

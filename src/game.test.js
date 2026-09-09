@@ -34,7 +34,7 @@ test("selection switches during actions and resolves equal distances by roster o
 test("a key pulse between simulation ticks still starts an action", () => {
   const s = isolated();
   s.ball.x = s.ball.z = 8;
-  step(s, dt, { tackleId: 1 });
+  step(s, dt, { tackleId: 1, x: 1 });
   assert.equal(s.players[7].action, 1);
 });
 function isolated() {
@@ -46,10 +46,10 @@ function isolated() {
 test("missed tackle animates, moves, and cannot repeat while held", () => {
   const s = isolated();
   s.ball.x = s.ball.z = 9;
-  step(s, dt, { tackle: true });
+  step(s, dt, { tackle: true, x: 1 });
   assert.equal(s.players[7].action, 1);
   assert.ok(s.players[7].x > 0.075);
-  for (let i = 0; i < 65; i++) step(s, dt, { tackle: true });
+  for (let i = 0; i < 65; i++) step(s, dt, { tackle: true, x: 1 });
   assert.notEqual(s.players[7].action, 1);
 });
 test("tap and hold throw in facing direction with different heights", () => {
@@ -166,7 +166,7 @@ test("tackle wins possession directly and resolves only one opponent per slide",
   Object.assign(s.players[16], { x: 0.7, z: 0, stun: 0, cooldown: 10 });
   Object.assign(s.players[17], { x: 0.8, z: 0, stun: 0, cooldown: 10 });
   Object.assign(s.ball, { owner: 16, lastTouch: 16, x: 0.7, z: 0, h: 1 });
-  step(s, dt, { tackle: true }, [true, true]);
+  step(s, dt, { tackle: true, x: 1 }, [true, true]);
   assert.equal(
     s.ball.owner,
     16,

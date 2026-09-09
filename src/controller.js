@@ -289,17 +289,19 @@ export async function start() {
         ? "KNOCKED DOWN"
         : p.action === 1
           ? "SLIDING!"
-          : p.action === 2
-            ? "JUMP!"
-            : state.charge[team] >= 0.12
-              ? "RELEASING"
-              : state.charge[team] > 0
-                ? "WINDING UP"
-                : p.cooldown > 0.01
-                  ? "RECOVERING"
-                  : owned
-                    ? "THROW WHERE YOU FACE"
-                    : "READY TO TACKLE";
+          : p.action === 7
+            ? "PUNCH!"
+            : p.action === 2
+              ? "JUMP!"
+              : state.charge[team] >= 0.12
+                ? "RELEASING"
+                : state.charge[team] > 0
+                  ? "WINDING UP"
+                  : p.cooldown > 0.01
+                    ? "RECOVERING"
+                    : owned
+                      ? "THROW WHERE YOU FACE"
+                      : "READY TO TACKLE";
     $("actionLabel").dataset.action = String(p.action);
     $("chargeFill").style.width =
       `${clamp(state.charge[team] / 0.16, 0, 1) * 100}%`;

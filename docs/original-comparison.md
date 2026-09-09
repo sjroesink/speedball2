@@ -564,3 +564,18 @@ Both team assets have a newly authored Blender Catch clip, timed to 3/25 seconds
 by the renderer. Paired tests check direction, movement/throw inhibition and
 exclusions. The clip is an original 3D interpretation rather than a reproduction
 of the original sprites; keeper-specific visual poses remain to be differentiated.
+
+
+### Standing punch
+
+The no-ball human action now selects a standing punch when there is no movement
+direction, matching `sub_F47E`; a moving action still slides, and eligible high
+balls can still trigger a jump. The punch uses the four sprite frames at 0x6f96,
+remains stationary, checks contact from its next thinking tick, and uses the
+ordinary attack threshold without the sliding modifier. Successful punches set
+fall velocity level three instead of four. Action 7 has a Blender-authored Punch
+clip and event 20 has a new synthesized swish. The HUD names the punch explicitly.
+Paired tests cover duration, stationary recovery, one event and delayed contact
+with the correct victim velocity. Existing slide fixtures now explicitly provide
+movement input. AI standing-attack decisions remain heuristic; fallen-player
+retaliation and other original action-function details are still outstanding.

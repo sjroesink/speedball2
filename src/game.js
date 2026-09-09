@@ -503,6 +503,7 @@ export function step(
       p.action !== 2 &&
       p.action !== 3 &&
       p.action !== 6 &&
+      p.action !== 7 &&
       Math.hypot(dx, dz) > 0.01
     )
       [p.fx, p.fz] = norm(dx, dz);
@@ -540,6 +541,13 @@ export function step(
         p.actionTime = actionDuration(2, p.stats[3]);
         p.cooldown = p.actionTime;
         event(s, 2, i, -1, p.x, p.z, 0);
+      } else if (Math.hypot(dx, dz) < 0.01) {
+        p.action = 7;
+        p.actionTime = 4 / 25;
+        p.cooldown = p.actionTime;
+        p.tackleResolved = false;
+        p.keeperBlock = false;
+        event(s, 20, i, -1, p.x, p.z, 0);
       } else {
         p.action = 1;
         p.tackleResolved = false;
@@ -752,7 +760,7 @@ export function catchBall(s, only = -1, distances = null) {
 // Invoked during the existing slide's thinking, before later players act.
 function resolveTackle(s, i, distances) {
   const p = s.players[i];
-  if (p.action !== 1 || p.tackleResolved) return;
+  if ((p.action !== 1 && p.action !== 7) || p.tackleResolved) return;
   for (let j = 0; j < s.players.length; j++) {
     const q = s.players[j];
     if (
@@ -769,8 +777,9 @@ function resolveTackle(s, i, distances) {
     if (damage(s, i, j)) {
       if (hadBall) giveBall(s, i);
       [q.fx, q.fz] = eightWay(p.fx, p.fz);
-      q.fallX = q.fx * 4 * velocityUnit;
-      q.fallZ = q.fz * 4 * velocityUnit;
+      const speed = (p.action === 1 ? 4 : 3) * velocityUnit;
+      q.fallX = q.fx * speed;
+      q.fallZ = q.fz * speed;
     }
     return;
   }
