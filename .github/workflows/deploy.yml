@@ -1,0 +1,66 @@
+name: Deploy Speedball
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-speedball-production
+  cancel-in-progress: false
+
+jobs:
+  test-and-deploy:
+    name: Test and deploy speedball.roesink.dev
+    if: github.repository == 'sjroesink/speedball2'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out the triggering revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Set up Go
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version: '1.27.x'
+          cache: true
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Test and build
+        run: |
+          set -euo pipefail
+          npm test
+          npm run build
+          go test ./server
+          go vet ./server
+
+      - name: Trigger authenticated Unraid deployment
+        run: |
+          set -euo pipefail
+          token="$(curl --fail --silent --show-error \
+            --header "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=deploy.roes.ink" | jq -r .value)"
+          test -n "$token"
+          response="$(curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer ${token}" \
+            --header 'Content-Type: application/json' \
+            --data '{"stack":"speedball"}' \
+            https://deploy.roes.ink/hooks/deploy)"
+          printf '%s\n' "$response"
+          printf '%s\n' "$response" | grep -Fq "Commit: ${GITHUB_SHA}"
+          printf '%s\n' "$response" | grep -Fq 'Deploy voltooid: speedball'
