@@ -502,6 +502,7 @@ export function step(
       p.action !== 1 &&
       p.action !== 2 &&
       p.action !== 3 &&
+      p.action !== 6 &&
       Math.hypot(dx, dz) > 0.01
     )
       [p.fx, p.fz] = norm(dx, dz);
@@ -721,6 +722,22 @@ export function catchBall(s, only = -1, distances = null) {
       ) {
         b.electric = 0;
         b.charged = false;
+      }
+      if (p.actionTime <= 0 && !(p.moveX || p.moveZ) && (b.vx || b.vz)) {
+        const dx =
+          Math.round(b.x / terrainUnit) - Math.round(p.x / terrainUnit);
+        const dz =
+          Math.round(b.z / terrainUnit) - Math.round(p.z / terrainUnit);
+        const fx =
+          Math.abs(dx) > Math.floor(Math.abs(dz) / 2) ? Math.sign(dx) : 0;
+        const fz =
+          Math.abs(dz) > Math.floor(Math.abs(dx) / 2) ? Math.sign(dz) : 0;
+        if (fx || fz) {
+          p.fx = fx;
+          p.fz = fz;
+          p.action = 6;
+          p.actionTime = 3 / 25;
+        }
       }
       s.charge[team] = 0;
       b.flightKind = 0;

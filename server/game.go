@@ -448,7 +448,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			p.aiWait = 1. / 25
 			dx, dz = eightWay(dx, dz)
 		}
-		if p.Action != 1 && p.Action != 2 && p.Action != 3 && math.Hypot(dx, dz) > .01 {
+		if p.Action != 1 && p.Action != 2 && p.Action != 3 && p.Action != 6 && math.Hypot(dx, dz) > .01 {
 			p.FX, p.FZ = normalized(dx, dz)
 		}
 		pressed := (u.Shoot && !s.previous[t].Shoot) || (u.Tackle && !s.previous[t].Tackle) || u.Fire > s.previous[t].Fire || u.TackleID > s.previous[t].TackleID
@@ -636,6 +636,23 @@ func (s *State) catchBallAt(only int, distances *[18]int) {
 			if (b.VX != 0 || b.VZ != 0) && b.LastTouch >= 0 && s.Players[b.LastTouch].Team != p.Team {
 				b.Electric = 0
 				b.Charged = false
+			}
+			if p.ActionTime <= 0 && p.moveX == 0 && p.moveZ == 0 && (b.VX != 0 || b.VZ != 0) {
+				const unit = 22.4 / 576
+				dx := int(math.Round(b.X/unit) - math.Round(p.X/unit))
+				dz := int(math.Round(b.Z/unit) - math.Round(p.Z/unit))
+				fx, fz := 0., 0.
+				if absInt(dx) > absInt(dz)/2 {
+					fx = math.Copysign(1, float64(dx))
+				}
+				if absInt(dz) > absInt(dx)/2 {
+					fz = math.Copysign(1, float64(dz))
+				}
+				if fx != 0 || fz != 0 {
+					p.FX, p.FZ = fx, fz
+					p.Action = 6
+					p.ActionTime = 3. / 25
+				}
 			}
 			s.Charge[team] = 0
 			b.FlightKind = 0

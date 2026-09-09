@@ -197,7 +197,7 @@ for name,color in [('player-cyan',cyan),('player-orange',orange)]:
  for part in parts:
   if part.parent is None: part.parent=root
  root.animation_data_create()
- poses={'Run':[(1,.06,0),(7,.06,.055),(13,.06,0),(19,.06,.055),(25,.06,0)],'Slide':[(1,0,0),(4,1.3,.12),(19,1.3,.12),(24,0,0)],'Jump':[(1,0,0),(10,-.25,0),(28,.2,0),(42,0,0)],'Throw':[(1,-.3,0),(6,.45,0),(20,0,0)],'Hit':[(1,0,0),(8,-1.5,.18),(65,-1.5,.18),(81,0,0)]}
+ poses={'Catch':[(1,-.12,0),(4,-.08,0),(8,0,0)],'Run':[(1,.06,0),(7,.06,.055),(13,.06,0),(19,.06,.055),(25,.06,0)],'Slide':[(1,0,0),(4,1.3,.12),(19,1.3,.12),(24,0,0)],'Jump':[(1,0,0),(10,-.25,0),(28,.2,0),(42,0,0)],'Throw':[(1,-.3,0),(6,.45,0),(20,0,0)],'Hit':[(1,0,0),(8,-1.5,.18),(65,-1.5,.18),(81,0,0)]}
  for clip,frames in poses.items():
   action=bpy.data.actions.new(clip);root.animation_data.action=action
   for frame,angle,height in frames:
@@ -207,9 +207,10 @@ for name,color in [('player-cyan',cyan),('player-orange',orange)]:
   track=root.animation_data.nla_tracks.new();track.name=clip;strip=track.strips.new(clip,1,action)
  for joint,side,isarm in limbs:
   joint.animation_data_create()
-  for clip in ['Run','Throw','Jump','Slide','Hit']:
+  for clip in ['Run','Throw','Jump','Slide','Hit','Catch']:
    action=bpy.data.actions.new(joint.name+'_'+clip);joint.animation_data.action=action
    frames=[1,7,13,19,25] if clip=='Run' else [1,6,12,20,32]
+   if clip=='Catch': frames=[1,4,8]
    for k,frame in enumerate(frames):
     angle=0
     if clip=='Run': angle=math.sin((frame-1)/24*math.tau)*.65*side*(-1 if isarm else 1)
@@ -217,6 +218,7 @@ for name,color in [('player-cyan',cyan),('player-orange',orange)]:
     elif clip=='Jump': angle=-2.5 if isarm else .4
     elif clip=='Slide': angle=-1.2 if isarm else side*.2
     elif clip=='Hit': angle=side*.55
+    elif clip=='Catch' and isarm: angle=[-.9,-.65,0][k]
     joint.rotation_euler.x=angle;joint.keyframe_insert(data_path='rotation_euler',frame=frame)
    joint.animation_data.action=None
    track=joint.animation_data.nla_tracks.new();track.name=clip;track.strips.new(clip,1,action)

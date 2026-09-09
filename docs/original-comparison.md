@@ -550,3 +550,17 @@ resetting to index 18 leaves a 17-frame tail. Shared constants drive both hit
 recovery and late-contact handling. Paired fall/electroball tests now assert
 these original-sequence timings and the corresponding free movement distance.
 Standing-catch analysis remains pending while this source discrepancy is fixed.
+
+
+### Standing catch recovery
+
+`sub_D520` invokes `sub_F1B4` for a free, stationary player catching a moving
+ball. It faces the ball using integer half-axis direction tests and selects a
+three-sprite catch sequence (including keeper variants), followed by 0xfffd.
+Both simulations now expose action 6 for this three-frame recovery; movement
+and new throws wait until it completes. Moving catches, stationary balls and
+zero direction do not add the recovery. Existing busy actions are retained.
+Both team assets have a newly authored Blender Catch clip, timed to 3/25 seconds
+by the renderer. Paired tests check direction, movement/throw inhibition and
+exclusions. The clip is an original 3D interpretation rather than a reproduction
+of the original sprites; keeper-specific visual poses remain to be differentiated.
