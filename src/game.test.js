@@ -60,7 +60,7 @@ test("tap and hold throw in facing direction with different heights", () => {
     step(s, dt, { z: 1, shoot: true });
     assert.equal(s.ball.owner, 7, "ball stays in hand during wind-up");
     assert.equal(s.players[7].action, 3);
-    for (let i = 1; i < 10; i++) step(s, dt, { z: 1, shoot: high });
+    for (let i = 1; i < 11; i++) step(s, dt, { z: 1, shoot: high });
     assert.equal(s.ball.owner, -1);
     assert.ok(s.ball.vz > 7);
     assert.ok(Math.abs(s.ball.vx) < 1);

@@ -26,7 +26,6 @@ type Player struct {
 	FX, FZ                      float64
 	Stun, ActionTime, Cooldown  float64
 	Action                      int
-	lowThrow                    bool
 	tackleResolved              bool
 	Health, Injury              float64
 	Gear                        int
@@ -225,7 +224,7 @@ func (s *State) throw(i int, lob bool, release ...Input) {
 	setBallSpeed(b, p.Stats[4])
 	startFlight(b, lob)
 	p.Action = 3
-	p.ActionTime = .32
+	p.ActionTime = 4. / 25
 	s.event(3, i, -1, b.X, b.Z, b.H)
 }
 func (s *State) passTarget(i int) int {
@@ -437,14 +436,13 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 					s.Charge[t] = dt
 					p.Action = 3
 					p.ActionTime = .32
-					p.lowThrow = !u.Shoot
 				} else if s.Charge[t] > 0 {
 					s.Charge[t] += dt
 				}
 				if s.Charge[t] > 0 {
-					p.lowThrow = p.lowThrow || !u.Shoot
-					if s.Charge[t] >= .16 {
-						s.throw(i, !p.lowThrow, u)
+					// Charge includes the starting tick. Release follows four full ticks.
+					if s.Charge[t]-dt >= 4./25-1e-9 {
+						s.throw(i, u.Shoot, u)
 						s.Charge[t] = 0
 					}
 				}

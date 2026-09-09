@@ -19,7 +19,7 @@ func TestInputPulseSurvivesShortTap(t *testing.T) {
 	s = isolated()
 	s.Players[7].X = 4
 	s.Ball.Owner = 7
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 11; i++ {
 		s.step(dt, [2]Input{{Fire: 1}, {}})
 	}
 	if s.Ball.Owner != -1 {
@@ -71,7 +71,7 @@ func TestDirectionalLowAndHighThrow(t *testing.T) {
 		if s.Ball.Owner != 7 || s.Players[7].Action != 3 {
 			t.Fatal("missing throw wind-up")
 		}
-		for i := 1; i < 10; i++ {
+		for i := 1; i < 11; i++ {
 			s.step(dt, [2]Input{{Z: 1, Shoot: lob}, {}})
 		}
 

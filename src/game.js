@@ -223,7 +223,7 @@ export function throwBall(s, i, lob, input = {}) {
   setBallSpeed(b, p.stats[4]);
   startFlight(b, lob);
   p.action = 3;
-  p.actionTime = 0.32;
+  p.actionTime = 4 / 25;
   event(s, 3, i, -1, b.x, b.z, b.h);
 }
 // Advance the ball to a free teammate when a carrier is pressed in its own half.
@@ -503,12 +503,11 @@ export function step(
           s.charge[t] = dt;
           p.action = 3;
           p.actionTime = 0.32;
-          p.lowThrow = !u.shoot;
         } else if (s.charge[t] > 0) s.charge[t] += dt;
         if (s.charge[t] > 0) {
-          p.lowThrow ||= !u.shoot;
-          if (s.charge[t] >= 0.16) {
-            throwBall(s, i, !p.lowThrow, u);
+          // Charge includes the starting tick; release follows four full ticks.
+          if (s.charge[t] - dt >= 4 / 25 - 1e-9) {
+            throwBall(s, i, !!u.shoot, u);
             s.charge[t] = 0;
           }
         }

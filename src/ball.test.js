@@ -152,7 +152,7 @@ test("steering is sampled at wind-up release and does not continue during flight
   Object.assign(s.players[7], { x: 4, z: 0, stun: 0, fx: 1, fz: 0 });
   s.ball.owner = 7;
   step(s, 1 / 60, { x: 1, shoot: true }, [true, true]);
-  for (let n = 1; n < 10; n++) step(s, 1 / 60, { z: 1 }, [true, true]);
+  for (let n = 1; n < 11; n++) step(s, 1 / 60, { z: 1 }, [true, true]);
   assert.equal(s.ball.owner, -1);
   assert.equal(s.ball.vz, 4 * velocityUnit);
   const vx = s.ball.vx,

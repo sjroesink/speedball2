@@ -373,3 +373,20 @@ Paired integration tests cover all three busy actions, ensure blocked pulses
 are not deferred, and verify that a fresh lob works after recovery. The shortcut
 itself remains an additional browser control; original one-button release
 handling and standing-catch animations still need further comparison.
+
+
+### Throw release and recovery timeline
+
+The original throw animation at Amiga 0x7076 has eight sprite entries followed
+by 0xfffd. `sub_F078` releases at opcode index four and samples the current
+button value for low/high flight, without remembering earlier releases.
+The regular human throw now stays held through indices 0–3, releases at
+index 4, and permits another action at index 8. Previously it released one
+25 Hz tick early and restarted a full eight-frame recovery at release.
+Release now leaves only four recovery frames. Releasing and repressing the
+button during windup can produce a high throw if held at the release tick.
+Legacy 60 Hz unit fixtures were updated to wait for the full windup; new
+paired 25 Hz tests assert every ownership/recovery boundary and both button
+transitions. Direct AI and shortcut lobs still skip the original windup and
+receive the four-frame release tail; that remaining difference is not covered
+by this human-throw timing correction.
