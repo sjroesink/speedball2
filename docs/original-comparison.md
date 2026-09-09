@@ -653,3 +653,12 @@ The no-item branch of WIP `sub_D742_AII` now drives selected field-player pursui
 One random byte is shared by local-contact and pursuit decisions, and selected carriers now consume the decision byte too, matching the selected AI entry routine. Tests cover aggression equality, distance equality, fallen opponents, multiplier and possession overrides; all 133 JavaScript tests, Go tests, Go vet and the build pass.
 
 This implements the no-item visible-player branch. Pickup target selection, offscreen eligibility and selected keeper behaviour still need porting; this checkpoint is not full AI equivalence.
+
+
+### Logical viewport and selected AI pickup targets
+
+Both simulations now retain the original logical viewport, initialized at terrain (160,484). After each simulation step it follows the carrier or free ball with the WIP `CenterScreenOnEntity` integer rules: abs(delta)/8 + 1 capped at 16, horizontal movement suppressed below speed 2 during play, vertical movement allowed at speed 1, and scroll limits (320,968). Visibility uses inclusive 320 by 184 bounds; selected field-player pursuit uses the original 16-unit inset. This logical viewport controls the new AI branch and is independent of the wider 3D browser camera. Other AI/collision visibility checks have not yet been migrated. Presentation and medical camera targets still need separate porting.
+
+Selected pursuit now checks visible, active pickups in original order: token 1, token 2, equipment, coins 1–4 (current slots 0,1,6,2,3,4,5). Coincident candidates are excluded because the original empty blocked-direction masks reject zero direction. The first eligible candidate is used only when its distance to the ball is no greater than the player ball distance; failure does not retry lower-priority pickups. Offscreen selected field players follow the ball without attacking or seeking pickups. Pickup placement/respawn and per-sprite origin offsets remain separate fidelity gaps.
+
+Tests cover viewport dead zone, scroll cap, limits, inclusive visibility boundaries, pickup priority, offscreen rejection and first-candidate distance failure. All 136 JavaScript tests, Go tests, Go vet and the production build pass.

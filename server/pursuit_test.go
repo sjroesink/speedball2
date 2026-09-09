@@ -2,6 +2,41 @@ package main
 
 import "testing"
 
+func TestPickupPursuit(t *testing.T) {
+	const u = 22.4 / 576
+	s := initial()
+	var d [18]int
+	for i := range d {
+		d[i] = 32
+	}
+	s.Players[7].X, s.Players[7].Z = -32*u, 0
+	s.Ball.X, s.Ball.Z, s.Ball.VX, s.Ball.VZ, s.Ball.Owner = 0, 0, 0, 0, -1
+	for i := range s.Pickups {
+		s.Pickups[i].Wait = 100
+	}
+	s.Pickups[2].X, s.Pickups[2].Z, s.Pickups[2].Wait = 8*u, 0, 0
+	s.Pickups[6].X, s.Pickups[6].Z, s.Pickups[6].Wait = 24*u, 0, 0
+	check := func(want float64) {
+		t.Helper()
+		_, x, _ := s.pursuit(7, 255, &d, false)
+		if x != want {
+			t.Fatal("pickup", x, want)
+		}
+	}
+	check(24 * u)
+	s.Pickups[0].X, s.Pickups[0].Z, s.Pickups[0].Wait = 16*u, 0, 0
+	check(16 * u)
+	s.Pickups[0].X = 64 * u
+	check(0)
+	s.Pickups[0].X = 200 * u
+	check(24 * u)
+	s.Players[7].X = 200 * u
+	a, x, _ := s.pursuit(7, 0, &d, false)
+	if x != 0 || a.attack {
+		t.Fatal("offscreen pursuit")
+	}
+}
+
 func TestSelectedPursuitTarget(t *testing.T) {
 	const u = 22.4 / 576
 	s := initial()

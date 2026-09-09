@@ -59,6 +59,7 @@ type Event struct {
 	Actor, Target int
 }
 type State struct {
+	logicalView       [2]int
 	Bench             [2][3][8]int
 	Events            [16]Event
 	EventCount        int
@@ -120,7 +121,7 @@ func aiReactionTime(intelligence int) float64 {
 }
 
 func initial() State {
-	s := State{RNG: [2]uint32{0x31415926, 0x53589793}, Time: 90, Period: 1, Controlled: [2]int{7, 16}}
+	s := State{logicalView: [2]int{160, 484}, RNG: [2]uint32{0x31415926, 0x53589793}, Time: 90, Period: 1, Controlled: [2]int{7, 16}}
 	s.resetPitch()
 	s.initFeatures()
 	return s
@@ -268,6 +269,7 @@ func (s *State) passTarget(i int) int {
 }
 func (s *State) step(dt float64, inputs [2]Input) { s.simulate(dt, inputs, [2]bool{true, true}) }
 func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
+	defer s.advanceViewport()
 	s.Tick++
 	if s.Over {
 		return

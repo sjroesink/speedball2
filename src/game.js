@@ -1,5 +1,6 @@
 import { localInteraction } from "./interaction.js";
 import { pursuit } from "./pursuit.js";
+import { advanceViewport } from "./visibility.js";
 import { contactDistances, blockPlayerMovement } from "./collision.js";
 import { steerToTarget } from "./steering.js";
 import { goalieTarget, deflectBall } from "./goalie.js";
@@ -330,7 +331,11 @@ export function domeBounce(s) {
     }
   }
 }
-export function step(
+export function step(s, ...args) {
+  simulateStep(s, ...args);
+  advanceViewport(s);
+}
+function simulateStep(
   s,
   dt,
   input = {},
