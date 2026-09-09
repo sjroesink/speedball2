@@ -428,8 +428,22 @@ for x,y in [(304*22.4/576,-300*22.4/576),(-304*22.4/576,300*22.4/576)]:
  for dx in [-.35,0,.35]: cube('Electrode',(x+dx,y,1.1),(.12,.65,.12),white,.03)
 for x in [-pitch_end,pitch_end]:
  cube('GoalShield_'+str(int(x)),(x,0,1),(.16,2*goal_half_width,1.9),cyan,.03)
+# Individual replacement plates vary gently in finish, within the existing seams.
+plate_finishes=[]
+for tone in range(5):
+ shift=(tone-2)*.006
+ finish=mat('Court plate finish '+str(tone),(.15+shift,.19+shift,.175+shift),.45)
+ finish.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value=.59+tone*.03
+ plate_finishes.append(finish)
+x_edges=[-pitch_end,-15.75,-10.5,0,10.5,15.75,pitch_end]
+y_edges=[-11.9,-8.4,-4.2,0,4.2,8.4,11.9]
+for col,(left,right) in enumerate(zip(x_edges,x_edges[1:])):
+ for row,(bottom,top) in enumerate(zip(y_edges,y_edges[1:])):
+  finish=plate_finishes[(col*7+row*3+col*row)%len(plate_finishes)]
+  cube('Court replacement plate',((left+right)/2,(bottom+top)/2,.062),
+       (right-left-.035,top-bottom-.030,.002),finish,0)
 # Batch only static decoration; animated score targets retain separate names.
-for prefixes,label in [(['Wall service cassette'],'Wall service panels'),(['Recessed vent slot'],'Wall ventilation'),(['Cassette bolt'],'Wall fasteners'),(['Terrace riser','Grandstand seat back'],'Terrace steelwork'),(['Grandstand seat'],'Terrace seating')]:
+for prefixes,label in [(['Court replacement plate'],'Court plate finishes'),(['Wall service cassette'],'Wall service panels'),(['Recessed vent slot'],'Wall ventilation'),(['Cassette bolt'],'Wall fasteners'),(['Terrace riser','Grandstand seat back'],'Terrace steelwork'),(['Grandstand seat'],'Terrace seating')]:
  objects=[o for o in bpy.context.scene.objects if o.type=='MESH' and any(o.name.startswith(p) for p in prefixes)]
  bpy.ops.object.select_all(action='DESELECT')
  for o in objects:

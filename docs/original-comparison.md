@@ -2022,3 +2022,15 @@ Thirteen animation tests pass. The new exported-model test checks a raised
 knee settles toward rest while the stride phase remains fixed, then reaches
 rest after the fade. Build passes and fullscreen training starts with the
 updated renderer. This is pose blending, not world-space foot locking.
+
+### Steel floor plate finishes
+
+The Blender arena now has 36 thin replacement plates aligned within the
+existing panel seams. Five subdued green-gray material variants change base
+color and roughness slightly across the court, breaking up the uniform steel
+surface. Plates are joined into one mesh with five material slots. Markings,
+fasteners and collision-aligned walls retain their height and placement.
+
+Inspected the full court in the browser art study; production build and diff
+checks pass. Exported contact geometry remains end=21.155556, goal
+half-width=1.866667 and side=11.2. Detailed wear and scratches remain absent.
