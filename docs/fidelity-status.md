@@ -32,7 +32,9 @@ collision/release placement. The complete 117 signed ball offsets, 120 sprite or
 The complete memory-backed extraction uses `tools/ExportBallTables.java`.
 Physical placement is integrated in JS/Go using generated direction groups,
 a retained run cursor, action timers and jump/catch state. A complete source
-interpreter remains open. Pose-aware ball and opposing-player distances are integrated; collectible and bumper callers were audited as object-based. Goal-throw distance and selected-teammate avoidance are now integrated. Full source fixed-point coordinate behavior remains open.
+interpreter remains open. Per-player pose ordering and the fall -5 gameplay
+terminator are now integrated; fresh falls preserve frame zero even when
+damage arrives after the victim has been processed. Pose-aware ball and opposing-player distances are integrated; collectible and bumper callers were audited as object-based. Goal-throw distance and selected-teammate avoidance are now integrated. Full source fixed-point coordinate behavior remains open.
 
 ## Verification limits
 

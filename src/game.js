@@ -1,4 +1,5 @@
-import {advancePhysicalPose,physicalBallOffset,playerPointDistance} from "./physical-pose.js";
+import {physicalBallOffset,playerPointDistance} from "./physical-pose.js";
+import { advancePlayerPose } from "./player-pose.js";
 import { beginRestart, restartStep } from "./restart.js";
 import { forwardDecision } from "./forward-ai.js";
 import { carrierMove } from "./carrier-move.js";
@@ -377,9 +378,9 @@ function simulateStep(
   b.lock = Math.max(0, b.lock - dt);
   b.after = Math.max(0, b.after - dt);
   for (const p of s.players) {
-    p.stun = Math.max(0, p.stun - dt);
+    p.stun = Math.max(0, p.stun - (p.fallPosePending ? 0 : dt));
     if (p.stun < 1e-9) p.stun = 0;
-    p.actionTime = Math.max(0, p.actionTime - dt);
+    p.actionTime = Math.max(0, p.actionTime - (p.fallPosePending ? 0 : dt));
     p.fallAttackTime = Math.max(0, (p.fallAttackTime || 0) - dt);
     p.cooldown = Math.max(0, p.cooldown - dt);
     if (p.cooldown < 1e-9) p.cooldown = 0;
@@ -446,7 +447,10 @@ function simulateStep(
         p.moveZ = p.fallZ || 0;
         blockPlayerMovement(s.players, i, contacts[i], dt);
       }
-      advancePhysicalPose(p, i, s.period, dt);
+      if (advancePlayerPose(s, i, dt)) {
+        s.previous = inputs.map((u) => ({ ...u }));
+        return;
+      }
       continue;
     }
     resolveTackle(s, i, contacts[i]);
@@ -461,7 +465,10 @@ function simulateStep(
     }
     if (active(s, 1, 1 - t)) {
       p.moveX = p.moveZ = 0;
-      advancePhysicalPose(p, i, s.period, dt);
+      if (advancePlayerPose(s, i, dt)) {
+        s.previous = inputs.map((u) => ({ ...u }));
+        return;
+      }
       continue;
     }
     if (!human) {
@@ -665,7 +672,10 @@ function simulateStep(
     p.moveZ = dz * speed;
     blockPlayerMovement(s.players, i, contacts[i], dt);
     // step_player updates the pose before the next roster entry (0xe886).
-    advancePhysicalPose(p, i, s.period, dt);
+    if (advancePlayerPose(s, i, dt)) {
+      s.previous = inputs.map((u) => ({ ...u }));
+      return;
+    }
   }
   // The original moves players only after every player's thinking has run.
   for (let i = 0; i < s.players.length; i++) {

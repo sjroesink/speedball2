@@ -87,6 +87,7 @@ test("simultaneous tackles use roster order independently of tick parity", () =>
     assert.equal(s.players[7].poseKind, 4, "earlier damage advances during the victim's own turn");
     step(s, simulationStep, {}, [true, true]);
     assert.equal(s.players[16].poseKind, 4, "earlier victim advances the fall on the next tick");
+    assert.equal(s.players[16].physicalFrame, 0, "late damage starts at the first fall frame");
   }
 });
 
@@ -163,7 +164,8 @@ test("tackled player moves at original fall speed then stops before recovery", (
   const x = p.x;
   step(s, simulationStep, {}, [true, true]);
   assert.equal(p.x, x, "final fall frame stops velocity");
-  assert.equal(p.action, 4);
+  assert.equal(p.action, 0, "fall terminator clears the action on the last displayed frame");
+  assert.equal(p.physicalFrame, 25);
   step(s, simulationStep, {}, [true, true]);
   assert.equal(p.stun, 0);
   assert.equal(p.action, 0);

@@ -108,7 +108,7 @@ func TestTackleRosterOrder(t *testing.T) {
 			t.Fatal("poses must advance within each roster turn", s.Players[16].poseKind, s.Players[7].poseKind)
 		}
 		s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
-		if s.Players[16].poseKind != 4 {
+		if s.Players[16].poseKind != 4 || s.Players[16].physicalFrame != 0 {
 			t.Fatal("earlier victim must advance falling on next tick")
 		}
 	}
@@ -202,7 +202,7 @@ func TestTackleFallMotion(t *testing.T) {
 	}
 	x := p.X
 	s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
-	if p.X != x || p.Action != 4 {
+	if p.X != x || p.Action != 0 || p.physicalFrame != 25 {
 		t.Fatal("last fall frame")
 	}
 	s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})

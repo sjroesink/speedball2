@@ -15,6 +15,7 @@ const (
 // Actions are replicated, including misses: 1 slide, 2 jump, 3 throw, 4 hit.
 type Player struct {
 	physicalPoseValid                          bool
+	fallPosePending                            bool
 	poseKind                                   int
 	poseRemaining, poseDuration                float64
 	poseCursor                                 float64
@@ -315,11 +316,15 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 	b.After = math.Max(0, b.After-dt)
 	for i := range s.Players {
 		p := &s.Players[i]
-		p.Stun = math.Max(0, p.Stun-dt)
+		fallElapsed := dt
+		if p.fallPosePending {
+			fallElapsed = 0
+		}
+		p.Stun = math.Max(0, p.Stun-fallElapsed)
 		if p.Stun < 1e-9 {
 			p.Stun = 0
 		}
-		p.ActionTime = math.Max(0, p.ActionTime-dt)
+		p.ActionTime = math.Max(0, p.ActionTime-fallElapsed)
 		p.fallAttackTime = math.Max(0, p.fallAttackTime-dt)
 		p.Cooldown = math.Max(0, p.Cooldown-dt)
 		if p.Cooldown < 1e-9 {
@@ -391,7 +396,10 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				p.moveX, p.moveZ = p.fallX, p.fallZ
 				blockPlayerMovement(&s.Players, i, &contacts[i], dt)
 			}
-			advancePhysicalPose(p, i, s.Period, dt)
+			if s.advancePlayerPose(i, dt) {
+				s.previous = inputs
+				return
+			}
 			continue
 		}
 		s.resolveTackle(i, &contacts[i])
@@ -405,7 +413,10 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		}
 		if s.active(1, 1-t) {
 			p.moveX, p.moveZ = 0, 0
-			advancePhysicalPose(p, i, s.Period, dt)
+			if s.advancePlayerPose(i, dt) {
+				s.previous = inputs
+				return
+			}
 			continue
 		}
 		if !human {
@@ -617,7 +628,10 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		p.moveX, p.moveZ = dx*speed, dz*speed
 		blockPlayerMovement(&s.Players, i, &contacts[i], dt)
 		// step_player updates the pose before the next roster entry (0xe886).
-		advancePhysicalPose(p, i, s.Period, dt)
+		if s.advancePlayerPose(i, dt) {
+			s.previous = inputs
+			return
+		}
 	}
 	// Original movement follows the complete player-thinking pass.
 	for i := range s.Players {

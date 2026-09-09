@@ -2826,3 +2826,30 @@ complete callback/terminator reconciliation.
 All 259 JS tests pass, including six 10,000-tick JS/Go comparisons with internal
 physical pose fields. Go tests/vet and the production build pass. No claim of
 complete original-game equivalence follows from client/server agreement.
+
+
+## Fall cursor zero and -5 completion (2026-09-09)
+
+Follow-up to per-player pose ordering: newly inflicted falls now keep a pending
+first-pose marker. Their stun/action clock cannot consume frame zero before
+the victim's animation pass. This covers damage after the victim has already
+been processed, as well as damage applied between simulation ticks. The marker
+is included in the long JS/Go parity trace.
+
+The first -5 terminator of anim_tackled is processed in the pose pass. It stops
+movement and clears retained attack state; a healthy player leaves the fall
+action and resets the lying-down cursor at 0x10d84. Fatal completion calls
+start_injury from that same pass, rather than waiting for a later global timer.
+Formation processing now also advances the physical poses of fatal falls.
+The raw pose helper still reports the terminator cursor; the player-level
+wrapper performs the source's gameplay transitions.
+
+New JS and Go fixtures check every frame 0–25 for healthy/fatal falls during
+active play and restart formation. Counter-tackle tests require a later-hit
+victim to start at zero on its next turn. The old healthy final-frame assertion
+was corrected: -5 clears the fall action while the last sprite is displayed.
+All 263 JS tests passed; after adding the healthy cursor reset, targeted fall
+and six 10,000-tick parity scenarios passed again, as did all Go tests. Build
+and vet passed before that final cursor-only correction. This supersedes the
+previous entry's open fall-first-frame issue. Throw/jump/catch opcode completion
+and the full original callback interpreter remain separate unresolved work.

@@ -94,6 +94,7 @@ export function damage(s, i, j, ignoreShield = false) {
   q.fallX = q.fallZ = 0;
   q.action = 4;
   q.actionTime = fallDuration;
+  q.fallPosePending = true;
   s.charge[q.team] = 0;
   // damage_player leaves possession and ball motion to the attack caller.
   emit(s, 4, i, j, q.x, q.z);

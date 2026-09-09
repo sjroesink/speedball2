@@ -32,10 +32,17 @@ func (s *State) formationAndLaunchStep(dt float64, medicalFormation bool) bool {
 				if medicalFormation && s.Medical.Player == i {
 					continue
 				}
-				p.ActionTime = math.Max(0, p.ActionTime-dt)
-				p.Stun = math.Max(0, p.Stun-dt)
+				fallElapsed := dt
+				if p.fallPosePending {
+					fallElapsed = 0
+				}
+				p.ActionTime = math.Max(0, p.ActionTime-fallElapsed)
+				p.Stun = math.Max(0, p.Stun-fallElapsed)
 				p.aiWait = math.Max(0, p.aiWait-dt)
 				if p.Health <= 0 {
+					if s.advancePlayerPose(i, dt) {
+						return true
+					}
 					if !medicalFormation && s.startInjury(i) {
 						return true
 					}
@@ -44,7 +51,9 @@ func (s *State) formationAndLaunchStep(dt float64, medicalFormation bool) bool {
 				}
 				if p.ActionTime > 1e-9 || p.aiWait > 1e-9 {
 					ready = false
-					advancePhysicalPose(p, i, s.Period, dt)
+					if s.advancePlayerPose(i, dt) {
+						return true
+					}
 					continue
 				}
 				p.Action = 0
@@ -62,7 +71,9 @@ func (s *State) formationAndLaunchStep(dt float64, medicalFormation bool) bool {
 					p.FX, p.FZ = s.direction(team), 0
 					p.moveX, p.moveZ = 0, 0
 				}
-				advancePhysicalPose(p, i, s.Period, dt)
+				if s.advancePlayerPose(i, dt) {
+					return true
+				}
 			}
 		}
 		if ready && !medicalFormation {

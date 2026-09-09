@@ -86,6 +86,7 @@ func (s *State) damageWithProtection(i, j int, ignoreShield bool) bool {
 	q.fallX, q.fallZ = 0, 0
 	q.Action = 4
 	q.ActionTime = fallDuration
+	q.fallPosePending = true
 	s.Charge[q.Team] = 0
 	// damage_player leaves possession and ball motion to the attack caller.
 	s.event(4, i, j, q.X, q.Z, .5)

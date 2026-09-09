@@ -3,7 +3,7 @@ import { flightStep } from "./ball.js";
 import { movementSpeed, restorePower } from "./attributes.js";
 import { advanceSteering } from "./steering.js";
 import { startInjury } from "./features.js";
-import { advancePhysicalPose } from "./physical-pose.js";
+import { advancePlayerPose } from "./player-pose.js";
 
 export function beginRestart(s, pause = 0) {
   s.restartPhase = 1;
@@ -42,17 +42,18 @@ export function restartStep(s, dt, launchPosition, medicalFormation = false) {
         const i = team * 9 + slot,
           p = s.players[i];
         if (medicalFormation && s.medical.player === i) continue;
-        p.actionTime = Math.max(0, p.actionTime - dt);
-        p.stun = Math.max(0, p.stun - dt);
+        p.actionTime = Math.max(0, p.actionTime - (p.fallPosePending ? 0 : dt));
+        p.stun = Math.max(0, p.stun - (p.fallPosePending ? 0 : dt));
         p.aiWait = Math.max(0, (p.aiWait || 0) - dt);
         if (p.health <= 0) {
+          if (advancePlayerPose(s, i, dt)) return true;
           if (!medicalFormation && startInjury(s, i)) return true;
           ready = false;
           continue;
         }
         if (p.actionTime > 1e-9 || p.aiWait > 1e-9) {
           ready = false;
-          advancePhysicalPose(p, i, s.period, dt);
+          if (advancePlayerPose(s, i, dt)) return true;
           continue;
         }
         p.action = 0;
@@ -74,7 +75,7 @@ export function restartStep(s, dt, launchPosition, medicalFormation = false) {
           p.moveX = p.moveZ = 0;
         }
         // Formation movement still advances sprites in the original player pass.
-        advancePhysicalPose(p, i, s.period, dt);
+        if (advancePlayerPose(s, i, dt)) return true;
       }
     if (ready && !medicalFormation) {
       emit(s, 22, -1, -1, 0, 0, 0.1);

@@ -34,7 +34,7 @@ func init() {
 		panic(err)
 	}
 }
-func advancePhysicalPose(p *Player, i, period int, dt float64) {
+func advancePhysicalPose(p *Player, i, period int, dt float64) bool {
 	direction := (int(math.Round(math.Atan2(p.FZ, p.FX)*4/math.Pi)) + 8) % 8
 	up := (p.Team == 0) == (period != 2)
 	keeper := i%9 == 0
@@ -110,6 +110,8 @@ func advancePhysicalPose(p *Player, i, period int, dt float64) {
 	p.physicalFrame = index
 	p.poseKind = kind
 	p.poseRemaining = p.ActionTime
+	p.fallPosePending = false
+	return kind == 4 && index == len(frames)-1 && physicalPoseData.Controls[group][direction] == -5
 }
 func physicalBallOffset(p *Player, b *Ball) (float64, float64) {
 	correction := 12
