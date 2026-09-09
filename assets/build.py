@@ -176,7 +176,7 @@ def build_players():
   for part in parts:
    if part.parent is None: part.parent=root
   root.animation_data_create()
-  poses={'Punch':[(1,0,0),(4,.22,0),(11,0,0)],'Catch':[(1,-.12,0),(4,-.08,0),(8,0,0)],'Run':[(1,.06,0),(7,.06,.055),(13,.06,0),(19,.06,.055),(25,.06,0)],'Slide':[(1,0,0),(4,1.3,.12),(19,1.3,.12),(24,0,0)],'Jump':[(1,0,0),(10,-.25,0),(28,.2,0),(42,0,0)],'Throw':[(1,-.1,0),(8,-.2,0),(16.5,.12,0),(24,.04,0),(32,0,0)],'Hit':[(1,0,0),(8,-1.5,.18),(65,-1.5,.18),(81,0,0)]}
+  poses={'Punch':[(1,0,0),(4,.22,0),(11,0,0)],'Catch':[(1,-.12,0),(4,-.08,0),(8,0,0)],'Run':[(1,.06,0),(7,.065,.055),(13,.06,0),(19,.065,.055),(25,.06,0)],'Slide':[(1,0,0),(4,1.3,.12),(19,1.3,.12),(24,0,0)],'Jump':[(1,0,0),(10,-.25,0),(28,.2,0),(42,0,0)],'Throw':[(1,-.1,0),(8,-.2,0),(16.5,.12,0),(24,.04,0),(32,0,0)],'Hit':[(1,0,0),(8,-1.5,.18),(65,-1.5,.18),(81,0,0)]}
   for clip,frames in poses.items():
    action=bpy.data.actions.new(clip);root.animation_data.action=action
    for frame,angle,height in frames:
@@ -250,6 +250,27 @@ def build_players():
     ankle.animation_data.action=None
     track=ankle.animation_data.nla_tracks.new();track.name=clip;track.strips.new(clip,1,action)
    ankle.rotation_euler=(0,0,0)
+  # Bake body height against the actual authored boot soles for the Run clip.
+  animated=[obj for obj in bpy.context.scene.objects if obj.animation_data]
+  for obj in animated:
+   for track in obj.animation_data.nla_tracks: track.mute=True
+   obj.animation_data.action=next(track for track in obj.animation_data.nla_tracks if track.name=='Run').strips[0].action
+  boots=[obj for obj in bpy.context.scene.objects if obj.name.startswith('Boot')]
+  ground_keys=[]
+  for frame in range(1,26):
+   bpy.context.scene.frame_set(frame);bpy.context.view_layer.update()
+   depsgraph=bpy.context.evaluated_depsgraph_get()
+   evaluated=[boot.evaluated_get(depsgraph) for boot in boots]
+   sole=min((boot.matrix_world @ vertex.co).z for boot in evaluated for vertex in boot.data.vertices)
+   ground_keys.append((frame,root.location.z+.01-sole))
+  run_track=next(track for track in root.animation_data.nla_tracks if track.name=='Run')
+  root.animation_data.action=run_track.strips[0].action
+  for frame,height in ground_keys:
+   root.location=(0,0,height);root.keyframe_insert(data_path='location',frame=frame)
+  root.animation_data.action=None
+  for obj in animated:
+   obj.animation_data.action=None
+   for track in obj.animation_data.nla_tracks: track.mute=False
   root.rotation_euler=(0,0,0);root.location=(0,0,0);bpy.context.scene.render.fps=60
   export(name,apply_modifiers=True)
 if '--players-only' in sys.argv:

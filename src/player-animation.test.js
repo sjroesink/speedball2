@@ -160,3 +160,22 @@ test("running boot soles remain near level throughout the exported cycle", async
     }
   }
 });
+
+test("running stance stays near the floor between authored keys", async () => {
+  for (const team of ["cyan", "orange"]) {
+    const model=await player(team),mixer=new AnimationMixer(model.scene);
+    const clip=model.animations.find(c=>c.name==='Run');mixer.clipAction(clip).play();
+    const boots=[];model.scene.traverse(o=>{if(o.isMesh&&o.name.startsWith('Boot'))boots.push(o)});
+    assert.equal(boots.length,2);
+    const point=new Vector3();
+    for(let step=0;step<=96;step++) {
+      mixer.setTime(clip.duration*step/96);model.scene.updateMatrixWorld(true);
+      let sole=Infinity;
+      for(const boot of boots) {
+        const vertices=boot.geometry.attributes.position;
+        for(let i=0;i<vertices.count;i++) sole=Math.min(sole,point.fromBufferAttribute(vertices,i).applyMatrix4(boot.matrixWorld).y);
+      }
+      assert.ok(sole>=-.005&&sole<.04,`stance sole stays within floor tolerance: ${sole}`);
+    }
+  }
+});

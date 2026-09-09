@@ -1981,3 +1981,18 @@ Inspected running in the browser. Ten exported-model tests pass, including
 49 samples per team checking sole tilt stays below 12 degrees throughout the
 cycle, plus prior knee phase, grip and action timing tests. Production build
 passes.
+
+### Baked running ground clearance
+
+The Blender builder evaluates the Run clip in isolation and samples the actual
+boot geometry with modifiers applied. It bakes body height at every frame to
+bring the lowest sole to 0.01 units above the model origin. A subtle torso lean
+variation is exported with the gait; the earlier constant lean was omitted from
+the GLB animation and caused a mismatch between Blender floor measurements and
+browser playback.
+
+Eleven exported-model tests pass. The new check samples both teams at 97 times
+and requires the lowest sole to remain between -0.005 and 0.04 units, including
+interpolated frames. Browser running preview and production build pass. This
+reduces vertical floating; horizontal foot sliding, cadence versus travel speed
+and full weight transfer still need work.
