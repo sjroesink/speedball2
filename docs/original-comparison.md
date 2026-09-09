@@ -1719,3 +1719,24 @@ Tests simulate held/repeated/fresh key transitions and use the actual training
 simulation to verify canceled queued fire followed by a working fresh press.
 This is browser lifecycle behavior, not a change to the original match rules.
 Validation: 216 JavaScript tests and production build pass.
+
+
+### Zap victim movement and ball release (2026-09-09)
+
+`powerup_zap` chooses velocity table 4 for a moving victim or table 3 for a
+stationary one at 0x11a5e..0x11a6e, retaining the victim's facing. At 0x11a72..
+0x11a7a it releases possession without changing the ball's coordinates or
+velocity. Our generic damage path instead gave no fall drift and launched a
+new ball from the victim with a fixed attacker-facing impulse.
+
+Zap now sets the victim's fall drift from their facing and previous movement,
+and restores the carried ball data with ownership released. Other damage
+paths retain their existing behavior. Tests cover moving/stationary victims
+and preserved ball position, velocity, height, attribution and slowdown data.
+All four long browser/server match scenarios remain aligned. The changed
+Zap movement removes injury from the tackle-only seed; medical and goal
+coverage is now explicitly required from the mixed-player scenario, which
+still contains both injury and substitution events.
+
+The source offscreen-victim exclusion and dedicated Zap sound remain separate
+fidelity items; this increment addresses movement and release only.

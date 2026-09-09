@@ -269,3 +269,16 @@ test("knocked-loose ball clears stale throw slowdown and direction",()=>{
  assert.equal(s.ball.owner,-1);
  for(const key of ["speedTimer","nextSlowdown","slowFraction","dirX","dirZ","electricBudget"])assert.equal(s.ball[key],0,key);
 });
+
+test("zap fall follows victim facing and releases the existing ball without a throw impulse",()=>{
+ for(const moving of [false,true]){
+  const s=initial(),p=s.players[16];
+  Object.assign(p,{fx:-1,fz:1,moveX:moving?2:0,moveZ:0});
+  Object.assign(s.ball,{owner:16,lastTouch:16,x:3,z:4,h:1,vx:2,vz:0,vh:0,speedTimer:17,nextSlowdown:8});
+  pickup(s,7,12);
+  assert.equal(p.fallX,-(moving?4:3)*velocityUnit);
+  assert.equal(p.fallZ,(moving?4:3)*velocityUnit);
+  assert.equal(s.ball.owner,-1);
+  for(const [key,value] of Object.entries({lastTouch:16,x:3,z:4,h:1,vx:2,vz:0,vh:0,speedTimer:17,nextSlowdown:8}))assert.equal(s.ball[key],value,key);
+ }
+});

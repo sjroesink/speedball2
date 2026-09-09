@@ -156,7 +156,15 @@ export function pickup(s, i, k) {
     p.gear = 0;
   } else if (k === 12)
     s.players.forEach((q, j) => {
-      if (q.team !== t) damage(s, i, j);
+      if (q.team === t) return;
+      const speed = ((q.moveX || q.moveZ) ? 4 : 3) * velocityUnit;
+      const carried = s.ball.owner === j ? { ...s.ball } : null;
+      if (damage(s, i, j)) {
+        q.fallX = Math.sign(q.fx) * speed;
+        q.fallZ = Math.sign(q.fz) * speed;
+        // powerup_zap only releases possession, retaining the ball's motion.
+        if (carried) Object.assign(s.ball, carried, { owner: -1 });
+      }
     });
   else {
     restorePower(s);

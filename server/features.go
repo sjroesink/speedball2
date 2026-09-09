@@ -123,7 +123,20 @@ func (s *State) pickup(i, k int) {
 	case k == 12:
 		for j, q := range s.Players {
 			if q.Team != t {
-				s.damage(i, j)
+				speed := 3 * velocityUnit
+				if q.moveX != 0 || q.moveZ != 0 {
+					speed = 4 * velocityUnit
+				}
+				carried, ball := s.Ball.Owner == j, s.Ball
+				if s.damage(i, j) {
+					fx, fz := eightWay(q.FX, q.FZ)
+					s.Players[j].fallX, s.Players[j].fallZ = fx*speed, fz*speed
+					// powerup_zap only releases possession, retaining the ball's motion.
+					if carried {
+						s.Ball = ball
+						s.Ball.Owner = -1
+					}
+				}
 			}
 		}
 	default:

@@ -290,3 +290,25 @@ func TestSelectedGroundedPickup(t *testing.T) {
 		}
 	}
 }
+
+func TestZapFallAndBallRelease(t *testing.T) {
+	for _, moving := range []bool{false, true} {
+		s := initial()
+		p := &s.Players[16]
+		p.FX, p.FZ = -1, 1
+		if moving {
+			p.moveX = 2
+		}
+		s.Ball = Ball{Owner: 16, LastTouch: 16, X: 3, Z: 4, H: 1, VX: 2, SpeedTimer: 17, NextSlowdown: 8}
+		expected := s.Ball
+		expected.Owner = -1
+		s.pickup(7, 12)
+		speed := 3 * velocityUnit
+		if moving {
+			speed = 4 * velocityUnit
+		}
+		if p.fallX != -speed || p.fallZ != speed || s.Ball != expected {
+			t.Fatal("zap motion", moving, p.fallX, p.fallZ, s.Ball)
+		}
+	}
+}
