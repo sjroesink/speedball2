@@ -191,17 +191,11 @@ export function resetPitch(s) {
   };
   s.charge = [0, 0];
 }
-export const jumpHeight = (p) =>
-  p.action === 2 && p.actionTime > 0
-    ? Math.sin(
-        clamp(
-          (actionDuration(2, p.stats[3]) - p.actionTime) /
-            (actionDuration(2, p.stats[3]) - 2 / 25),
-          0,
-          1,
-        ) * Math.PI,
-      ) * 1.8
-    : 0;
+export const jumpDuration = (p) => p.poseKind === 2 && p.poseDuration > 0
+  ? p.poseDuration : actionDuration(2, p.stats[3]);
+export const jumpHeight = (p) => p.action === 2 && p.actionTime > 0
+  ? Math.sin(clamp((jumpDuration(p) - p.actionTime) /
+      (jumpDuration(p) - 2 / 25), 0, 1) * Math.PI) * 1.8 : 0;
 // Amiga 0xd95e: all cached player distances target the carrier when held.
 export function possessionDistances(s) {
   const target = s.ball.owner >= 0 ? s.players[s.ball.owner] : s.ball;

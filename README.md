@@ -71,7 +71,7 @@ The launcher uses Blender 5.2's standard Windows installation path or `blender` 
 
 - `server/game.go`, `server/features.go`, `server/bonuses.go`: 25 Hz authoritative simulation, matching the original PAL gameplay cadence. Snapshots are sent every simulation tick; rendering remains independent.
 - `server/main.go`: rooms, sessions, origin checks and certificates.
-- `server/wire.go`, `src/wire.js`: binary protocol v8. Complete snapshots including 18 players and all match features fit within 1200 bytes.
+- `server/wire.go`, `src/wire.js`: binary protocol v9. Complete snapshots including 18 players and all match features fit within 1200 bytes.
 - Input and snapshots travel as WebTransport datagrams. Sequence numbers reject stale packets; action counters retain short button presses between ticks. The server accepts no client positions or scores and neutralizes movement after 300 ms without input.
 - `src/game.js`, `src/features.js`: local training simulation. The renderer interpolates player positions; client prediction and lag compensation are not implemented.
 - Empty lobbies expire after ten minutes; leaving closes the match for both players.
@@ -102,7 +102,7 @@ npm test
 npm run build
 ```
 
-Tests cover actions, throws, catches, collisions, scoring, power effects and expiry, injuries and substitutes, equipment, warp-gates, charged balls, goal locks, audio lifecycle and packet size. JavaScript tests decode an actual Go-generated protocol-v8 snapshot. Two local browser clients are used for WebTransport checks.
+Tests cover actions, throws, catches, collisions, scoring, power effects and expiry, injuries and substitutes, equipment, warp-gates, charged balls, goal locks, audio lifecycle and packet size. JavaScript tests decode an actual Go-generated protocol-v9 snapshot. Two local browser clients are used for WebTransport checks.
 
 This is an exhibition-match adaptation. Career/league management, transfers, persistent injuries between matches, ranked matchmaking, accounts, reconnect and touch controls are not included. Match mechanics now use source-derived attribute, damage, pickup, ball-flight and AI rules, but full original-game parity is not established. Physical carried-ball offsets and other unresolved requirements are tracked in [current fidelity status](docs/fidelity-status.md); [original-game comparison](docs/original-comparison.md) preserves the chronological source research.
 

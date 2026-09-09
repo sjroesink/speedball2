@@ -242,3 +242,20 @@ Both-team regressions prove catch identity and pre-release windup identity.
 The 273-test existing JS suite and Go suite pass after the code change; the new
 identity tests pass separately, as do vet and build. The long trace includes
 lastTouch and remains aligned. Complete original event sequencing is still open.
+
+### Jump height retains the launch duration
+
+A midair speed change previously recalculated jumpHeight using the new attribute,
+although the action timer and source sustain remain captured at takeoff. The
+reproduction tools/compare-jump-height.mjs showed a 0.343769 world-unit vertical
+jump without advancing time (speed 100 to 250). It now reports zero change.
+Both simulations use the retained physical-pose duration, with a fallback for
+fresh actions before their first pose update.
+
+Protocol v9 carries jump duration in 25 Hz frames in the upper five bits of the
+existing action byte (low three bits remain action 0..7). The decoded player
+uses that duration for rendering, including when joining mid-jump. Packet size
+is unchanged; the maximum-name/event-tail datagram test still passes. Older
+protocol versions are rejected. Server and browser must update together.
+275 JS tests, Go tests, vet and build pass. Actual Go snapshot decoding verifies
+a retained 16-frame duration independently of the current speed attribute.

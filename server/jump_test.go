@@ -237,3 +237,22 @@ func TestLobCannotCancelBusyAction(t *testing.T) {
 		}
 	}
 }
+
+func TestJumpHeightRetainsLaunchDuration(t *testing.T) {
+	s := initial()
+	for i := range s.Players {
+		s.Players[i].X, s.Players[i].Z, s.Players[i].Stun = 20, 10, 100
+	}
+	p := &s.Players[7]
+	p.X, p.Z, p.Stun = 0, 0, 0
+	s.Ball.X, s.Ball.Z, s.Ball.H, s.Ball.Owner = 1, 0, 4, -1
+	s.simulate(.04, [2]Input{{Shoot: true}, {}}, [2]bool{true, false})
+	for n := 0; n < 3; n++ {
+		s.simulate(.04, [2]Input{}, [2]bool{true, false})
+	}
+	height := jumpHeight(*p)
+	p.Stats[3] = 250
+	if jumpHeight(*p) != height {
+		t.Fatal("speed changed jump height")
+	}
+}

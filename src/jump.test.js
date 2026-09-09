@@ -223,3 +223,12 @@ test("lob shortcut cannot cancel a busy action after obtaining possession", () =
     assert.equal(s.ball.flightKind, 2);
   }
 });
+
+test('changing speed mid-jump does not move the player vertically without a tick',()=>{
+ const s=initial();for(const p of s.players) Object.assign(p,{x:20,z:10,stun:100});
+ const p=s.players[7];Object.assign(p,{x:0,z:0,stun:0});
+ Object.assign(s.ball,{x:1,z:0,h:4,owner:-1});
+ step(s,.04,{shoot:true});for(let n=0;n<3;n++)step(s,.04,{});
+ const height=jumpHeight(p);p.stats[3]=250;
+ assert.equal(jumpHeight(p),height);
+});

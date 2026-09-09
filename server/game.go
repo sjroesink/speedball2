@@ -206,9 +206,15 @@ func (s *State) event(kind, actor, target int, x, z, h float64) {
 	s.Events[s.EventCount] = s.Event
 	s.EventCount++
 }
+func jumpDuration(p Player) float64 {
+	if p.poseKind == 2 && p.poseDuration > 0 {
+		return p.poseDuration
+	}
+	return actionDuration(2, p.Stats[3])
+}
 func jumpHeight(p Player) float64 {
 	if p.Action == 2 && p.ActionTime > 0 {
-		return math.Sin(clamp((actionDuration(2, p.Stats[3])-p.ActionTime)/(actionDuration(2, p.Stats[3])-2./25), 0, 1)*math.Pi) * 1.8
+		return math.Sin(clamp((jumpDuration(p)-p.ActionTime)/(jumpDuration(p)-2./25), 0, 1)*math.Pi) * 1.8
 	}
 	return 0
 }

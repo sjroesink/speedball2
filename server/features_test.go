@@ -204,6 +204,10 @@ func TestPickupRespawnAndEquipment(t *testing.T) {
 }
 func TestFeatureSnapshot(t *testing.T) {
 	s := initial()
+	s.Players[0].Action = 2
+	s.Players[0].poseKind = 2
+	s.Players[0].poseDuration = 16. / 25
+
 	s.Pickups[6].Kind = 0 // Held armor must stay hidden after decoding.
 	s.RestartPhase = 1
 	s.logicalView = [2]int{317, 963}
