@@ -669,3 +669,10 @@ Tests cover viewport dead zone, scroll cap, limits, inclusive visibility boundar
 WIP `sub_E854` exits for an offscreen actor and skips offscreen opponents before choosing attack or avoidance. Both simulations now apply those checks through the retained logical viewport. The full inclusive viewport is used, not the 16-unit inset used by selected-player pursuit. Tests place actor and opponent on either side of the boundary and then scroll the viewport to reveal them. All 137 JavaScript tests, Go tests, Go vet and the production build pass.
 
 This ports eligibility for local AI decisions only. Hit resolution, movement collision and human-to-AI control handoff still need their own original visibility checks. The renderer continues to show a wider 3D view, so logical visibility does not equal browser clipping.
+
+
+### Hit-resolution visibility
+
+WIP `sub_ED56` rejects offscreen attackers, and `sub_ED92` skips offscreen defenders before switching attack thinking and drawing the tackle random byte. Both simulations now check the original logical viewport at those points for slide and punch contact. Skipping an invisible participant leaves the attack unresolved and does not consume randomness. Regression tests put each participant outside the viewport in turn, then let normal scrolling reveal them on the next tick and confirm the same attack can transfer possession. The existing punch-fall fixture now explicitly centers the viewport over its players.
+
+All 138 JavaScript tests, Go tests, Go vet and the production build pass. Movement-collision visibility and control handoff still need porting. The logical original viewport remains distinct from the wider rendered camera.

@@ -28,6 +28,7 @@ test("stationary action punches for four frames without moving", () => {
 });
 test("punch contact starts next tick and uses lower fall velocity than slide", () => {
   const s = setup();
+  s.logicalView = [160, 360];
   s.rng = [0, 0];
   Object.assign(s.players[16], { x: 4.6, z: 0, stun: 0, fx: 1, fz: 0 });
   s.ball.owner = 16;
@@ -37,4 +38,28 @@ test("punch contact starts next tick and uses lower fall velocity than slide", (
   assert.equal(s.ball.owner, 7);
   assert.ok(s.players[16].stun > 0);
   assert.equal(s.players[16].fallX, 3 * velocityUnit);
+});
+
+test("offscreen hits wait for visibility without consuming the tackle attempt", () => {
+  const u = 22.4 / 576;
+  for (const actorOutside of [false, true]) {
+    const s = setup(),
+      p = s.players[7],
+      q = s.players[16];
+    s.rng = [0, 0];
+    Object.assign(p, {
+      x: (actorOutside ? 93 : 91) * u,
+      action: 7,
+      actionTime: 4 / 25,
+    });
+    Object.assign(q, { x: (actorOutside ? 91 : 93) * u, z: 0, stun: 0 });
+    s.ball.owner = 16;
+    step(s, simulationStep, {}, [true, true]);
+    assert.equal(s.ball.owner, 16);
+    assert.ok(!p.tackleResolved);
+    assert.deepEqual(s.rng, [0, 0]);
+    step(s, simulationStep, {}, [true, true]);
+    assert.equal(s.ball.owner, 7);
+    assert.ok(p.tackleResolved);
+  }
 });

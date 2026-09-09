@@ -1,6 +1,6 @@
 import { localInteraction } from "./interaction.js";
 import { pursuit } from "./pursuit.js";
-import { advanceViewport } from "./visibility.js";
+import { advanceViewport, worldInViewport } from "./visibility.js";
 import { contactDistances, blockPlayerMovement } from "./collision.js";
 import { steerToTarget } from "./steering.js";
 import { goalieTarget, deflectBall } from "./goalie.js";
@@ -824,7 +824,12 @@ export function catchBall(s, only = -1, distances = null) {
 // Invoked during the existing slide's thinking, before later players act.
 function resolveTackle(s, i, distances) {
   const p = s.players[i];
-  if ((p.action !== 1 && p.action !== 7) || p.tackleResolved) return;
+  if (
+    (p.action !== 1 && p.action !== 7) ||
+    p.tackleResolved ||
+    !worldInViewport(s, p)
+  )
+    return;
   for (let j = 0; j < s.players.length; j++) {
     const q = s.players[j];
     if (
@@ -832,7 +837,8 @@ function resolveTackle(s, i, distances) {
       q.stun > 0 ||
       q.health <= 0 ||
       shielded(s, q.team) ||
-      distances[j] > 30
+      distances[j] > 30 ||
+      !worldInViewport(s, q)
     )
       continue;
     p.tackleResolved = true;

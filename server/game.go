@@ -729,12 +729,12 @@ func (s *State) catchBallAt(only int, distances *[18]int) {
 // Existing slides resolve contact during thinking, before later players act.
 func (s *State) resolveTackle(i int, distances *[18]int) {
 	p := &s.Players[i]
-	if (p.Action != 1 && p.Action != 7) || p.tackleResolved {
+	if (p.Action != 1 && p.Action != 7) || p.tackleResolved || !s.worldInViewport(p.X, p.Z, 0) {
 		return
 	}
 	for j := range s.Players {
 		q := &s.Players[j]
-		if q.Team == p.Team || q.Stun > 0 || q.Health <= 0 || s.active(10, q.Team) || distances[j] > 30 {
+		if q.Team == p.Team || q.Stun > 0 || q.Health <= 0 || s.active(10, q.Team) || distances[j] > 30 || !s.worldInViewport(q.X, q.Z, 0) {
 			continue
 		}
 		p.tackleResolved = true
