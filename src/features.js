@@ -145,7 +145,7 @@ export function pickup(s, i, k) {
     giveBall(s, t * 9 + 8);
   } else if (k === 11) {
     p.health = 100;
-    p.stats = defaultStats();
+    p.stats = [...(p.baseStats ?? defaultStats())];
     p.gear = 0;
   } else if (k === 12)
     s.players.forEach((q, j) => {
@@ -230,7 +230,8 @@ export function medicalStep(s, dt) {
   if (done) {
     const bench = s.bench[p.team];
     const outgoing = p.stats.map((value) => Math.floor(value / 10) * 10);
-    p.stats = bench.shift();
+    p.baseStats = [...bench.shift()];
+    p.stats = [...p.baseStats];
     bench.push(outgoing);
     s.reserves[p.team] = bench.length;
     p.health = 100;

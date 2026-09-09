@@ -144,6 +144,7 @@ export function resetPitch(s) {
       fx: d,
       fz: 0,
       stats: s.tick > 0 ? [...old[i].stats] : defaultStats(),
+      baseStats: s.tick > 0 ? [...(old[i].baseStats ?? defaultStats())] : defaultStats(),
       statBackup:
         s.tick > 0
           ? [...(old[i].statBackup ?? Array(8).fill(0))]

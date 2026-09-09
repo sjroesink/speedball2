@@ -114,7 +114,7 @@ func (s *State) pickup(i, k int) {
 		s.giveBall(t*9 + 8)
 	case k == 11:
 		p.Health = 100
-		p.Stats = defaultStats()
+		p.Stats = p.BaseStats
 		p.Gear = 0
 	case k == 12:
 		for j, q := range s.Players {
@@ -194,7 +194,8 @@ func (s *State) medicalStep(dt float64) bool {
 			outgoing[j] = outgoing[j] / 10 * 10
 		}
 		bench := &s.Bench[p.Team]
-		p.Stats = bench[0]
+		p.BaseStats = bench[0]
+		p.Stats = p.BaseStats
 		bench[0] = bench[1]
 		bench[1] = bench[2]
 		bench[2] = outgoing

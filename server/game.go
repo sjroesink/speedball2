@@ -29,7 +29,7 @@ type Player struct {
 	aiTarget                                   bool
 	keeperBlock                                bool
 	moveX, moveZ                               float64
-	Stats, StatBackup                          [8]int
+	Stats, StatBackup, BaseStats               [8]int
 	GearBackup, GearPowerBackup                int
 	X, Z                                       float64
 	Team                                       int
@@ -154,11 +154,12 @@ func (s *State) resetPitch() {
 		d := s.direction(t)
 		old := s.Players[i]
 		x, z := s.launchPosition(i)
-		s.Players[i] = Player{Stats: defaultStats(), Health: 100, X: x, Z: z, Team: t, FX: d}
+		s.Players[i] = Player{Stats: defaultStats(), BaseStats: defaultStats(), Health: 100, X: x, Z: z, Team: t, FX: d}
 		if s.Tick > 0 {
 			s.Players[i].Health = old.Health
 			s.Players[i].Gear = old.Gear
 			s.Players[i].Stats = old.Stats
+			s.Players[i].BaseStats = old.BaseStats
 			s.Players[i].StatBackup = old.StatBackup
 			s.Players[i].GearBackup = old.GearBackup
 			s.Players[i].GearPowerBackup = old.GearPowerBackup

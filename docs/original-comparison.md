@@ -1318,3 +1318,21 @@ anchor, a waiting second injury, and no premature clock/launcher advancement.
 The original offscreen teleport shortcut remains intentionally replaced by
 continuous movement in the modern renderer. This closes the earlier frozen-
 teammate medical gap, not the remaining original viewport/phase timing audit.
+
+
+## Substitute baselines and Full Energy (2026-09-09)
+
+Confirmed substitute_player/round_player_stats at 0xbacc/0xbb5a copies current
+attributes, rounds down to tens and rotates the three reserves as implemented.
+Found Full Energy still restored a hard-coded 100 in every attribute. Source
+powerup_energy calls reset_player (0x137ca), which reads the current player's
+saved attribute record. Added a separate baseline per active player, initialized
+with the roster and replaced when a reserve enters. Full Energy copies that
+baseline rather than flattening upgraded or returning players to 100. Live
+attribute mutations do not alias the saved JS baseline. No packet fields added.
+
+Regression tests in both languages cycle through four injuries/substitutions,
+including the return of the rounded outgoing player, then damage attributes
+and use Full Energy to verify the correct baseline each time. Go tests/vet and
+production build pass. Current exhibition rosters still start with uniform
+attributes; original mode-specific roster initialization remains to compare.
