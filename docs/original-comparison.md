@@ -2034,3 +2034,17 @@ fasteners and collision-aligned walls retain their height and placement.
 Inspected the full court in the browser art study; production build and diff
 checks pass. Exported contact geometry remains end=21.155556, goal
 half-width=1.866667 and side=11.2. Detailed wear and scratches remain absent.
+
+### Blender-authored brushed roughness texture
+
+Court plates now share a packed 256x256 linear roughness/metalness image created
+and packed by Blender. Seeded fine brush lines and short smoother scuff strokes
+vary the reflected finish while base color stays subdued. All five plate
+materials reference the embedded PNG through their metallic-roughness textures.
+The native arena includes the packed image; no external texture download is
+needed. Arena GLB size is 3,960,812 bytes.
+
+Confirmed the GLB contains the image and all five material references. Inspected
+the floor at the player-study camera angle in the browser; production build and
+diff checks pass. This is subtle surface finish variation, not a complete wear
+pass with dents, chipped paint or localized contact damage.

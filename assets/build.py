@@ -1,5 +1,5 @@
 """Original game meshes, authored and exported with Blender. Run with npm run assets."""
-import bpy, math, os, time, json, sys
+import bpy, math, os, time, json, sys, random
 from mathutils import Vector
 ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT=os.path.join(ROOT,'public','assets')
@@ -429,11 +429,35 @@ for x,y in [(304*22.4/576,-300*22.4/576),(-304*22.4/576,300*22.4/576)]:
 for x in [-pitch_end,pitch_end]:
  cube('GoalShield_'+str(int(x)),(x,0,1),(.16,2*goal_half_width,1.9),cyan,.03)
 # Individual replacement plates vary gently in finish, within the existing seams.
+# Packed linear roughness/metalness map authored in Blender, shared by all plates.
+brush_size=256
+brush_rng=random.Random(2091)
+brush=bpy.data.images.new('Court brushed metal roughness',width=brush_size,height=brush_size,alpha=True)
+brush.colorspace_settings.name='Non-Color'
+brush_pixels=[]
+brush_lines=[brush_rng.uniform(-.055,.055) for _ in range(brush_size)]
+for y in range(brush_size):
+ for x in range(brush_size):
+  grain=brush_lines[y]+brush_rng.uniform(-.012,.012)
+  roughness=max(.40,min(.80,.65+grain))
+  brush_pixels.extend((1,roughness,.45,1))
+# Short scuff strokes are smoother than the surrounding brushed finish.
+for stroke in range(90):
+ y=brush_rng.randrange(brush_size);start=brush_rng.randrange(brush_size)
+ for step in range(brush_rng.randrange(3,28)):
+  x=(start+step)%brush_size
+  brush_pixels[(y*brush_size+x)*4+1]=.42
+brush.pixels.foreach_set(brush_pixels);brush.pack()
 plate_finishes=[]
 for tone in range(5):
  shift=(tone-2)*.006
  finish=mat('Court plate finish '+str(tone),(.15+shift,.19+shift,.175+shift),.45)
- finish.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value=.59+tone*.03
+ nodes=finish.node_tree.nodes;links=finish.node_tree.links
+ texture=nodes.new('ShaderNodeTexImage');texture.image=brush
+ channels=nodes.new('ShaderNodeSeparateColor');links.new(texture.outputs['Color'],channels.inputs['Color'])
+ shader=nodes.get('Principled BSDF')
+ links.new(channels.outputs['Green'],shader.inputs['Roughness'])
+ links.new(channels.outputs['Blue'],shader.inputs['Metallic'])
  plate_finishes.append(finish)
 x_edges=[-pitch_end,-15.75,-10.5,0,10.5,15.75,pitch_end]
 y_edges=[-11.9,-8.4,-4.2,0,4.2,8.4,11.9]
