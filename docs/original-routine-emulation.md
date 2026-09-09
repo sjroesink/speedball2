@@ -118,3 +118,14 @@ instructions; the comparator verifies the full input ordering. Result: zero
 mismatches against JS tackleThreshold. Original numeric measurements are in
 original-tackle.csv. No production change was needed. This does not cover RNG
 sequence, victim eligibility/order, collision distances or the damage routine.
+
+## Both hosts use the measured corpus in normal tests
+
+`src/original-reference.test.js` runs the four strict CSV comparators as part
+of npm test. `server/original_reference_test.go` independently reads the same
+measured data and checks the Go helpers, including pose origins. Thus 20,124
+original measured cases are checked per host without Ghidra in routine CI.
+The Go reader rejects malformed counts/headers, duplicate inputs and noninteger
+cells. Regeneration still requires the local original reference and emulator;
+these tests do not themselves rerun the Amiga code. All four Go comparisons
+pass. No server/client production logic changed in this integration.
