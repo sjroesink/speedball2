@@ -507,3 +507,17 @@ applies the velocity. Direction fallback to current ball velocity supports
 states without a recorded nominal direction; normal runtime throws and wall
 reflections retain the nominal direction. Late-fall collision stopping and the
 adapted medical sequence remain separate outstanding differences.
+
+
+### Contact while falling
+
+Falling players now execute opponent movement blocking during their thinking
+pass. Before fall index 18, approaching velocity components are compensated
+as for other movement. At index 18 or later, `sub_D4AC` stops velocity and
+resets the animation index to 18 on each eligible contact. The simulations
+represent this as a stationary eight-frame recovery tail that restarts while
+the standing opponent remains within the cached 30-unit range. Once contact
+ends, the tail completes. Paired tests cover repeated late contact and recovery
+after separation. The earlier free-fall trace now explicitly removes the attacker
+after the first blocked movement tick. Offscreen exclusions, fatal injury staging,
+and exact fall indexing for victims hit after their thinking turn remain open.

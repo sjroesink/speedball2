@@ -416,6 +416,11 @@ export function step(
     }
     if (p.stun > 0) {
       p.moveX = p.moveZ = 0;
+      if (p.action === 4 && p.health > 0) {
+        p.moveX = p.fallX || 0;
+        p.moveZ = p.fallZ || 0;
+        blockPlayerMovement(s.players, i, contacts[i], dt);
+      }
       continue;
     }
     resolveTackle(s, i, contacts[i]);

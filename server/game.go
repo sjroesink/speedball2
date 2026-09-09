@@ -355,6 +355,10 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		}
 		if p.Stun > 0 {
 			p.moveX, p.moveZ = 0, 0
+			if p.Action == 4 && p.Health > 0 {
+				p.moveX, p.moveZ = p.fallX, p.fallZ
+				blockPlayerMovement(&s.Players, i, &contacts[i], dt)
+			}
 			continue
 		}
 		s.resolveTackle(i, &contacts[i])
