@@ -815,7 +815,6 @@ func (s *State) resolveTackle(i int, distances *[18]int) {
 			return
 		}
 		hadBall := s.Ball.Owner == j
-		released := s.Ball
 		counter, counterTime := 0, actionDuration(1, q.Stats[3])
 		if !q.tackleResolved && !(q.Action == 1 && q.slideEnding) && (q.Action == 1 || q.Action == 7) {
 			counter = q.Action
@@ -826,7 +825,6 @@ func (s *State) resolveTackle(i int, distances *[18]int) {
 				q.fallAttackTime = counterTime
 			}
 			if falling && hadBall {
-				s.Ball = released
 				s.Ball.Owner = -1
 			} else if hadBall {
 				s.giveBall(i)

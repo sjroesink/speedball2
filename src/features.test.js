@@ -264,12 +264,14 @@ test("floor items require the selected grounded player and use team-order priori
   }
 });
 
-test("knocked-loose ball clears stale throw slowdown and direction",()=>{
+test("damage leaves possession and complete ball state to the attack caller",()=>{
  const s=initial();
- Object.assign(s.ball,{owner:16,speedTimer:47,nextSlowdown:23,slowFraction:.5,dirX:1,dirZ:-1,electricBudget:3});
+ Object.assign(s.ball,{owner:16,lastTouch:16,x:3,z:4,h:1,vx:2,vz:-3,vh:.5,speedTimer:47,nextSlowdown:23,slowFraction:.5,dirX:1,dirZ:-1,electricBudget:3});
+ const ball=s.ball,before={...ball};
  assert.equal(damage(s,7,16),true);
- assert.equal(s.ball.owner,-1);
- for(const key of ["speedTimer","nextSlowdown","slowFraction","dirX","dirZ","electricBudget"])assert.equal(s.ball[key],0,key);
+ assert.ok(s.players[16].health<100);
+ assert.equal(s.ball,ball);
+ assert.deepEqual(s.ball,before);
 });
 
 test("zap fall follows victim facing and releases the existing ball without a throw impulse",()=>{

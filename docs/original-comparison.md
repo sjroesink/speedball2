@@ -2235,3 +2235,25 @@ not establish animation quality. This short local probe does not establish WAN,
 reconnection, injury substitution or full-match coverage. Both clients were
 stopped. The test instrumentation is retained in tools/network-playtest.html;
 these changes remain local under the hourly push preference.
+
+
+### Damage no longer invents a loose-ball impulse
+
+The original damage_player (0x1061a-0x1066c) updates energy, attributes and
+armour, without changing ball possession or motion. Its attack callers decide
+possession: powerup_zap (0x11a72-0x11a7a) clears the carrier pointer, while
+standing tackles transfer possession and retained falling attacks only release.
+The modern damage helper previously invented a throw impulse, then its tackle
+and power-up callers restored a saved copy or replaced it through giveBall.
+That intermediate mutation and those compensating copies are now removed in
+both JS and Go. Each attack directly applies its possession rule; electrical
+ball hits continue to preserve the flying ball and consume their hit budget.
+
+This is a source-aligned simplification of the existing attack outcomes, not a
+claim of a newly visible gameplay change. The former generic loose-ball reset
+test encoded the discarded invented impulse; it is replaced with a complete
+ball-state preservation check, with a matching Go test. Existing tests retain
+coverage of Zap release, falling tackles and normal possession transfer.
+All 236 JS tests, including five 10,000-tick JS/Go parity scenarios, pass; Go
+tests, vet and the production build also pass. The local server was restarted
+with this implementation. Changes remain local for the hourly push batch.

@@ -876,7 +876,6 @@ function resolveTackle(s, i, distances) {
     event(s, 29, i, j, q.x, q.z, 0);
     if (randomByte(s) > tackleThreshold({ ...p, action: attack }, q, j % 9 === 0)) return;
     const hadBall = s.ball.owner === j;
-    const released = falling && hadBall ? { ...s.ball } : null;
     // do_tackle retains only an unresolved slide/punch callback on the victim.
     const counter = !q.tackleResolved && !(q.action === 1 && q.slideEnding) &&
       (q.action === 1 || q.action === 7) ? q.action : 0;
@@ -884,7 +883,7 @@ function resolveTackle(s, i, distances) {
     if (damage(s, i, j)) {
       q.fallAttack = counter;
       q.fallAttackTime = counter ? counterTime : 0;
-      if (released) Object.assign(s.ball, released, { owner: -1 });
+      if (falling && hadBall) s.ball.owner = -1;
       else if (hadBall) {
         giveBall(s, i);
         event(s, p.team === 0 ? 24 : 25, i, j, q.x, q.z, 0);

@@ -62,7 +62,6 @@ func (s *State) damage(i, j int) bool {
 }
 
 func (s *State) damageWithProtection(i, j int, ignoreShield bool) bool {
-	p := s.Players[i]
 	q := &s.Players[j]
 	if q.Health <= 0 || q.Stun > 0 || (!ignoreShield && s.active(10, q.Team)) {
 		return false
@@ -88,9 +87,7 @@ func (s *State) damageWithProtection(i, j int, ignoreShield bool) bool {
 	q.Action = 4
 	q.ActionTime = fallDuration
 	s.Charge[q.Team] = 0
-	if s.Ball.Owner == j {
-		s.Ball = Ball{X: q.X, Z: q.Z, H: .5, VX: p.FX * 5, VZ: p.FZ * 5, VH: 3, Owner: -1, LastTouch: i, Lock: .12}
-	}
+	// damage_player leaves possession and ball motion to the attack caller.
 	s.event(4, i, j, q.X, q.Z, .5)
 	return true
 }
@@ -129,13 +126,11 @@ func (s *State) pickup(i, k int) {
 				if q.moveX != 0 || q.moveZ != 0 {
 					speed = 4 * velocityUnit
 				}
-				carried, ball := s.Ball.Owner == j, s.Ball
 				if s.damage(i, j) {
 					fx, fz := eightWay(q.FX, q.FZ)
 					s.Players[j].fallX, s.Players[j].fallZ = fx*speed, fz*speed
 					// powerup_zap only releases possession, retaining the ball's motion.
-					if carried {
-						s.Ball = ball
+					if s.Ball.Owner == j {
 						s.Ball.Owner = -1
 					}
 				}

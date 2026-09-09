@@ -95,29 +95,7 @@ export function damage(s, i, j, ignoreShield = false) {
   q.action = 4;
   q.actionTime = fallDuration;
   s.charge[q.team] = 0;
-  if (s.ball.owner === j)
-    Object.assign(s.ball, {
-      flightKind: 0,
-      owner: -1,
-      lastTouch: i,
-      x: q.x,
-      z: q.z,
-      h: 0.5,
-      // A knocked-loose ball must not inherit the previous throw's slowdown.
-      speedTimer: 0,
-      nextSlowdown: 0,
-      slowFraction: 0,
-      dirX: 0,
-      dirZ: 0,
-      electricBudget: 0,
-      vx: p.fx * 5,
-      vz: p.fz * 5,
-      vh: 3,
-      lock: 0.12,
-      after: 0,
-      electric: 0,
-      charged: false,
-    });
+  // damage_player leaves possession and ball motion to the attack caller.
   emit(s, 4, i, j, q.x, q.z);
   return true;
 }
@@ -166,12 +144,11 @@ export function pickup(s, i, k) {
     s.players.forEach((q, j) => {
       if (q.team === t || !worldInViewport(s, q)) return;
       const speed = ((q.moveX || q.moveZ) ? 4 : 3) * velocityUnit;
-      const carried = s.ball.owner === j ? { ...s.ball } : null;
       if (damage(s, i, j)) {
         q.fallX = Math.sign(q.fx) * speed;
         q.fallZ = Math.sign(q.fz) * speed;
         // powerup_zap only releases possession, retaining the ball's motion.
-        if (carried) Object.assign(s.ball, carried, { owner: -1 });
+        if (s.ball.owner === j) s.ball.owner = -1;
       }
     });
   else {

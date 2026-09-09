@@ -315,3 +315,15 @@ func TestZapFallAndBallRelease(t *testing.T) {
 		}
 	}
 }
+
+func TestDamageLeavesBallStateToCaller(t *testing.T) {
+	s := initial()
+	s.Ball = Ball{Owner: 16, LastTouch: 16, X: 3, Z: 4, H: 1, VX: 2, VZ: -3, VH: .5}
+	before := s.Ball
+	if !s.damage(7, 16) || s.Players[16].Health >= 100 {
+		t.Fatal("expected damage")
+	}
+	if s.Ball != before {
+		t.Fatalf("damage altered ball: %+v", s.Ball)
+	}
+}
