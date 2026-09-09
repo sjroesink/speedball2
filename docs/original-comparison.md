@@ -1024,3 +1024,28 @@ Both displayed ONLINE / LIVE, WEBTRANSPORT CONNECTED, opposite team selection,
 clock 01:24 and score 0:0. This verifies current client/server compatibility,
 not a complete online medical event. Production build passes. Remaining visual
 work includes the overly rounded player shoulders and clearer human silhouettes.
+
+
+## Player silhouette and Blender export correction (2026-09-09)
+
+Compared the current renderer with the original Amiga screenshot at
+https://thekingofgrabs.com/2023/01/25/speedball-2-brutal-deluxe-amiga/speedball-2-brutal-deluxe-amiga-13/
+(viewed directly in the browser). The original sprites show torsos, faces and
+legs above a flat court; the previous vertical camera showed mostly helmets
+and round shoulder pads. The follow camera now has a modest oblique angle.
+Orthographic pixel proportions are preserved and edge clamps use the enlarged
+ground footprint. It still tracks the ball/medical anchor and fills the viewport.
+
+Blender players now have smaller shaped shoulder plates, colored crown inlays,
+a narrower breastplate and exposed upper arms. Found that bevel modifiers were
+not included in prior GLB exports: shoulder plates had only 24 vertices. Player
+exports now evaluate modifiers (126 shoulder vertices), retain all seven clips
+and support --players-only without rebuilding the other assets. Rebuilt both
+.blend sources and GLBs; original commercial assets are not included.
+
+Browser screenshots checked front/back standing silhouettes and medical carry.
+Centered the prone mesh on its stretcher because the standing origin is at the
+feet. All 173 JavaScript tests and production build pass; GLB structure checks
+confirm evaluated geometry and seven animations per team. Full motion, collision
+readability and different viewport proportions still need playtesting with the
+new camera; this is a visual fidelity improvement, not completed art parity.

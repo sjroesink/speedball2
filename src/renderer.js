@@ -179,6 +179,11 @@ export class ArenaRenderer {
     this.camera.left = this.follow ? -this.extent.halfWidth : -24 * this.aspect;
     this.camera.right = -this.camera.left;
     this.camera.top = this.follow ? this.extent.halfHeight : 24;
+    // Tilt expands the ground footprint; retain square pixels and clamp that footprint.
+    this.groundExtent = {
+      ...this.extent,
+      halfHeight: (this.extent.halfHeight * Math.hypot(32, 18)) / 32,
+    };
     this.camera.bottom = -this.camera.top;
     this.renderViewport = [0, 0, w, h];
     this.camera.updateProjectionMatrix();
@@ -252,6 +257,8 @@ export class ArenaRenderer {
       actor.mixer.update(dt);
       o.visible = p.health > 0 || p.action === 4 || p.injury > 1;
       actor.model.rotation.x = p.health <= 0 ? Math.PI / 2 : 0;
+      // Standing meshes originate at the feet; center the prone body on the stretcher.
+      actor.model.position.z = carried ? -0.9 : 0;
       const medic = this.medics[i],
         medical = s.medical,
         wasVisible = medic.visible;
@@ -426,9 +433,13 @@ export class ArenaRenderer {
         ? cameraTarget(
             (576 - s.medical.origin[1]) * (22.4 / 576),
             (s.medical.origin[0] - 320) * (22.4 / 576),
-            this.extent,
+            this.groundExtent,
           )
-        : cameraTarget(this.ball.position.x, this.ball.position.z, this.extent);
+        : cameraTarget(
+            this.ball.position.x,
+            this.ball.position.z,
+            this.groundExtent,
+          );
       const factor = damping(10, dt);
       this.focus.x += (target.x - this.focus.x) * factor;
       this.focus.z += (target.z - this.focus.z) * factor;
@@ -437,7 +448,7 @@ export class ArenaRenderer {
         halfWidth: this.extent.halfWidth,
       };
       this.camera.up.set(1, 0, 0);
-      this.camera.position.set(this.focus.x, 32, this.focus.z);
+      this.camera.position.set(this.focus.x - 18, 32, this.focus.z);
       this.camera.lookAt(this.focus.x, 0, this.focus.z);
     } else {
       this.camera.up.set(0, 1, 0);

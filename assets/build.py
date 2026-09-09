@@ -29,9 +29,9 @@ def sphere(name,loc,r,material):
  bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=3,radius=r,location=loc); o=bpy.context.object;o.name=name;o.data.materials.append(material);
  for face in o.data.polygons: face.use_smooth=True
  return o
-def export(name):
+def export(name,apply_modifiers=False):
  bpy.ops.wm.save_as_mainfile(filepath=os.path.join(ROOT,'assets',name+'.blend'))
- bpy.ops.export_scene.gltf(filepath=os.path.join(OUT,name+'.build.glb'),export_format='GLB',use_selection=False,export_animation_mode='NLA_TRACKS')
+ bpy.ops.export_scene.gltf(filepath=os.path.join(OUT,name+'.build.glb'),export_format='GLB',use_selection=False,export_animation_mode='NLA_TRACKS',export_apply=apply_modifiers)
  for attempt in range(30):
   try: os.replace(os.path.join(OUT,name+'.build.glb'),os.path.join(OUT,name+'.glb'));break
   except OSError:
@@ -59,6 +59,81 @@ def build_medics():
  export('medic')
 if '--medic-only' in sys.argv:
  build_medics()
+ raise SystemExit
+def build_players():
+ for name,color in [('player-cyan',cyan),('player-orange',orange)]:
+  # Broad human silhouette: silver pads, enamel helmet, face, articulated limbs.
+  cube('Hip belt',(0,0,.72),(.58,.40,.24),rubber,.09)
+  cube('Ribbed breastplate',(0,0,1.13),(.66,.46,.65),armor,.14)
+  cube('Team breast stripe',(0,-.245,1.28),(.50,.04,.12),color,.03)
+  for z in [.91,1.01]: cube('Abdominal rib',(0,-.25,z),(.48,.055,.055),steel,.02)
+  sphere('Head',(0,-.035,1.65),.24,skin)
+  helmet=sphere('Open face helmet',(0,.015,1.75),.275,color);helmet.scale.z=.75
+  cube('Helmet crown stripe',(0,-.03,1.94),(.085,.29,.035),armor,.02)
+  cube('Brow guard',(0,-.245,1.76),(.38,.08,.085),armor,.035)
+  cube('Dark eye opening',(0,-.265,1.69),(.29,.04,.06),rubber,.015)
+  cube('Jaw',(0,-.22,1.57),(.23,.16,.13),skin,.06)
+  limbs=[]
+  for side in [-1,1]:
+   before=set(bpy.context.scene.objects)
+   shoulder=cube('Silver shoulder pad',(side*.47,0,1.39),(.43,.46,.30),armor,.105)
+   cube('Shoulder crown inlay',(side*.47,0,1.55),(.25,.33,.035),color,.035)
+   cube('Shoulder team band',(side*.5,-.235,1.40),(.27,.04,.085),color,.02)
+   bicep=sphere('Bicep',(side*.49,0,1.13),.18,skin);bicep.scale.z=1.2
+   cube('Forearm armor',(side*.49,-.06,.98),(.26,.33,.34),armor,.1)
+   sphere('Hand',(side*.49,-.12,.78),.14,skin)
+   parts=set(bpy.context.scene.objects)-before
+   bpy.ops.object.empty_add(location=(side*.43,0,1.42));joint=bpy.context.object;joint.name='Arm_'+str(side)
+   for part in parts: part.parent=joint;part.matrix_parent_inverse=joint.matrix_world.inverted()
+   limbs.append((joint,side,True))
+   before=set(bpy.context.scene.objects)
+   cube('Thigh',(side*.22,0,.54),(.31,.37,.37),armor,.10)
+   sphere('Knee',(side*.22,-.17,.36),.18,steel)
+   cube('Shin',(side*.22,0,.23),(.27,.31,.31),armor,.07)
+   cube('Boot',(side*.22,-.12,.10),(.34,.55,.20),rubber,.06)
+   cube('Steel toe',(side*.22,-.32,.14),(.32,.17,.15),armor,.04)
+   parts=set(bpy.context.scene.objects)-before
+   bpy.ops.object.empty_add(location=(side*.22,0,.75));joint=bpy.context.object;joint.name='Leg_'+str(side)
+   for part in parts: part.parent=joint;part.matrix_parent_inverse=joint.matrix_world.inverted()
+   limbs.append((joint,side,False))
+  # Native Blender animation clips, played by the browser's AnimationMixer.
+  parts=list(bpy.context.scene.objects)
+  bpy.ops.object.empty_add(type='PLAIN_AXES');root=bpy.context.object;root.name='AthletePose'
+  for part in parts:
+   if part.parent is None: part.parent=root
+  root.animation_data_create()
+  poses={'Punch':[(1,0,0),(4,.22,0),(11,0,0)],'Catch':[(1,-.12,0),(4,-.08,0),(8,0,0)],'Run':[(1,.06,0),(7,.06,.055),(13,.06,0),(19,.06,.055),(25,.06,0)],'Slide':[(1,0,0),(4,1.3,.12),(19,1.3,.12),(24,0,0)],'Jump':[(1,0,0),(10,-.25,0),(28,.2,0),(42,0,0)],'Throw':[(1,-.3,0),(6,.45,0),(20,0,0)],'Hit':[(1,0,0),(8,-1.5,.18),(65,-1.5,.18),(81,0,0)]}
+  for clip,frames in poses.items():
+   action=bpy.data.actions.new(clip);root.animation_data.action=action
+   for frame,angle,height in frames:
+    root.rotation_euler=(angle,0,0);root.location=(0,0,height)
+    root.keyframe_insert(data_path='rotation_euler',frame=frame);root.keyframe_insert(data_path='location',frame=frame)
+   root.animation_data.action=None
+   track=root.animation_data.nla_tracks.new();track.name=clip;strip=track.strips.new(clip,1,action)
+  for joint,side,isarm in limbs:
+   joint.animation_data_create()
+   for clip in ['Run','Throw','Jump','Slide','Hit','Catch','Punch']:
+    action=bpy.data.actions.new(joint.name+'_'+clip);joint.animation_data.action=action
+    frames=[1,7,13,19,25] if clip=='Run' else [1,6,12,20,32]
+    if clip=='Catch': frames=[1,4,8]
+    if clip=='Punch': frames=[1,4,11]
+    for k,frame in enumerate(frames):
+     angle=0
+     if clip=='Run': angle=math.sin((frame-1)/24*math.tau)*.65*side*(-1 if isarm else 1)
+     elif clip=='Throw' and isarm: angle=([-1.5,-1.0,.8,.25,0][k] if side==1 else .2)
+     elif clip=='Jump': angle=-2.5 if isarm else .4
+     elif clip=='Slide': angle=-1.2 if isarm else side*.2
+     elif clip=='Hit': angle=side*.55
+     elif clip=='Catch' and isarm: angle=[-.9,-.65,0][k]
+     elif clip=='Punch' and isarm: angle=[-.4,-1.7,0][k] if side==1 else -.3
+     joint.rotation_euler.x=angle;joint.keyframe_insert(data_path='rotation_euler',frame=frame)
+    joint.animation_data.action=None
+    track=joint.animation_data.nla_tracks.new();track.name=clip;track.strips.new(clip,1,action)
+   joint.rotation_euler=(0,0,0)
+  root.rotation_euler=(0,0,0);root.location=(0,0,0);bpy.context.scene.render.fps=60
+  export(name,apply_modifiers=True)
+if '--players-only' in sys.argv:
+ build_players()
  raise SystemExit
 # Blender XY ground maps to Three.js XZ. Pitch length along X.
 cube('Arena foundation',(0,0,-.42),(31,20,.8),steel,.3)
@@ -179,76 +254,7 @@ for x in [-pitch_end,pitch_end]:
  cube('GoalShield_'+str(int(x)),(x,0,1),(.16,2*goal_half_width,1.9),cyan,.03)
 export('arena')
 if '--arena-only' in sys.argv: sys.exit(0)
-for name,color in [('player-cyan',cyan),('player-orange',orange)]:
- # Broad human silhouette: silver pads, enamel helmet, face, articulated limbs.
- cube('Hip belt',(0,0,.72),(.58,.40,.24),rubber,.09)
- cube('Ribbed breastplate',(0,0,1.13),(.72,.46,.65),armor,.16)
- cube('Team breast stripe',(0,-.245,1.28),(.50,.04,.12),color,.03)
- for z in [.91,1.01]: cube('Abdominal rib',(0,-.25,z),(.48,.055,.055),steel,.02)
- sphere('Head',(0,-.035,1.65),.24,skin)
- helmet=sphere('Open face helmet',(0,.015,1.75),.275,color);helmet.scale.z=.75
- cube('Helmet crown stripe',(0,-.03,1.94),(.085,.29,.035),armor,.02)
- cube('Brow guard',(0,-.245,1.76),(.38,.08,.085),armor,.035)
- cube('Dark eye opening',(0,-.265,1.69),(.29,.04,.06),rubber,.015)
- cube('Jaw',(0,-.22,1.57),(.23,.16,.13),skin,.06)
- limbs=[]
- for side in [-1,1]:
-  before=set(bpy.context.scene.objects)
-  shoulder=sphere('Silver shoulder pad',(side*.48,0,1.39),.30,armor);shoulder.scale=(1,.9,.8)
-  cube('Shoulder team band',(side*.5,-.235,1.40),(.27,.04,.085),color,.02)
-  sphere('Bicep',(side*.49,0,1.13),.19,rubber)
-  cube('Forearm armor',(side*.49,-.06,.98),(.26,.33,.34),armor,.1)
-  sphere('Hand',(side*.49,-.12,.78),.14,skin)
-  parts=set(bpy.context.scene.objects)-before
-  bpy.ops.object.empty_add(location=(side*.43,0,1.42));joint=bpy.context.object;joint.name='Arm_'+str(side)
-  for part in parts: part.parent=joint;part.matrix_parent_inverse=joint.matrix_world.inverted()
-  limbs.append((joint,side,True))
-  before=set(bpy.context.scene.objects)
-  cube('Thigh',(side*.22,0,.54),(.31,.37,.37),armor,.10)
-  sphere('Knee',(side*.22,-.17,.36),.18,steel)
-  cube('Shin',(side*.22,0,.23),(.27,.31,.31),armor,.07)
-  cube('Boot',(side*.22,-.12,.10),(.34,.55,.20),rubber,.06)
-  cube('Steel toe',(side*.22,-.32,.14),(.32,.17,.15),armor,.04)
-  parts=set(bpy.context.scene.objects)-before
-  bpy.ops.object.empty_add(location=(side*.22,0,.75));joint=bpy.context.object;joint.name='Leg_'+str(side)
-  for part in parts: part.parent=joint;part.matrix_parent_inverse=joint.matrix_world.inverted()
-  limbs.append((joint,side,False))
- # Native Blender animation clips, played by the browser's AnimationMixer.
- parts=list(bpy.context.scene.objects)
- bpy.ops.object.empty_add(type='PLAIN_AXES');root=bpy.context.object;root.name='AthletePose'
- for part in parts:
-  if part.parent is None: part.parent=root
- root.animation_data_create()
- poses={'Punch':[(1,0,0),(4,.22,0),(11,0,0)],'Catch':[(1,-.12,0),(4,-.08,0),(8,0,0)],'Run':[(1,.06,0),(7,.06,.055),(13,.06,0),(19,.06,.055),(25,.06,0)],'Slide':[(1,0,0),(4,1.3,.12),(19,1.3,.12),(24,0,0)],'Jump':[(1,0,0),(10,-.25,0),(28,.2,0),(42,0,0)],'Throw':[(1,-.3,0),(6,.45,0),(20,0,0)],'Hit':[(1,0,0),(8,-1.5,.18),(65,-1.5,.18),(81,0,0)]}
- for clip,frames in poses.items():
-  action=bpy.data.actions.new(clip);root.animation_data.action=action
-  for frame,angle,height in frames:
-   root.rotation_euler=(angle,0,0);root.location=(0,0,height)
-   root.keyframe_insert(data_path='rotation_euler',frame=frame);root.keyframe_insert(data_path='location',frame=frame)
-  root.animation_data.action=None
-  track=root.animation_data.nla_tracks.new();track.name=clip;strip=track.strips.new(clip,1,action)
- for joint,side,isarm in limbs:
-  joint.animation_data_create()
-  for clip in ['Run','Throw','Jump','Slide','Hit','Catch','Punch']:
-   action=bpy.data.actions.new(joint.name+'_'+clip);joint.animation_data.action=action
-   frames=[1,7,13,19,25] if clip=='Run' else [1,6,12,20,32]
-   if clip=='Catch': frames=[1,4,8]
-   if clip=='Punch': frames=[1,4,11]
-   for k,frame in enumerate(frames):
-    angle=0
-    if clip=='Run': angle=math.sin((frame-1)/24*math.tau)*.65*side*(-1 if isarm else 1)
-    elif clip=='Throw' and isarm: angle=([-1.5,-1.0,.8,.25,0][k] if side==1 else .2)
-    elif clip=='Jump': angle=-2.5 if isarm else .4
-    elif clip=='Slide': angle=-1.2 if isarm else side*.2
-    elif clip=='Hit': angle=side*.55
-    elif clip=='Catch' and isarm: angle=[-.9,-.65,0][k]
-    elif clip=='Punch' and isarm: angle=[-.4,-1.7,0][k] if side==1 else -.3
-    joint.rotation_euler.x=angle;joint.keyframe_insert(data_path='rotation_euler',frame=frame)
-   joint.animation_data.action=None
-   track=joint.animation_data.nla_tracks.new();track.name=clip;track.strips.new(clip,1,action)
-  joint.rotation_euler=(0,0,0)
- root.rotation_euler=(0,0,0);root.location=(0,0,0);bpy.context.scene.render.fps=60
- export(name)
+build_players()
 sphere('Chrome speedball',(0,0,.25),.25,white)
 export('ball')
 for i in range(12):
