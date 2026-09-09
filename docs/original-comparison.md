@@ -2627,3 +2627,19 @@ the way back and zero stale vertical origin once the launcher starts. Restart
 tests, six 10,000-tick JS/Go parity scenarios, the Go suite, Go vet and the
 production build pass. Live server must be restarted to serve this latest
 change; the preceding network check covered 5da4dd0, not this revision.
+
+### Steering uses the physical run phase
+
+player_moving_action_fn at 0x102fe tests the original sprite cursor for zero
+before recalculating a distant direction. advanceSteering previously counted
+its own calls independently of action animations. Runtime JS/Go players now
+use the retained physical pose cursor once a physical pose has been advanced;
+the standalone helper retains a fallback counter before pose initialization.
+Near-target corrections and explicitly changed targets keep their existing
+behavior. This is not a claim that every branch of original steering is ported.
+
+A regression deliberately disagrees the old counter with the physical cursor:
+it verifies retaining direction at physical phase three and correcting at
+phase zero. All 256 JS tests, including six 10,000-tick parity scenarios,
+Go tests, vet and production build pass. This also covers the prior formation
+pose update in the complete JS suite. No additional push was made this cycle.

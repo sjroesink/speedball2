@@ -1,6 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { steerToTarget, predictedTarget, advanceSteering } from "./steering.js";
+
+test("live steering waits for the retained physical animation cursor", () => {
+  const p={x:0,z:0,physicalPoseValid:true,poseCursor:3};
+  advanceSteering(p,200*u,100*u,true);
+  p.x=40*u;
+  p.steerFrame=0;
+  assert.deepEqual(advanceSteering(p,200*u,100*u),[1,0]);
+  p.poseCursor=0; p.steerFrame=5;
+  assert.deepEqual(advanceSteering(p,200*u,100*u),[1,1]);
+});
 const u = 22.4 / 576;
 test("prediction uses the original intelligence bands in 25 Hz steps", () => {
   for (const [intelligence, expected] of [

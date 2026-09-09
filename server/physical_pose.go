@@ -96,6 +96,7 @@ func advancePhysicalPose(p *Player, i, period int, dt float64) {
 	frames := physicalPoseData.Groups[group][direction]
 	index = min(index, len(frames)-1)
 	p.physicalSprite = frames[index]
+	p.physicalPoseValid = true
 	p.physicalFrame = index
 	p.poseKind = kind
 	p.poseRemaining = p.ActionTime

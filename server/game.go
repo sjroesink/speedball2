@@ -14,6 +14,7 @@ const (
 
 // Actions are replicated, including misses: 1 slide, 2 jump, 3 throw, 4 hit.
 type Player struct {
+	physicalPoseValid                          bool
 	poseKind                                   int
 	poseRemaining, poseDuration                float64
 	poseCursor                                 float64

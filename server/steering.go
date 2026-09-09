@@ -61,7 +61,11 @@ func advanceSteering(p *Player, x, z float64, fresh bool) (float64, float64) {
 	dx := math.Abs(math.Round(x/unit) - math.Round(p.X/unit))
 	dz := math.Abs(math.Round(z/unit) - math.Round(p.Z/unit))
 	changed := !p.steerValid || p.steerTargetX != x || p.steerTargetZ != z
-	update := fresh || changed || p.steerFrame == 0 || (dx <= 32 && dz <= 32)
+	frame := p.steerFrame
+	if p.physicalPoseValid {
+		frame = int(p.poseCursor)
+	}
+	update := fresh || changed || frame == 0 || (dx <= 32 && dz <= 32)
 	p.steerFrame = (p.steerFrame + 1) & 7
 	if update {
 		p.steerX, p.steerZ = steerToTarget(p, x, z, fresh)

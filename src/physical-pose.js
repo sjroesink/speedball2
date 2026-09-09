@@ -79,6 +79,7 @@ export function advancePhysicalPose(p, i, period, dt) {
     data.groups[group][keeper && kind === 0 ? (up ? 0 : 4) : direction];
   index = Math.min(index, frames.length - 1);
   p.physicalSprite = frames[index];
+  p.physicalPoseValid = true;
   p.physicalFrame = index;
   p.poseKind = kind;
   p.poseRemaining = p.actionTime;

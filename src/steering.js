@@ -40,7 +40,8 @@ export function steerToTarget(p, x, z, fresh = false) {
 export function advanceSteering(p, x, z, fresh = false) {
   const dx = Math.abs(Math.round(x / unit) - Math.round(p.x / unit));
   const dz = Math.abs(Math.round(z / unit) - Math.round(p.z / unit));
-  const frame = p.steerFrame ?? 0;
+  // 0x102fe checks the sprite cursor, including its retained action phase.
+  const frame = p.physicalPoseValid ? p.poseCursor : p.steerFrame ?? 0;
   const changed = p.steerTargetX !== x || p.steerTargetZ !== z;
   const update = fresh || changed || frame === 0 || (dx <= 32 && dz <= 32);
   p.steerFrame = (frame + 1) & 7;
