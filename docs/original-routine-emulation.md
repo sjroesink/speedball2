@@ -46,3 +46,27 @@ results only. Current result: 151 compared, zero mismatches against JS
 `actionSustain`. This directly validates that helper; it does not establish
 full action timing, Go execution, controls, collisions or whole-match parity.
 The same emulator project can support the next bounded reference routines.
+
+## Distance routine
+
+`CompareOriginalDistance.java` executes vector_length at 0xdaf6 until one of
+its two RTS addresses (0xdb1a/0xdb20). Input registers D0/D3 receive absolute
+terrain deltas; output is D1's low word. Each case has a 32-instruction limit.
+It needs no runtime lookup initialization. The same imported read-only project
+and headless arguments apply, with this script name and a separate output CSV.
+
+The input grid includes all integers 0..64 on both axes and 15 larger values
+up to 1152, yielding 6,400 pairs. It covers small-range truncation and branch
+boundaries, swapped axes, zero deltas and representative full-court distances.
+`original-distance.csv` contains measured numbers, not executable bytes.
+
+```text
+node tools/compare-original-distance.mjs docs/original-distance.csv
+```
+
+Current result: 6,400 compared, zero mismatches against JS referenceDistance.
+The comparison validates the complete expected grid and emulator step bounds.
+This proves the measured integer helper cases only: sign normalization,
+sprite-origin adjustments, world-coordinate rounding and caller/update order
+are outside this routine and remain separate comparison targets. No production
+code needed changing as a result of this measurement.

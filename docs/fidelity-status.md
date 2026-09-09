@@ -41,7 +41,8 @@ damage arrives after the victim has been processed. Pose-aware ball and opposing
 
 1. Expand executable reference comparisons toward whole-match traces.
    original-routine-emulation.md records the first measured routine: all 151
-   valid get_sustain inputs match JS. Whole-match comparison remains absent.
+   valid get_sustain inputs and 6,400 vector_length inputs match JS.
+   Whole-match comparison remains absent.
 2. Remaining physical-pose and fixed-point ordering, especially interactions
    between tackles, catches, ball hardware and medical interruption.
 3. Playable feel review with the current high camera, player animation and
