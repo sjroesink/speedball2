@@ -353,6 +353,25 @@ def build_pickups():
   bpy.ops.object.empty_add();root=bpy.context.object;root.name='Pickup_'+str(k)
   for part in parts:part.parent=root
  export('pickups',apply_modifiers=True)
+def build_impact():
+ # Compact tapered metal sparks with an open center, readable above an athlete.
+ vertices=[];faces=[]
+ for i in range(8):
+  angle=i*math.tau/8 + (.055 if i%2 else -.035)
+  inner=.40+(i%3)*.025; outer=.70-(i%3)*.035
+  middle=inner+(outer-inner)*.30; width=.035 if i%2 else .045
+  start=len(vertices)
+  for radius,side in [(inner,0),(middle,width),(outer,0),(middle,-width)]:
+   vertices.append((math.cos(angle)*radius-math.sin(angle)*side,math.sin(angle)*radius+math.cos(angle)*side,0))
+  faces.append((start,start+1,start+2,start+3))
+ mesh=bpy.data.meshes.new('Tapered impact sparks');mesh.from_pydata(vertices,[],faces);mesh.update()
+ obj=bpy.data.objects.new('Impact sparks',mesh);bpy.context.collection.objects.link(obj)
+ material=mat('Impact light',(1,.82,.48),0,.4)
+ material.use_backface_culling=False;obj.data.materials.append(material)
+ export('impact')
+
+if '--impact-only' in sys.argv:
+ build_impact();sys.exit(0)
 if '--pickups-only' in sys.argv:
  build_pickups()
  raise SystemExit
@@ -562,9 +581,7 @@ if '--arena-only' in sys.argv: sys.exit(0)
 build_players()
 sphere('Chrome speedball',(0,0,.25),.25,white)
 export('ball')
-for i in range(12):
- a=i*math.tau/12;o=cube('Impact spark',(math.cos(a)*.65,math.sin(a)*.65,.25),(.4,.07,.07),white,.015);o.rotation_euler.z=a
-export('impact')
+build_impact()
 build_pickups()
 build_medics()
 for name in ['arena','player-cyan','player-orange','ball']:

@@ -194,10 +194,12 @@ export class ArenaRenderer {
         o.material.color.setHex(color);
         o.material.emissive?.setHex(color);
         o.material.transparent = true;
+        o.material.depthWrite = false;
+        o.material.side = THREE.DoubleSide;
       }
     });
     this.scene.add(mesh);
-    this.effects.push({ mesh, life: 0.4 });
+    this.effects.push({ mesh, life: 0.22 });
   }
   draw(s, dt, team) {
     if (!this.ball) return;
@@ -426,15 +428,16 @@ export class ArenaRenderer {
     });
     for (const e of recentEvents(s, this.lastEvent)) {
       if ([4, 5, 8, 9, 10, 11, 12, 13, 14, 15, 26, 27, 28].includes(e.kind))
-        this.burst(e.x, e.z, e.h, e.kind === 4 ? 0xffbd65 : 0xa7fcff);
+        this.burst(e.x, e.z, e.kind === 4 ? Math.max(e.h, 1.8) : e.h, e.kind === 4 ? 0xffbd65 : 0xa7fcff);
     }
     this.lastEvent = s.event.id;
     for (let i = this.effects.length - 1; i >= 0; i--) {
       const e = this.effects[i];
       e.life -= dt;
-      e.mesh.scale.setScalar(1 + (1 - e.life / 0.4) * 2);
+      const phase = Math.max(0, e.life / 0.22);
+      e.mesh.scale.setScalar(0.7 + (1 - phase) * 0.65);
       e.mesh.traverse((o) => {
-        if (o.isMesh) o.material.opacity = Math.max(0, e.life / 0.4);
+        if (o.isMesh) o.material.opacity = phase * phase;
       });
       if (e.life <= 0) {
         this.scene.remove(e.mesh);

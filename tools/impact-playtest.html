@@ -1,0 +1,14 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Speedball impact review</title>
+<style>body{margin:0;background:#101820;color:white;font:14px system-ui}nav{padding:10px;display:flex;gap:15px;align-items:center}button{padding:10px}#stage{height:85vh}</style>
+<nav><strong>Blender impact review</strong><button id="play">Play impact</button><button id="freeze">Freeze at 55 ms</button><output>Loading</output></nav><div id="stage"></div>
+<script type="module">
+import {ArenaRenderer} from '/src/renderer.js';import {createMatch} from '/src/game.js';
+const s=createMatch({training:true}),view=new ArenaRenderer(document.querySelector('#stage'));
+Object.assign(s.players[7],{x:0,z:0,action:4,actionTime:1.1,stun:1.1});
+Object.assign(s.ball,{owner:-1,x:0,z:1.6,h:.25});
+await view.load();view.setFollow(true);view.resize();view.draw(s,.04,0);
+let frozen=true,last=performance.now();
+function show(freeze){view.draw(s,1,0);view.burst(0,0,1.8,0xffbd65);view.draw(s,freeze?.055:0,0);frozen=freeze;document.querySelector('output').textContent=freeze?'Frozen 55 ms after contact':'Playing 220 ms impact';}
+document.querySelector('#play').onclick=()=>show(false);document.querySelector('#freeze').onclick=()=>show(true);
+show(true);function draw(now){view.draw(s,frozen?0:Math.min(.05,(now-last)/1000),0);last=now;requestAnimationFrame(draw)}requestAnimationFrame(draw);
+</script></html>

@@ -2300,3 +2300,23 @@ maximum release-frame step of 0.607 world units and zero held-ball grip error.
 Not every release must appear as a distinct rendered transition when snapshots
 are omitted. This short probe does not establish WAN or reconnection behavior.
 Both clients were stopped. Instrumentation remains in network-playtest.html.
+
+
+### Compact Blender impact feedback
+
+Replaced the twelve box-shaped impact rays with eight tapered planar sparks,
+authored in build_impact and saved in impact.blend/impact.glb. The asset exports
+as one mesh primitive. A dedicated --impact-only flag avoids rebuilding the
+court and athletes. The effect keeps its center open and uses transparent,
+double-sided material without depth writes.
+
+The renderer now fades over 220 ms with squared opacity and grows from scale
+0.7 to 1.35, replacing the 400 ms growth from 1 to 3. Successful tackle impacts
+appear above the armor at height 1.8; other event effects retain their event
+height. The first compact version was occluded by armor in browser inspection,
+so the radius and contact height were adjusted. The final production-renderer
+fixture at tools/impact-playtest.html shows the effect at 55 ms alongside the
+athlete, selection ring and ball. It also provides a Play impact button.
+The browser screenshot confirms spatial readability at that phase; it does not
+establish final artistic acceptance or overall animation quality. Production
+build passes. Blender source and exported asset are committed together locally.
