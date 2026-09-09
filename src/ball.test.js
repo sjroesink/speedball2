@@ -233,7 +233,7 @@ test("height stage three cannot score even though it is below the old geometric 
   s.players.forEach((p) => (p.stun = 10));
   Object.assign(s.ball, {
     owner: -1,
-    x: 21.1,
+    x: 21.4,
     z: 0,
     vx: 8 * velocityUnit,
     vz: 0,

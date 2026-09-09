@@ -1606,3 +1606,27 @@ This validates scheduled-source cancellation, not the perceptual mix or the
 speaker/headphone output. The sound engine required no lifecycle code change.
 The in-game rule text was also corrected to state the keeper block-dive
 exception to Shield protection established in the source audit.
+
+
+### High-ball wall clearance (2026-09-09)
+
+`constrain_sprites` at 0xe5f4..0xe602 chooses a 24-terrain-unit inset for ball
+stages above 2, or 32 for low stages. `constrain_sprite` uses that inset on
+both court axes, clamps an out-of-bounds position, reverses velocity and then
+advances it. Both simulations previously used the low-ball boundary for every
+height. They now give high balls the extra eight units of clearance on all
+four walls; existing high-ball rebound fixtures start near the corresponding
+higher boundary. Goals still require low flight.
+
+New tests exercise both heights, both signs, both axes and positions between
+and beyond the respective walls. The four complete parity scenarios exposed
+a separate stale-state bug at tick 4376: a knocked-loose browser ball retained
+the previous throw's slowdown timer, unlike the server's fresh Ball value.
+That timer, slowdown accumulator, nominal direction and electric budget now
+reset on the browser damage path, with a focused regression test.
+
+After correction, all four scenarios again align. Goal coverage remains in
+the mixed-human scenario; the changed two-human trajectory has no goal in this
+seed. Warp and medical coverage remain required elsewhere in the same test.
+The original animation-before-constraint ordering still requires a separate
+boundary-frame audit; this change establishes the height-specific geometry.

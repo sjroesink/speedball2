@@ -122,7 +122,7 @@ test("four warp entrances preserve height and travel direction; high ball reboun
       assert.equal(s.event.kind, 12);
     }
   const s = isolated();
-  Object.assign(s.ball, { x: 8, z: 11.1, h: 3, vz: 24, owner: -1 });
+  Object.assign(s.ball, { x: 8, z: 11.4, h: 3, vz: 24, owner: -1 });
   // Contact is evaluated on the tick after crossing the boundary.
   step(s, dt, {});
   step(s, dt, {});
@@ -260,4 +260,12 @@ test("floor items require the selected grounded player and use team-order priori
     if (kind === 13) assert.deepEqual(s.credits, [100, 0]);
     if (kind === 17) assert.equal(s.players[7].gear, 17);
   }
+});
+
+test("knocked-loose ball clears stale throw slowdown and direction",()=>{
+ const s=initial();
+ Object.assign(s.ball,{owner:16,speedTimer:47,nextSlowdown:23,slowFraction:.5,dirX:1,dirZ:-1,electricBudget:3});
+ assert.equal(damage(s,7,16),true);
+ assert.equal(s.ball.owner,-1);
+ for(const key of ["speedTimer","nextSlowdown","slowFraction","dirX","dirZ","electricBudget"])assert.equal(s.ball[key],0,key);
 });

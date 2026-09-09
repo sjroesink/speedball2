@@ -113,7 +113,7 @@ func TestWarpsAndHighBounce(t *testing.T) {
 		}
 	}
 	s := isolated()
-	s.Ball = Ball{X: 8, Z: 11.1, H: 3, VZ: 24, Owner: -1, LastTouch: -1}
+	s.Ball = Ball{X: 8, Z: 11.4, H: 3, VZ: 24, Owner: -1, LastTouch: -1}
 	s.step(dt, [2]Input{})
 	s.step(dt, [2]Input{})
 	if s.Ball.VZ >= 0 || s.Ball.Z < 0 {

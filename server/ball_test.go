@@ -218,7 +218,7 @@ func TestFlightStageCatchAndGoal(t *testing.T) {
 	}
 	s := isolated()
 	s.Players[7].Stun = 10
-	s.Ball = Ball{Owner: -1, X: 21.1, VX: 8 * velocityUnit}
+	s.Ball = Ball{Owner: -1, X: 21.4, VX: 8 * velocityUnit}
 	startFlight(&s.Ball, true)
 	flightStep(&s.Ball, 6./25)
 	s.step(dt, [2]Input{})

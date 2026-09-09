@@ -99,6 +99,13 @@ export function damage(s, i, j, ignoreShield = false) {
       x: q.x,
       z: q.z,
       h: 0.5,
+      // A knocked-loose ball must not inherit the previous throw's slowdown.
+      speedTimer: 0,
+      nextSlowdown: 0,
+      slowFraction: 0,
+      dirX: 0,
+      dirZ: 0,
+      electricBudget: 0,
       vx: p.fx * 5,
       vz: p.fz * 5,
       vh: 3,

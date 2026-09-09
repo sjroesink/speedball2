@@ -80,7 +80,7 @@ test("high ball clears standing player, can be caught while jumping", () => {
 });
 test("a high throw at the goal rebounds above the crossbar", () => {
   const s = isolated();
-  Object.assign(s.ball, { x: 20.9, z: 0, h: 3, vx: 24, owner: -1 });
+  Object.assign(s.ball, { x: 21.4, z: 0, h: 3, vx: 24, owner: -1 });
   // Contact is evaluated on the tick after crossing the boundary.
   step(s, dt, {});
   step(s, dt, {});

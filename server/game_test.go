@@ -117,6 +117,9 @@ func TestWallsGoalsAndHighGoalMiss(t *testing.T) {
 	for _, h := range []float64{1, 3} {
 		s = isolated()
 		s.Ball = Ball{X: 20.9, H: h, VX: 24, Owner: -1, LastTouch: 7}
+		if h > 2 {
+			s.Ball.X = 21.4
+		}
 		s.step(dt, [2]Input{})
 		s.step(dt, [2]Input{})
 		if h < 2 && s.Score[0] != 10 {

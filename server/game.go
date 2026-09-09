@@ -624,12 +624,18 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 	} else if inMultiplier {
 		// The original multiplier animation owns the ball position while inside.
 	} else {
-		if math.Abs(b.Z) > pitchZ && !specialContact {
+		// constrain_sprites (0xe5f4): high stages use a 24-unit wall inset, low 32.
+		inset := 32.
+		if b.FlightKind != 0 && b.FlightStage > 2 || b.FlightKind == 0 && b.H > 1.25 {
+			inset = 24
+		}
+		wallX, wallZ := (576-inset)*terrainUnit, (320-inset)*terrainUnit
+		if math.Abs(b.Z) > wallZ && !specialContact {
 			s.event(5, b.LastTouch, -1, b.X, b.Z, b.H)
-			b.Z = math.Copysign(pitchZ, b.Z)
+			b.Z = math.Copysign(wallZ, b.Z)
 			reflectBall(b, false)
 		}
-		if math.Abs(b.X) > pitchX {
+		if math.Abs(b.X) > wallX {
 			if math.Abs(b.Z) <= goalWidth && b.X*b.VX > 0 && (b.FlightKind > 0 && b.FlightStage <= 2 || b.FlightKind == 0 && b.H < goalHeight) && !s.goalBlocked(b.X) {
 				scorer := 0
 				if b.X*s.direction(0) < 0 {
@@ -641,7 +647,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				s.previous = inputs
 				return
 			} else {
-				b.X = math.Copysign(pitchX, b.X)
+				b.X = math.Copysign(wallX, b.X)
 				reflectBall(b, true)
 				s.event(5, b.LastTouch, -1, b.X, b.Z, b.H)
 			}

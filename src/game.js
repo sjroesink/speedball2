@@ -684,12 +684,15 @@ function simulateStep(
   } else if (inMultiplier) {
     // The original multiplier animation owns the ball position while inside.
   } else {
-    if (Math.abs(b.z) > 11.2 && !specialContact) {
+    // constrain_sprites (0xe5f4): high stages use a 24-unit wall inset, low 32.
+    const inset = (b.flightKind ? b.flightStage > 2 : b.h > 1.25) ? 24 : 32;
+    const wallX = (576 - inset) * terrainUnit, wallZ = (320 - inset) * terrainUnit;
+    if (Math.abs(b.z) > wallZ && !specialContact) {
       event(s, 5, b.lastTouch, -1, b.x, b.z, b.h);
-      b.z = Math.sign(b.z) * 11.2;
+      b.z = Math.sign(b.z) * wallZ;
       reflectBall(b, "z");
     }
-    if (Math.abs(b.x) > pitchLengthLimit) {
+    if (Math.abs(b.x) > wallX) {
       if (
         Math.abs(b.z) <= goalHalfWidth &&
         b.x * b.vx > 0 &&
@@ -703,7 +706,7 @@ function simulateStep(
         s.previous = inputs.map((u) => ({ ...u }));
         return;
       } else {
-        b.x = Math.sign(b.x) * pitchLengthLimit;
+        b.x = Math.sign(b.x) * wallX;
         reflectBall(b, "x");
         event(s, 5, b.lastTouch, -1, b.x, b.z, b.h);
       }
