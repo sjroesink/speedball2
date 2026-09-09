@@ -2048,3 +2048,16 @@ Confirmed the GLB contains the image and all five material references. Inspected
 the floor at the player-study camera angle in the browser; production build and
 diff checks pass. This is subtle surface finish variation, not a complete wear
 pass with dents, chipped paint or localized contact damage.
+
+### Taller athletic proportions
+
+Pending visual preference feedback, the next character pass provisionally favors
+more human proportions. The Blender builder lengthens the region between the
+boot tops and hips by 30 percent (0.165 total model units), translating the upper
+body without widening it. Mesh vertices and joint origins are remapped together.
+Arm descendants, including BallGrip, translate as one assembly to preserve the
+hand-to-ball offset. Ground clearance is baked again for the changed legs.
+
+Inspected standing and running poses for both teams in the browser. All thirteen
+animation tests and the production build pass. This remains a stylized character
+study; it is not user acceptance of the final proportions or art direction.

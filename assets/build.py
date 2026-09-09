@@ -170,6 +170,33 @@ def build_players():
    for part in parts:
     if part.parent is None: part.parent=joint;part.matrix_parent_inverse=joint.matrix_world.inverted()
    limbs.append((joint,side,False))
+  # Lengthen the legs above the boots while keeping the upper body proportions.
+  # Remap mesh vertices and joint origins together so the authored rig stays aligned.
+  bpy.context.view_layer.update()
+  parts=list(bpy.context.scene.objects)
+  old_world={part:part.matrix_world.copy() for part in parts}
+  def leg_height(z): return z+.30*max(0,min(z-.20,.55))
+  new_world={part:matrix.copy() for part,matrix in old_world.items()}
+  def remap_height(part,z):
+   ancestor=part
+   while ancestor:
+    if ancestor.name.startswith('Arm_'): return z+.165
+    ancestor=ancestor.parent
+   return leg_height(z)
+  for part,matrix in new_world.items(): matrix.translation.z=remap_height(part,matrix.translation.z)
+  for part in parts:
+   if part.type=='MESH':
+    inverse=new_world[part].inverted()
+    for vertex in part.data.vertices:
+     point=old_world[part] @ vertex.co;point.z=remap_height(part,point.z)
+     vertex.co=inverse @ point
+   part.matrix_world=new_world[part]
+  # Re-establish bind transforms after changing both parent and child origins.
+  for part in parts:
+   if part.parent:
+    part.matrix_parent_inverse=new_world[part.parent].inverted()
+    part.matrix_basis=new_world[part]
+  bpy.context.view_layer.update()
   # Native Blender animation clips, played by the browser's AnimationMixer.
   parts=list(bpy.context.scene.objects)
   bpy.ops.object.empty_add(type='PLAIN_AXES');root=bpy.context.object;root.name='AthletePose'
