@@ -62,6 +62,54 @@ func TestOriginalPredictionMeasurements(t *testing.T) {
 		}
 	}
 }
+
+func TestOriginalEnemyMeasurements(t *testing.T) {
+	const unit = 22.4 / 576
+	for _, r := range originalMeasurements(t, "original-enemy", "team,intelligence,distance,flags,x,dx,selected", 1080, 6) {
+		s := initial()
+		team, intelligence, flags := r[0], r[1], r[3]
+		i, base := team*9+3, (1-team)*9
+		s.Period = team + 1
+		s.logicalView = [2]int{0, 484}
+		s.Players[i].X, s.Players[i].Z = 0, (120-320)*unit
+		s.Players[i].Stats[7] = intelligence
+		var distances [18]int
+		for j := range distances {
+			distances[j] = 999
+		}
+		for j := 0; j < 9; j++ {
+			p := &s.Players[base+j]
+			p.X, p.Z, p.moveX, p.moveZ, p.Stun = 0, (180-320)*unit, 0, 0, 1
+			if j == 1 {
+				p.Stun = 0
+			}
+			if j == 0 {
+				p.Z = float64(r[4]-320) * unit
+				p.moveZ = float64(r[5]) * unit * 25
+				p.Stun = 0
+				if flags&16 != 0 {
+					p.Stun = 1
+				}
+				if flags&64 != 0 {
+					p.X = (576 - 450) * unit
+				}
+			}
+		}
+		distances[base], distances[base+1] = r[2], 199
+		x, z, ok := s.aggressionTarget(i, &distances, 0)
+		if r[6] < 0 {
+			if ok {
+				t.Fatalf("unexpected target for %v", r)
+			}
+			continue
+		}
+		p := s.Players[base+r[6]]
+		a, b := predictedTarget(p.X, p.Z, p.moveX, p.moveZ, intelligence)
+		if !ok || math.Abs(x-a) > 1e-9 || math.Abs(z-b) > 1e-9 {
+			t.Fatalf("enemy selection %v: got %v,%v,%v, expected %v,%v", r, x, z, ok, a, b)
+		}
+	}
+}
 func TestOriginalDistanceMeasurements(t *testing.T) {
 	for _, r := range originalMeasurements(t, "original-distance", "dx,dz,distance,instructions", 6400, 2) {
 		got := referenceDistance(float64(r[0])*terrainUnit, float64(r[1])*terrainUnit)

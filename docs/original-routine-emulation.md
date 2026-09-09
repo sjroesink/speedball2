@@ -204,4 +204,29 @@ node tools/compare-original-prediction.mjs docs/original-prediction.csv
 This verifies the prediction used by aggression, pursuit and other AI callers
 for the sampled states. It does not verify candidate selection, the caller's
 timing or an entire match. The newly restored aggression branch still needs
-its own original-execution comparison.
+its own original-execution comparison, provided below.
+
+## Closest available enemy
+
+`CompareOriginalEnemy.java` executes find_closest_available_enemy at
+0xf866..0xf8ca, including its observation-distance, prediction and role-bound
+subroutines. It installs synthetic nine-player opponent pointer tables and
+cached distances, initializes the original division table, and reads the
+returned A0 player pointer. The instruction limit is 512 per selection.
+
+The 1,080 cases vary both team-table branches, intelligence 100/200/250,
+distance thresholds and ties, tackled/offscreen flag combinations, and
+predicted movement across the inclusive role edge. The first two opponent
+slots compete; remaining slots are unavailable. The querying player's zone
+is [32,213,384,768], matching the tested midfield role on the corresponding
+half. These are controlled inputs, not a recording of a live original match.
+
+Both host implementations match every result. The comparator calls the actual
+aggressionTarget helper with its outer probability gate enabled; the measured
+original routine starts after that gate. This does not independently verify
+random timing, visibility-flag update timing or other caller scheduling.
+Eight retained numeric corpora now cover 32,851 cases per host.
+
+```text
+node tools/compare-original-enemy.mjs docs/original-enemy.csv
+```

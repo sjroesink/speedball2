@@ -4,7 +4,7 @@ import {execFileSync} from "node:child_process";
 import {fileURLToPath} from "node:url";
 
 // Independent numeric results from original machine-code execution, not host parity.
-for(const [routine,count] of [["sustain",151],["distance",6400],["point-distance",9477],["tackle",4096],["damage",1536],["random",1536],["prediction",8575]]) {
+for(const [routine,count] of [["sustain",151],["distance",6400],["point-distance",9477],["tackle",4096],["damage",1536],["random",1536],["prediction",8575],["enemy",1080]]) {
  test(`original ${routine} emulator measurements match the browser simulation`,()=>{
   const script=fileURLToPath(new URL(`../tools/compare-original-${routine}.mjs`,import.meta.url));
   const data=fileURLToPath(new URL(`../docs/original-${routine}.csv`,import.meta.url));
