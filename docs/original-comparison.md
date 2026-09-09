@@ -521,3 +521,16 @@ ends, the tail completes. Paired tests cover repeated late contact and recovery
 after separation. The earlier free-fall trace now explicitly removes the attacker
 after the first blocked movement tick. Offscreen exclusions, fatal injury staging,
 and exact fall indexing for victims hit after their thinking turn remain open.
+
+
+### Browser checkpoint, 2026-09-09
+
+The local Go server was still running the 2026-09-08 build. It was restarted
+from gameplay commit c331dd0 before testing. The current client loaded in
+training, displayed the fullscreen arena, advanced the match clock and AI score,
+and accepted sound activation without browser errors. Two refreshed browser
+tabs created/joined arena 9AGQHA through WebTransport; both displayed LIVE,
+WEBTRANSPORT CONNECTED and the same 01:20 match clock. Neither tab reported
+browser errors during this check. This is a local connection/rendering smoke
+test, not a latency/load test or proof of complete original gameplay equivalence.
+Audio activation was checked, but the sound mix was not assessed by listening.
