@@ -38,6 +38,28 @@ def export(name):
    if attempt==29:raise
    time.sleep(.1)
  bpy.ops.object.select_all(action='SELECT');bpy.ops.object.delete(use_global=False)
+def build_medics():
+ before=set(bpy.context.scene.objects)
+ cube('Stretcher',(0,0,.55),(1.8,.7,.12),armor,.06)
+ for y in [-.38,.38]:cube('Stretcher handle',(0,y,.60),(2.3,.07,.07),steel,.02)
+ parts=set(bpy.context.scene.objects)-before
+ bpy.ops.object.empty_add();root=bpy.context.object;root.name='StretcherAssembly'
+ for part in parts:part.parent=root
+ for n in range(2):
+  before=set(bpy.context.scene.objects)
+  cube('Medic tunic',(0,0,.95),(.38,.43,.65),white,.08)
+  sphere('Medic head',(0,0,1.46),.20,skin)
+  cube('Medic cap',(0,0,1.61),(.35,.38,.10),white,.04)
+  cube('Red cross horizontal',(0,0,1.68),(.26,.07,.02),orange,.005)
+  cube('Red cross vertical',(0,0,1.69),(.07,.26,.02),orange,.005)
+  for y in [-.13,.13]:cube('Medic boot',(0,y,.23),(.30,.18,.42),steel,.04)
+  parts=set(bpy.context.scene.objects)-before
+  bpy.ops.object.empty_add();root=bpy.context.object;root.name='Medic_'+str(n)
+  for part in parts:part.parent=root
+ export('medic')
+if '--medic-only' in sys.argv:
+ build_medics()
+ raise SystemExit
 # Blender XY ground maps to Three.js XZ. Pitch length along X.
 cube('Arena foundation',(0,0,-.42),(31,20,.8),steel,.3)
 cube('Playing surface',(0,0,0),(28,17,.12),floor)
@@ -244,16 +266,7 @@ for k,label in enumerate(labels,1):
  bpy.ops.object.empty_add();root=bpy.context.object;root.name='Pickup_'+str(k)
  for part in parts:part.parent=root
 export('pickups')
-cube('Stretcher',(0,0,.55),(1.8,.7,.12),armor,.06)
-for y in [-.38,.38]:cube('Stretcher handle',(0,y,.60),(2.3,.07,.07),steel,.02)
-for x in [-1.1,1.1]:
- cube('Medic tunic',(x,0,.95),(.38,.43,.65),white,.08)
- sphere('Medic head',(x,0,1.46),.20,skin)
- cube('Medic cap',(x,0,1.61),(.35,.38,.10),white,.04)
- cube('Red cross horizontal',(x,0,1.68),(.26,.07,.02),orange,.005)
- cube('Red cross vertical',(x,0,1.69),(.07,.26,.02),orange,.005)
- for y in [-.13,.13]:cube('Medic boot',(x,y,.23),(.30,.18,.42),steel,.04)
-export('medic')
+build_medics()
 for name in ['arena','player-cyan','player-orange','ball']:
  bpy.ops.import_scene.gltf(filepath=os.path.join(OUT,name+'.glb'))
  if name.startswith('player'):

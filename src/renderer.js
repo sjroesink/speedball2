@@ -250,19 +250,31 @@ export class ArenaRenderer {
       actor.mixer.update(dt);
       o.visible = p.health > 0 || p.action === 4 || p.injury > 1;
       actor.model.rotation.x = p.health <= 0 ? Math.PI / 2 : 0;
-      const medic = this.medics[i];
-      medic.visible = p.injury > 0;
+      const medic = this.medics[i],
+        medical = s.medical;
+      medic.visible = medical?.player === i;
       if (medic.visible) {
-        const side = p.z < 0 ? -12 : 12,
-          elapsed = 6 - p.injury;
-        const z =
-          elapsed < 2
-            ? THREE.MathUtils.lerp(side, p.z, elapsed / 2)
-            : THREE.MathUtils.lerp(p.z, side, clamp((elapsed - 2) / 3, 0, 1));
-        medic.position.set(p.x, 0, z);
-        if (elapsed >= 2) {
-          o.position.z = z;
-          o.position.y = 0.7;
+        const unit = 22.4 / 576;
+        medic.position.set(0, 0, 0);
+        for (let n = 0; n < 2; n++) {
+          const part = medic.getObjectByName(`Medic_${n}`),
+            point = medical.medics[n];
+          if (part)
+            part.position.set(
+              (576 - point[1]) * unit,
+              0,
+              (point[0] - 320) * unit,
+            );
+        }
+        const stretcher = medic.getObjectByName("StretcherAssembly");
+        if (stretcher) {
+          stretcher.visible = medical.phase >= 2;
+          stretcher.position.set(p.x, 0, p.z);
+          stretcher.rotation.y = Math.PI / 2;
+        }
+        if (medical.phase >= 2) {
+          o.position.set(p.x, 0.7, p.z);
+          o.rotation.y = 0;
         }
       }
       actor.model.traverse((m) => {
@@ -402,11 +414,13 @@ export class ArenaRenderer {
       }
     }
     if (this.follow) {
-      const target = cameraTarget(
-        this.ball.position.x,
-        this.ball.position.z,
-        this.extent,
-      );
+      const target = s.medical
+        ? cameraTarget(
+            (576 - s.medical.origin[1]) * (22.4 / 576),
+            (s.medical.origin[0] - 320) * (22.4 / 576),
+            this.extent,
+          )
+        : cameraTarget(this.ball.position.x, this.ball.position.z, this.extent);
       const factor = damping(10, dt);
       this.focus.x += (target.x - this.focus.x) * factor;
       this.focus.z += (target.z - this.focus.z) * factor;

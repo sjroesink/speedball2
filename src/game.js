@@ -127,6 +127,7 @@ export function initial() {
   return s;
 }
 export function resetPitch(s) {
+  s.medical = null;
   const old = s.players;
   s.players = Array.from({ length: 18 }, (_, i) => {
     const team = Math.floor(i / 9),

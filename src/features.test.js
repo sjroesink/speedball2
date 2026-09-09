@@ -177,10 +177,10 @@ test("fatal falls finish before medical scoring, clock pause and reserve rotatio
       step(s, 1 / 25, {}, [false, false]);
     assert.equal(s.players[16].injury, 0);
     step(s, 1 / 25, {}, [false, false]);
-    assert.equal(s.players[16].injury, 6);
+    assert.equal(s.players[16].injury, 1);
     assert.equal(s.score[0], points);
     const time = s.time;
-    for (let frame = 0; frame < 151; frame++)
+    for (let frame = 0; s.medical && frame < 1000; frame++)
       step(s, 1 / 25, {}, [false, false]);
     assert.equal(s.time, time);
     assert.equal(s.players[16].health, 100);

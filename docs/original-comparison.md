@@ -933,3 +933,26 @@ rendered successfully; its canvas bounds and drawing buffer were both exactly
 3456x1408 at (0,0), matching the current viewport without letterboxing. The
 server was restarted with the gameplay changes. Graphics/animation refinement,
 complete medical transport and audio listening comparison remain outstanding.
+
+
+## Medical transport checkpoint (2026-09-09)
+
+Replaced the fixed six-second evacuation with separate approach, positioning,
+lift and carry phases based on the supplied WIP Match.cs medical functions.
+Both medics move two terrain units per 25 Hz reference tick. The replacement
+enters from the actual carry-out side; the camera stays near the injury anchor.
+For modern wide displays, completion uses physical sideline clearance instead
+of the original small viewport edge. This deliberately changes route duration.
+
+Protocol v8 replicates the phase, patient index, injury anchor and two medic
+positions. The maximum snapshot remains 1200 bytes. Blender-authored medics
+and stretcher now have separate transform roots; the asset script supports
+--medic-only to rebuild them without changing the other assets.
+
+Validation: 170 JavaScript tests, Go tests and vet, production build, and GLB
+assembly checks pass. Tests cover mirrored routes, all four phases, frame-rate
+independence, bench rotation, serialized injuries, snapshot ownership and actual
+Go-to-JavaScript decoding of off-court medic coordinates. This checkpoint has
+not received a visual playthrough of the complete medical sequence. The original
+injury ball-launch/resume behavior remains a separate fidelity gap; this change
+retains the existing paused ball state. Full gameplay parity is not claimed.

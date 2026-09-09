@@ -323,9 +323,9 @@ export async function start() {
           "",
         ) + ` · ×${mult}`;
     }
-    const medical = state.players.find((q) => q.injury > 0);
+    const medical = state.medical;
     $("powerStatus").textContent = medical
-      ? `MEDICS · ${Math.ceil(medical.injury)}s · CLOCK STOPPED`
+      ? `MEDICS · ${["APPROACHING", "POSITIONING", "LIFTING", "EXITING"][medical.phase]} · CLOCK STOPPED`
       : state.effect.time > 0
         ? `${state.effect.team === team ? "YOUR TEAM" : "OPPONENT"}: ${powerNames[state.effect.kind]} · ${Math.ceil(state.effect.time)}s`
         : state.ball.charged

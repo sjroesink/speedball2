@@ -165,11 +165,11 @@ func TestInjuryMedicalAndReserveRotation(t *testing.T) {
 			t.Fatal("fall not finished")
 		}
 		s.simulate(simulationStep, [2]Input{}, [2]bool{})
-		if s.Score[0] != points || s.Players[16].Injury != 6 {
+		if s.Score[0] != points || s.Players[16].Injury != 1 {
 			t.Fatal("medical start")
 		}
 		clock := s.Time
-		for frame := 0; frame < 151; frame++ {
+		for frame := 0; s.Medical != nil && frame < 1000; frame++ {
 			s.simulate(simulationStep, [2]Input{}, [2]bool{})
 		}
 		if s.Time != clock || s.Reserves[1] != 3 || s.Players[16].Health != 100 {
@@ -203,6 +203,7 @@ func TestPickupRespawnAndEquipment(t *testing.T) {
 func TestFeatureSnapshot(t *testing.T) {
 	s := initial()
 	s.logicalView = [2]int{317, 963}
+	s.Medical = &Medical{Player: 16, Phase: 3, Origin: [2]int{592, 1104}, Medics: [2][2]int{{-50, 1104}, {-22, 1104}}}
 	s.Effect = Effect{10, 1, 5.5}
 	s.Credits = [2]int{100, 50}
 	s.Reserves = [2]int{2, 1}

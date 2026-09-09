@@ -51,7 +51,7 @@ One temporary effect is active at a time; a new temporary effect replaces the ol
 
 Eight equipment categories improve aggression (AI attack decisions), attack (tackle success), defence (resisting tackles), speed, throw strength, power (damage), stamina (damage resistance) or intelligence (ball anticipation). Equipment is lost on a hit.
 
-Energy loss reduces performance. At zero energy the player is injured: the opponent scores 10 points with any multiplier, the clock stops for a six-second medical evacuation, and a substitute enters. The three bench players rotate: the first enters and the outgoing player joins the back with weakened attributes rounded down to tens. Substitutions do not exhaust the bench. Damage persists after goals.
+Energy loss reduces performance. At zero energy the player is injured: the opponent scores 10 points with any multiplier, the clock stops while two medics approach, lift and carry the injured player beyond the sideline, and a substitute enters. The three bench players rotate: the first enters and the outgoing player joins the back with weakened attributes rounded down to tens. Substitutions do not exhaust the bench. Damage persists after goals.
 
 Four warp-gates at the original latitudes (approximately X = +/-8.01) on both side walls move low balls to the opposite wall while preserving direction. High balls rebound normally. Two electro-bounces opposite the star banks charge the ball for one to three hits, fixed by the multiplier at throw time. They relaunch the ball away from the emitter at full throw speed; another bounce does not replenish used hits. Charged balls with remaining hits knock opponents down instead of being caught; shields protect the catcher. The charged appearance persists after hits are exhausted. Friendly catches preserve it; opposing catches clear it when the ball is moving. A new throw clears the charge.
 
@@ -71,7 +71,7 @@ The launcher uses Blender 5.2's standard Windows installation path or `blender` 
 
 - `server/game.go`, `server/features.go`, `server/bonuses.go`: 25 Hz authoritative simulation, matching the original PAL gameplay cadence. Snapshots are sent every simulation tick; rendering remains independent.
 - `server/main.go`: rooms, sessions, origin checks and certificates.
-- `server/wire.go`, `src/wire.js`: binary protocol v3. Complete snapshots including 18 players and all match features remain below 1200 bytes.
+- `server/wire.go`, `src/wire.js`: binary protocol v8. Complete snapshots including 18 players and all match features fit within 1200 bytes.
 - Input and snapshots travel as WebTransport datagrams. Sequence numbers reject stale packets; action counters retain short button presses between ticks. The server accepts no client positions or scores and neutralizes movement after 300 ms without input.
 - `src/game.js`, `src/features.js`: local training simulation. The renderer interpolates player positions; client prediction and lag compensation are not implemented.
 - Empty lobbies expire after ten minutes; leaving closes the match for both players.
@@ -102,7 +102,7 @@ npm test
 npm run build
 ```
 
-Tests cover actions, throws, catches, collisions, scoring, power effects and expiry, injuries and substitutes, equipment, warp-gates, charged balls, goal locks, audio lifecycle and packet size. JavaScript tests decode an actual Go-generated protocol-v7 snapshot. Two local browser clients are used for WebTransport checks.
+Tests cover actions, throws, catches, collisions, scoring, power effects and expiry, injuries and substitutes, equipment, warp-gates, charged balls, goal locks, audio lifecycle and packet size. JavaScript tests decode an actual Go-generated protocol-v8 snapshot. Two local browser clients are used for WebTransport checks.
 
 This is an exhibition-match adaptation. Career/league management, transfers, persistent injuries between matches, ranked matchmaking, accounts, reconnect and touch controls are not included. Attribute values, damage, pickup timing and AI are tuned for this remake rather than emulated cycle for cycle. See [original-game comparison](docs/original-comparison.md) for source findings and differences.
 

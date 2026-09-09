@@ -132,7 +132,8 @@ func (s *State) startInjury(i int) bool {
 	x := max(48, min(592, int(math.Round(320+p.Z/unit))&^1))
 	y := max(48, min(1104, int(math.Round(576-p.X/unit))&^1))
 	p.X, p.Z = float64(576-y)*unit, float64(x-320)*unit
-	p.Injury, p.Stun, p.ActionTime = 6, 6, 6
+	p.Injury, p.Stun, p.ActionTime = 1, 1, 1
+	s.Medical = createMedical(i, x, y)
 	p.Action = 4
 	p.moveX, p.moveZ, p.fallX, p.fallZ = 0, 0, 0, 0
 	s.Controlled[p.Team] = i
@@ -142,47 +143,51 @@ func (s *State) startInjury(i int) bool {
 	return true
 }
 func (s *State) medicalStep(dt float64) bool {
-	stopped := false
-	for i := range s.Players {
-		p := &s.Players[i]
-		if p.Injury > 0 {
-			stopped = true
-			p.Injury = math.Max(0, p.Injury-dt)
-			p.Stun = p.Injury
-			p.ActionTime = p.Injury
-			if p.Injury == 0 {
-				outgoing := p.Stats
-				for j := range outgoing {
-					outgoing[j] = outgoing[j] / 10 * 10
-				}
-				bench := &s.Bench[p.Team]
-				p.Stats = bench[0]
-				bench[0] = bench[1]
-				bench[1] = bench[2]
-				bench[2] = outgoing
-				s.Reserves[p.Team] = len(bench)
-				p.Health = 100
-				p.StatBackup = [8]int{}
-				p.GearBackup, p.GearPowerBackup = 0, 0
-				p.Stun, p.ActionTime, p.Cooldown = 0, 0, 0
-				p.Action, p.Gear = 0, 0
-				p.keeperBlock, p.tackleResolved = false, false
-				p.X = -s.direction(p.Team) * 32 * (22.4 / 576)
-				side := 1.
-				if p.Z <= 0 {
-					side = -1
-				}
-				p.Z = side * 272 * (22.4 / 576)
-				p.FX, p.FZ = 0, -side
-				p.aiX, p.aiZ, p.aiWait = 0, 0, 1
-				p.aiTarget = true
-				s.event(15, i, len(bench), p.X, p.Z, .5)
-				s.Ball.Electric = 0
-				s.Ball.Charged = false
-			}
-		}
+	m := s.Medical
+	if m == nil {
+		return false
 	}
-	return stopped
+	copyMedical := *m
+	m = &copyMedical
+	s.Medical = m
+	i := m.Player
+	p := &s.Players[i]
+	done := advanceMedical(m, dt)
+	const unit = 22.4 / 576
+	p.X, p.Z = float64(576-m.Patient[1])*unit, float64(m.Patient[0]-320)*unit
+	if done {
+		outgoing := p.Stats
+		for j := range outgoing {
+			outgoing[j] = outgoing[j] / 10 * 10
+		}
+		bench := &s.Bench[p.Team]
+		p.Stats = bench[0]
+		bench[0] = bench[1]
+		bench[1] = bench[2]
+		bench[2] = outgoing
+		s.Reserves[p.Team] = len(bench)
+		p.Health = 100
+		p.Injury = 0
+		p.StatBackup = [8]int{}
+		p.GearBackup, p.GearPowerBackup = 0, 0
+		p.Stun, p.ActionTime, p.Cooldown = 0, 0, 0
+		p.Action, p.Gear = 0, 0
+		p.keeperBlock, p.tackleResolved = false, false
+		p.X = -s.direction(p.Team) * 32 * (22.4 / 576)
+		side := 1.
+		if p.Z <= 0 {
+			side = -1
+		}
+		p.Z = side * 272 * (22.4 / 576)
+		p.FX, p.FZ = 0, -side
+		p.aiX, p.aiZ, p.aiWait = 0, 0, 1
+		p.aiTarget = true
+		s.event(15, i, len(bench), p.X, p.Z, .5)
+		s.Ball.Electric = 0
+		s.Ball.Charged = false
+		s.Medical = nil
+	}
+	return true
 }
 func (s *State) featureStep(dt float64) {
 	for slot := range s.Pickups {

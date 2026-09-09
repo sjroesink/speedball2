@@ -7,6 +7,7 @@ import (
 
 func TestEventTailRetainsOrderAndFitsDatagram(t *testing.T) {
 	s := initial()
+	s.Medical = createMedical(7, 100, 500)
 	for i := 0; i < 40; i++ {
 		s.event(4, 7, 16, 1, 2, 3)
 	}

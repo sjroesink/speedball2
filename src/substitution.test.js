@@ -10,8 +10,9 @@ test("three bench slots rotate and the outgoing attributes return on the fourth 
   p.z = -2;
   for (const expected of [110, 120, 130, 190]) {
     p.health = 0;
-    p.injury = 0.04;
-    medicalStep(s, 0.04);
+    p.actionTime = 0;
+    assert.equal(startInjury(s, 7), true);
+    finishCare(s);
     assert.equal(p.stats[0], expected);
     assert.equal(p.health, 100);
     assert.equal(s.reserves[0], 3);
@@ -31,15 +32,16 @@ test("substitutes enter at original side positions and start toward center", () 
         const p = s.players[team * 9 + 7];
         Object.assign(p, {
           z: side,
-          injury: 0.04,
+          actionTime: 0,
           health: 0,
           gear: 17,
           gearBackup: 150,
         });
-        medicalStep(s, 0.04);
+        assert.equal(startInjury(s, team * 9 + 7), true);
+        finishCare(s);
         const d = (team === 0 ? 1 : -1) * (period === 2 ? -1 : 1);
         assert.equal(p.x, -d * 32 * u);
-        assert.equal(p.z, side * 272 * u);
+        assert.equal(p.z, -side * 272 * u);
         assert.equal(p.aiX, 0);
         assert.equal(p.aiZ, 0);
         assert.equal(p.aiWait, 1);
@@ -81,13 +83,18 @@ test("simultaneous fatal falls enter medical care in player processing order", (
     });
   for (let frame = 0; frame < 35; frame++)
     step(s, simulationStep, {}, [false, false]);
-  assert.equal(s.players[16].injury, 6);
+  assert.equal(s.players[16].injury, 1);
   assert.equal(s.players[7].injury, 0);
   assert.deepEqual(s.score, [10, 0]);
-  for (let frame = 0; s.players[16].injury > 0 && frame < 160; frame++)
+  for (let frame = 0; s.players[16].injury > 0 && frame < 1000; frame++)
     step(s, simulationStep, {}, [false, false]);
   step(s, simulationStep, {}, [false, false]);
   assert.equal(s.players[16].injury, 0);
-  assert.equal(s.players[7].injury, 6);
+  assert.equal(s.players[7].injury, 1);
   assert.deepEqual(s.score, [10, 10]);
 });
+
+function finishCare(s) {
+  for (let i = 0; s.medical && i < 1000; i++) medicalStep(s, 1 / 25);
+  assert.equal(s.medical, null);
+}

@@ -24,7 +24,7 @@ export function decodeSnapshot(bytes) {
       return n;
     },
     q = () => i16() / 1000;
-  if (u8() !== 83 || u8() !== 66 || u8() !== 50 || u8() !== 7)
+  if (u8() !== 83 || u8() !== 66 || u8() !== 50 || u8() !== 8)
     throw new Error("Server version mismatch. Restart the game server.");
   const s = { tick: u32(), time: f(), period: u8() },
     flags = u8(),
@@ -37,6 +37,20 @@ export function decodeSnapshot(bytes) {
   s.stars = [u8(), u8()];
   s.multiplier = i8();
   s.logicalView = [u16(), u16()];
+  const medicalCode = u8(),
+    origin = [i16(), i16()],
+    medics = [
+      [i16(), i16()],
+      [i16(), i16()],
+    ];
+  if (medicalCode) {
+    const player = medicalCode & 31,
+      phase = (medicalCode >> 5) - 1;
+    if (player >= 18 || phase < 0 || phase > 3)
+      throw new Error("Invalid medical state.");
+    s.medical = { player, phase, origin, medics };
+  }
+
   s.ball = {
     x: f(),
     z: f(),

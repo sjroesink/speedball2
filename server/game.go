@@ -60,6 +60,7 @@ type Event struct {
 	Actor, Target int
 }
 type State struct {
+	Medical           *Medical
 	logicalView       [2]int
 	Bench             [2][3][8]int
 	Events            [16]Event
@@ -138,6 +139,7 @@ func (s *State) direction(team int) float64 {
 	return d
 }
 func (s *State) resetPitch() {
+	s.Medical = nil
 	for i := range s.Players {
 		t := i / 9
 		d := s.direction(t)

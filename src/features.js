@@ -1,3 +1,4 @@
+import { createMedical, advanceMedical } from "./medical.js";
 import { emit } from "./events.js";
 import { warpBall, setBallSpeed, startFlight } from "./ball.js";
 import {
@@ -161,7 +162,8 @@ export function startInjury(s, i) {
   const y = Math.max(48, Math.min(1104, Math.round(576 - p.x / unit) & ~1));
   p.x = (576 - y) * unit;
   p.z = (x - 320) * unit;
-  p.injury = p.stun = p.actionTime = 6;
+  p.injury = p.stun = p.actionTime = 1;
+  s.medical = createMedical(i, x, y);
   p.action = 4;
   p.moveX = p.moveZ = p.fallX = p.fallZ = 0;
   s.controlled[p.team] = i;
@@ -175,39 +177,40 @@ export function startInjury(s, i) {
   return true;
 }
 export function medicalStep(s, dt) {
-  let stopped = false;
-  s.players.forEach((p, i) => {
-    if (p.injury > 0) {
-      stopped = true;
-      p.injury = Math.max(0, p.injury - dt);
-      p.stun = p.injury;
-      p.actionTime = p.injury;
-      if (p.injury === 0) {
-        const bench = s.bench[p.team];
-        const outgoing = p.stats.map((value) => Math.floor(value / 10) * 10);
-        p.stats = bench.shift();
-        bench.push(outgoing);
-        s.reserves[p.team] = bench.length;
-        p.health = 100;
-        p.statBackup = Array(8).fill(0);
-        p.gearBackup = p.gearPowerBackup = 0;
-        p.stun = p.action = p.actionTime = p.cooldown = p.gear = 0;
-        p.keeperBlock = false;
-        p.tackleResolved = false;
-        const direction = (p.team === 0 ? 1 : -1) * (s.period === 2 ? -1 : 1);
-        p.x = -direction * 32 * (22.4 / 576);
-        p.z = (p.z <= 0 ? -1 : 1) * 272 * (22.4 / 576);
-        p.fx = 0;
-        p.fz = -Math.sign(p.z);
-        p.aiX = p.aiZ = 0;
-        p.aiWait = 1;
-        emit(s, 15, i, bench.length, p.x, p.z);
-        s.ball.electric = 0;
-        s.ball.charged = false;
-      }
-    }
-  });
-  return stopped;
+  const m = s.medical;
+  if (!m) return false;
+  const p = s.players[m.player],
+    i = m.player,
+    unit = 22.4 / 576;
+  const done = advanceMedical(m, dt);
+  p.x = (576 - m.patient[1]) * unit;
+  p.z = (m.patient[0] - 320) * unit;
+  if (done) {
+    const bench = s.bench[p.team];
+    const outgoing = p.stats.map((value) => Math.floor(value / 10) * 10);
+    p.stats = bench.shift();
+    bench.push(outgoing);
+    s.reserves[p.team] = bench.length;
+    p.health = 100;
+    p.injury = 0;
+    p.statBackup = Array(8).fill(0);
+    p.gearBackup = p.gearPowerBackup = 0;
+    p.stun = p.action = p.actionTime = p.cooldown = p.gear = 0;
+    p.keeperBlock = false;
+    p.tackleResolved = false;
+    const direction = (p.team === 0 ? 1 : -1) * (s.period === 2 ? -1 : 1);
+    p.x = -direction * 32 * (22.4 / 576);
+    p.z = (p.z <= 0 ? -1 : 1) * 272 * (22.4 / 576);
+    p.fx = 0;
+    p.fz = -Math.sign(p.z);
+    p.aiX = p.aiZ = 0;
+    p.aiWait = 1;
+    emit(s, 15, i, bench.length, p.x, p.z);
+    s.ball.electric = 0;
+    s.ball.charged = false;
+    s.medical = null;
+  }
+  return true;
 }
 export function featureStep(s, dt) {
   for (let slot = 0; slot < s.pickups.length; slot++) {

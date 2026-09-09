@@ -19,8 +19,11 @@ func TestBenchRotation(t *testing.T) {
 	p.Z = -2
 	for _, want := range []int{110, 120, 130, 190} {
 		p.Health = 0
-		p.Injury = .04
-		s.medicalStep(.04)
+		p.ActionTime = 0
+		if !s.startInjury(7) {
+			t.Fatal("medical start")
+		}
+		finishCare(t, &s)
 		if p.Stats[0] != want || p.Health != 100 || s.Reserves[0] != 3 {
 			t.Fatal(want, p.Stats, s.Reserves)
 		}
@@ -40,12 +43,15 @@ func TestSubstituteEntry(t *testing.T) {
 				s.Period = period
 				p := &s.Players[team*9+7]
 				p.Z = side
-				p.Injury = .04
+				p.ActionTime = 0
 				p.Health = 0
 				p.Gear = 17
 				p.GearBackup = 150
-				s.medicalStep(.04)
-				if p.X != -s.direction(team)*32*u || p.Z != side*272*u || p.aiX != 0 || p.aiZ != 0 || p.aiWait != 1 || p.Gear != 0 || p.GearBackup != 0 {
+				if !s.startInjury(team*9 + 7) {
+					t.Fatal("medical start")
+				}
+				finishCare(t, &s)
+				if p.X != -s.direction(team)*32*u || p.Z != -side*272*u || p.aiX != 0 || p.aiZ != 0 || p.aiWait != 1 || p.Gear != 0 || p.GearBackup != 0 {
 					t.Fatal(period, team, side, p)
 				}
 			}
@@ -85,14 +91,24 @@ func TestSimultaneousFatalFalls(t *testing.T) {
 	for frame := 0; frame < 35; frame++ {
 		s.simulate(simulationStep, [2]Input{}, [2]bool{})
 	}
-	if s.Players[16].Injury != 6 || s.Players[7].Injury != 0 || s.Score != [2]int{10, 0} {
+	if s.Players[16].Injury != 1 || s.Players[7].Injury != 0 || s.Score != [2]int{10, 0} {
 		t.Fatal("medical processing order")
 	}
-	for frame := 0; s.Players[16].Injury > 0 && frame < 160; frame++ {
+	for frame := 0; s.Players[16].Injury > 0 && frame < 1000; frame++ {
 		s.simulate(simulationStep, [2]Input{}, [2]bool{})
 	}
 	s.simulate(simulationStep, [2]Input{}, [2]bool{})
-	if s.Players[16].Injury != 0 || s.Players[7].Injury != 6 || s.Score != [2]int{10, 10} {
+	if s.Players[16].Injury != 0 || s.Players[7].Injury != 1 || s.Score != [2]int{10, 10} {
 		t.Fatal("queued injury")
+	}
+}
+
+func finishCare(t *testing.T, s *State) {
+	t.Helper()
+	for i := 0; s.Medical != nil && i < 1000; i++ {
+		s.medicalStep(1. / 25)
+	}
+	if s.Medical != nil {
+		t.Fatal("medical did not finish")
 	}
 }
