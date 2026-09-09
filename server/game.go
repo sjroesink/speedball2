@@ -477,10 +477,10 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 						danger = true
 					}
 				}
-				if p.X*d > 12 || danger || i%9 == 0 {
-					var plan *passPlan
+				plan := s.hardwareThrow(i, random, &catchDistances)
+				if plan != nil || p.X*d > 12 || danger || i%9 == 0 {
 					receiver := -1
-					if i%9 < 6 {
+					if plan == nil && i%9 < 6 {
 						plan = s.defensivePass(i, &catchDistances)
 						if plan == nil {
 							plan = s.defensivePunt(i, random)
@@ -488,7 +488,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 						if plan != nil {
 							receiver = plan.receiver
 						}
-					} else if p.X*d < 10 {
+					} else if plan == nil && p.X*d < 10 {
 						receiver = s.passTarget(i)
 					}
 					tx, tz := d*23, 0.

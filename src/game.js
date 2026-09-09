@@ -1,3 +1,4 @@
+import { hardwareThrow } from "./hardware-ai.js";
 import { localInteraction } from "./interaction.js";
 import { pursuit } from "./pursuit.js";
 import { keeperAction } from "./keeper-action.js";
@@ -538,18 +539,19 @@ function simulateStep(
         const danger = s.players.some(
           (q) => q.team !== t && Math.hypot(q.x - p.x, q.z - p.z) < 3,
         );
-        if (p.x * d > 12 || danger || i % 9 === 0) {
+        const hardware = hardwareThrow(s, i, random, catchDistances);
+        if (hardware || p.x * d > 12 || danger || i % 9 === 0) {
           const plan =
-            i % 9 < 6
+            hardware ??
+            (i % 9 < 6
               ? (defensivePass(s, i, catchDistances) ??
                 defensivePunt(s, i, random))
-              : null;
-          const receiver =
-            i % 9 < 6
-              ? (plan?.receiver ?? -1)
-              : p.x * d < 10
-                ? passTarget(s, i)
-                : -1;
+              : null);
+          const receiver = plan
+            ? plan.receiver
+            : p.x * d < 10
+              ? passTarget(s, i)
+              : -1;
           const target =
             receiver >= 0 ? s.players[receiver] : { x: d * 23, z: 0 };
           [p.fx, p.fz] = norm(target.x - p.x, target.z - p.z);

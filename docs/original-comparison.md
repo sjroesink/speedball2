@@ -751,3 +751,29 @@ Validation: 148 JavaScript tests, Go tests, Go vet, production build. Mirrored
 fixtures cover both wall choices, both halves, electroball behavior, center
 target randomness, the strict bias threshold, and a keeper's complete
 no-receiver windup/release. No browser or audio listening check in this change.
+
+
+### Carrier hardware decisions
+
+Ported Amiga `use_court_hardware_ai` (0xf3a8..0xf556), which runs before
+normal carrier movement/passing for non-keepers. The AI now tries a low
+multiplier throw from the original narrow transverse strips, unless its
+team already has the maximum multiplier. Next it considers a high attacking
+diagonal toward terrain (32,464) or (608,688). Finally an uncharged ball can
+be thrown low at the left/right zapper at (20,880)/(620,272), within the
+inclusive 106-unit rectangle, with integer aggression/2 strictly above the
+same decision random byte. Pure longitudinal zapper throws are excluded.
+
+The receiver search and hardware branch share predicted opponent directions.
+Electroballs ignore blocked directions for multiplier and high wall throws;
+keepers bypass hardware choices. Target coordinates and branch order were
+checked against the Amiga assembly, including the zapper sprite records at
+0x62de/0x62e0 and 0x6308/0x630a. Tests cover multiplier priority and saturation,
+blocked/electric lanes, mirrored diagonal throws, zapper limits and aggression,
+and a real simulation tick starting a hardware throw without the old danger
+or goal-distance trigger. Existing receiver and punt tests remain applicable.
+
+Remaining carrier gaps: collectible detours, zone-center pass decisions,
+left/right route search, and the attacking-player pass/shot decision tree.
+These still need replacing; this change does not claim the entire carrier AI
+matches the original. No new audio or browser validation in this checkpoint.

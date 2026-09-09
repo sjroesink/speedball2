@@ -1,7 +1,7 @@
 import { predictedTarget } from "./steering.js";
 const unit = 22.4 / 576;
 const role = (i) => [0, 1, 1, 2, 2, 2, 4, 4, 3][i % 9];
-function directionKey(p, x, z) {
+export function directionKey(p, x, z) {
   const dx = Math.round(x / unit) - Math.round(p.x / unit);
   const dz = Math.round(z / unit) - Math.round(p.z / unit);
   return (
@@ -52,30 +52,7 @@ export function defensivePass(s, i, distances) {
     const fz = Math.abs(dz) > Math.floor(Math.abs(dx) / 2) ? Math.sign(dz) : 0;
     return { x, z, key: fx * 3 + fz };
   };
-  const selected = s.controlled[1 - p.team];
-  let other = -1,
-    limit = p.stats[7] * 2;
-  for (let j = 0; j < s.players.length; j++) {
-    const q = s.players[j];
-    if (
-      q.team === p.team ||
-      j === selected ||
-      q.stun > 0 ||
-      q.health <= 0 ||
-      distances[j] > limit
-    )
-      continue;
-    other = j;
-    limit = distances[j];
-  }
-  const eligible = (j) =>
-    j >= 0 && s.players[j].stun <= 0 && s.players[j].health > 0;
-  const blocked = s.ball.charged
-    ? [0, 0]
-    : [
-        eligible(selected) ? aim(selected).key : 0,
-        other >= 0 ? aim(other).key : 0,
-      ];
+  const blocked = s.ball.charged ? [0, 0] : opponentDirections(s, i, distances);
   let receiver = -1,
     distance = p.stats[7] * 2;
   for (let minimum = role(i) === 0 ? 2 : role(i) + 1; minimum > 0; minimum--) {
@@ -103,4 +80,34 @@ export function defensivePass(s, i, distances) {
     high:
       !(role(i) !== 0 || role(receiver) === 1) || p.stats[4] * 2 <= distance,
   };
+}
+
+export function opponentDirections(s, i, distances) {
+  const p = s.players[i];
+  const aim = (j) => {
+    const q = s.players[j];
+    return directionKey(
+      p,
+      ...predictedTarget(q.x, q.z, q.moveX || 0, q.moveZ || 0, p.stats[7]),
+    );
+  };
+  const selected = s.controlled[1 - p.team];
+  let other = -1,
+    limit = p.stats[7] * 2;
+  for (let j = 0; j < s.players.length; j++) {
+    const q = s.players[j];
+    if (
+      q.team === p.team ||
+      j === selected ||
+      q.stun > 0 ||
+      q.health <= 0 ||
+      distances[j] > limit
+    )
+      continue;
+    other = j;
+    limit = distances[j];
+  }
+  const eligible = (j) =>
+    j >= 0 && s.players[j].stun <= 0 && s.players[j].health > 0;
+  return [eligible(selected) ? aim(selected) : 0, other >= 0 ? aim(other) : 0];
 }
