@@ -2,6 +2,45 @@ package main
 
 import "testing"
 
+func TestHumanViewportHandoff(t *testing.T) {
+	const u = 22.4 / 576
+	for _, distance := range []int{76, 77} {
+		s := initial()
+		for i := range s.Players {
+			s.Players[i].Stun = 100
+		}
+		p := &s.Players[7]
+		p.X, p.Z, p.Stun = float64(distance)*u, 0, 0
+		s.Ball.X, s.Ball.Z, s.Ball.H, s.Ball.Owner = 0, 0, 4, -1
+		before := p.X
+		s.simulate(simulationStep, [2]Input{{X: 1}, {}}, [2]bool{true, false})
+		if (distance == 76 && p.X <= before) || (distance == 77 && p.X >= before) {
+			t.Fatal("handoff boundary", distance, p.X)
+		}
+	}
+}
+
+func TestOffscreenHumanThrowRelease(t *testing.T) {
+	for _, high := range []bool{false, true} {
+		s := initial()
+		for i := range s.Players {
+			s.Players[i].Stun = 100
+		}
+		p := &s.Players[7]
+		p.X, p.Z, p.FX, p.FZ, p.Stun = 4, 0, 1, 0, 0
+		p.Action, p.ActionTime, p.throwMode = 3, 5./25, 1
+		s.Ball.Owner = 7
+		s.simulate(simulationStep, [2]Input{{Shoot: high, Z: 1}, {}}, [2]bool{true, false})
+		kind := 1
+		if high {
+			kind = 2
+		}
+		if s.Ball.Owner != -1 || s.Ball.FlightKind != kind || s.Ball.VZ != 4*velocityUnit {
+			t.Fatal("release input lost", s.Ball)
+		}
+	}
+}
+
 func TestOriginalViewport(t *testing.T) {
 	for _, c := range []struct {
 		view         [2]int

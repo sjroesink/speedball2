@@ -44,6 +44,7 @@ func TestReleasedActionAtRuntimeCadence(t *testing.T) {
 func TestThrowAnimationIndices(t *testing.T) {
 	for _, high := range []bool{false, true} {
 		s := initial()
+		s.logicalView = [2]int{160, 380}
 		for i := range s.Players {
 			s.Players[i].Stun = 100
 		}

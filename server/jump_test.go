@@ -200,6 +200,7 @@ func TestLandingCatchOrder(t *testing.T) {
 func TestLobCannotCancelBusyAction(t *testing.T) {
 	for _, action := range []int{1, 2, 3} {
 		s := initial()
+		s.logicalView = [2]int{160, 380}
 		for i := range s.Players {
 			s.Players[i].Stun = 10
 		}

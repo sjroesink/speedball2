@@ -12,6 +12,7 @@ function setup() {
 test("stationary action punches for four frames without moving", () => {
   const s = setup(),
     p = s.players[7];
+  s.logicalView = [160, 380];
   step(s, simulationStep, { tackle: true }, [true, true]);
   assert.equal(p.action, 7);
   assert.equal(p.actionTime, 4 / 25);

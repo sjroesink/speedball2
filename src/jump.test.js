@@ -194,6 +194,7 @@ test("landing clears airborne privileges after that tick's catch check", () => {
 test("lob shortcut cannot cancel a busy action after obtaining possession", () => {
   for (const action of [1, 2, 3]) {
     const s = initial();
+    s.logicalView = [160, 380];
     for (const q of s.players) q.stun = 10;
     const p = s.players[7];
     Object.assign(p, {

@@ -368,7 +368,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		}
 		s.resolveTackle(i, &contacts[i])
 		t := p.Team
-		human := humans[t] && s.Controlled[t] == i
+		human := humans[t] && s.Controlled[t] == i && s.worldInViewport(p.X, p.Z, 16)
 		u := inputs[t]
 		dx, dz := u.X, u.Z
 		if human && s.active(2, 1-t) {
@@ -515,10 +515,10 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			} else {
 				s.Charge[t] = 8./25 - p.ActionTime + dt
 				if p.ActionTime <= 4./25+1e-9 {
-					high := p.throwMode == 3 || p.throwMode == 1 && u.Shoot
+					high := p.throwMode == 3 || p.throwMode == 1 && inputs[t].Shoot
 					steering := Input{}
-					if human {
-						steering = u
+					if humans[t] {
+						steering = inputs[t]
 					}
 					s.throw(i, high, steering)
 					p.throwMode = 0

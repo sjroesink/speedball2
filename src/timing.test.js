@@ -27,6 +27,7 @@ test("released action counter survives sampling at 25 Hz", () => {
 test("throw releases at index four, samples current button and finishes at index eight", () => {
   for (const high of [false, true]) {
     const s = initial();
+    s.logicalView = [160, 380];
     for (const p of s.players) p.stun = 100;
     Object.assign(s.players[7], { x: 4, z: 0, fx: 1, fz: 0, stun: 0 });
     s.ball.owner = 7;

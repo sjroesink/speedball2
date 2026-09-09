@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { initial, catchBall, step, simulationStep } from "./game.js";
 test("standing catch faces the ball and blocks input for three frames", () => {
   const s = initial();
+  s.logicalView = [160, 380];
   for (const p of s.players) p.stun = 100;
   const p = s.players[7];
   Object.assign(p, { x: 4, z: 0, stun: 0, fx: 1, fz: 0 });

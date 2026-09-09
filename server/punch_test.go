@@ -14,6 +14,7 @@ func punchSetup() State {
 }
 func TestStationaryPunch(t *testing.T) {
 	s := punchSetup()
+	s.logicalView = [2]int{160, 380}
 	p := &s.Players[7]
 	s.simulate(simulationStep, [2]Input{{Tackle: true}, {}}, [2]bool{true, true})
 	if p.Action != 7 || p.ActionTime != 4./25 || p.X != 4 {

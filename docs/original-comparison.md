@@ -683,3 +683,10 @@ All 138 JavaScript tests, Go tests, Go vet and the production build pass. Moveme
 WIP `sub_D448_PreventMoveOnPlayers` rejects an offscreen moving player and skips offscreen standing opponents. Both simulations now pass the logical viewport into movement blocking, including the fall-recovery hold branch. An offscreen opponent cannot cancel movement or reset a fallen player to the recovery tail. Tests verify the inclusive edge, offscreen actor exclusion, and recovery remaining unchanged until the opponent is visible. The global-movement-order fixture explicitly places the viewport over its players.
 
 All 139 JavaScript tests, Go tests, Go vet and the build pass. Human control handoff outside the inset viewport remains pending. Visibility is currently evaluated from terrain coordinates at the interaction point; exact original flag-refresh ordering is still part of the overall frame-order comparison.
+
+
+### Human control outside the original inset
+
+WIP `sub_D2DE_SetInput` routes the selected player to human input only inside `IsOnscreen_Margin16`; otherwise it invokes the selected AI after the reaction timer. Both simulations now apply that condition. Pending throw release remains separate: `sub_F078` reads the team controller even if the player has moved outside the inset. Normal throws therefore still sample the release button and human-team direction input, while forced AI throw modes retain their chosen height.
+
+Tests verify the inclusive 16-unit inset boundary and AI movement one unit outside, plus both high/low offscreen pending releases with perpendicular steering. Existing isolated human-input fixtures now center their logical viewport over the tested player. All 141 JavaScript tests, Go tests, Go vet and the build pass. The rendered 3D camera is wider than the logical viewport; aligning its presentation with this control region remains pending, as do exact original flag refresh ordering and selected goalkeeper AI.

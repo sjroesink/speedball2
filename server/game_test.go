@@ -66,6 +66,7 @@ func TestTackleKnockdownAndPossession(t *testing.T) {
 func TestDirectionalLowAndHighThrow(t *testing.T) {
 	for _, lob := range []bool{false, true} {
 		s := isolated()
+		s.logicalView = [2]int{160, 380}
 		s.Players[7].X = 4 // Keep the throw lane clear of the central dome.
 		s.Ball.Owner = 7
 		s.step(dt, [2]Input{{Z: 1, Shoot: true}, {}})

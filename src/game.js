@@ -432,7 +432,7 @@ function simulateStep(
     }
     resolveTackle(s, i, contacts[i]);
     const t = p.team,
-      human = humans[t] && s.controlled[t] === i;
+      human = humans[t] && s.controlled[t] === i && worldInViewport(s, p, 16);
     let u = inputs[t],
       dx = u.x || 0,
       dz = u.z || 0;
@@ -585,8 +585,9 @@ function simulateStep(
       } else {
         s.charge[t] = 8 / 25 - p.actionTime + dt;
         if (p.actionTime <= 4 / 25 + 1e-9) {
-          const high = p.throwMode === 3 || (p.throwMode === 1 && !!u.shoot);
-          throwBall(s, i, high, human ? u : {});
+          const high =
+            p.throwMode === 3 || (p.throwMode === 1 && !!inputs[t].shoot);
+          throwBall(s, i, high, humans[t] ? inputs[t] : {});
           p.throwMode = 0;
           s.charge[t] = 0;
         }

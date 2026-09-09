@@ -4,6 +4,7 @@ import "testing"
 
 func TestStandingCatchRecovery(t *testing.T) {
 	s := initial()
+	s.logicalView = [2]int{160, 380}
 	for i := range s.Players {
 		s.Players[i].Stun = 100
 	}

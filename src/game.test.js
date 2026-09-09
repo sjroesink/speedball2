@@ -55,6 +55,7 @@ test("missed tackle animates, moves, and cannot repeat while held", () => {
 test("tap and hold throw in facing direction with different heights", () => {
   for (const high of [false, true]) {
     const s = isolated();
+    s.logicalView = [160, 380];
     s.players[7].x = 4; // Clear throwing lane beside the central dome.
     s.ball.owner = 7;
     step(s, dt, { z: 1, shoot: true });
