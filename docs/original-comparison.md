@@ -1,5 +1,7 @@
 # Original-game comparison â€” 8 September 2026
 
+**Fall timing correction:** The full memory export reveals an internal -5 terminator after 26 ordinary fall frames. Earlier 35-frame/20-tick-tail claims are superseded by the integration entry below.
+
 **Current status:** See [fidelity-status.md](fidelity-status.md) for current implementation and unresolved requirements. This file is a chronological research log; early implementation claims below are superseded by later entries.
 
 **Timing correction:** the earlier audit entries that assume 50 simulation ticks/second are superseded by the final match-clock audit below. Default Amiga gameplay runs at 25 ticks/second, with each tick waiting for two PAL video frames.
@@ -2492,3 +2494,42 @@ seeks the player and held ball to index 18 on landing. A mid-jump catch therefor
 does not restart its ball animation from zero. The four stepping tests plus the
 existing offset test pass. These primitives remain separate from production
 simulation until the player cursor/callback lifecycle is integrated in JS/Go.
+
+
+### Physical pose integration and first fall terminator correction
+
+Both simulations now use generated original direction groups and combined
+sprite offsets for held-ball X/Z instead of a fixed 0.5-unit facing offset.
+Running retains an eight-word phase across direction changes; action poses use
+their action timer and source tail seeks. Initial duration is retained if speed
+changes mid-action. Keeper groups come from the original pointer tables.
+Airborne catches use the held-ball sprite size for their jump phase and return
+to sprite zero on landing. Blender BallGrip remains the visual attachment;
+release preserves the preceding physical position before flight advances.
+
+The full anim_tackled block has an internal -5 at word 26 followed by another
+sequence. Ordinary falls now last 26/25 seconds, completed attack tails use
+(26-15)/25, and collision-held recovery uses (26-18)/25. This supersedes earlier
+35-frame assertions and delayed-recovery metrics using them. Blender playback
+uses the corrected duration; the network diagnostic imports that duration.
+
+Tests check standing offsets, pre-release position, jump landing, mid-action
+speed changes, identical JS/Go data and reaching the first terminator after
+26 frames. Existing collision/medical/animation expectations were corrected.
+Six 10,000-tick JS/Go scenarios pass; the sixth explicitly seeds a fatal fall
+because changed trajectories removed natural medical coverage from an older
+scenario. Goal and warp coverage remain required. Full JS run plus corrected
+targeted reruns, Go tests, vet and build pass. This integrates physical placement,
+not complete original interpreter parity: origin-aware distance calculations
+and exceptional callback ordering remain open. build-physical-pose-data.py
+regenerates both data files and excludes control words from sprite sequences.
+
+Final integration verification: all 249 JavaScript tests, Go tests, Go vet and
+production build pass. A fresh paired WebTransport run (room ZTVVP6) stopped
+at ticks 559/550 with client 2 delayed by 160 ms and 114 dropped snapshots.
+All 440 shared snapshots matched, with no missing shared events. Four throws
+were rendered, maximum release-frame displacement was 0.673 world units,
+and held-grip and recovery-phase errors were zero across six recovery seeks.
+Client 1 had five windups/cue dispatches, client 2 four at its older stop tick;
+this final unequal tick is not a same-tick event mismatch. Coin 13 collection
+and 100 credits replicated. This short run did not exercise medical phases.

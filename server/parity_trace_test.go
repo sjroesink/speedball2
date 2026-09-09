@@ -8,13 +8,18 @@ import (
 
 func TestSimulationParityTrace(t *testing.T) {
 	traces := [][][]float64{}
-	for scenario := 0; scenario < 5; scenario++ {
+	for scenario := 0; scenario < 6; scenario++ {
 		s := newMatch()
 		if scenario == 4 {
 			s.RestartPhase = 0
 			s.Ball = Ball{X: 206 * 22.4 / 576, Z: 11.2, H: .25, VZ: 6, Owner: -1, LastTouch: 7}
 		}
 		rows := [][]float64{}
+		if scenario == 5 {
+			s.RestartPhase = 0
+			s.Players[7].Health = 1
+			s.damage(16, 7)
+		}
 		for tick := 0; tick < 10000; tick++ {
 			inputs := [2]Input{}
 			humans := [2]bool{scenario > 0, scenario > 1}

@@ -92,12 +92,12 @@ test("tackle and jump clips follow original sustain bands rather than Blender du
 test("fall animation remains active through recovery and seeks late snapshots", async () => {
   const model=await player(),mixer=new AnimationMixer(model.scene);
   const clip=model.animations.find(c=>c.name.includes("Hit")),action=mixer.clipAction(clip);
-  playPlayerAction(action,4,35/25);
+  playPlayerAction(action,4,26/25);
   mixer.update(18/25);
   assert.ok(action.isRunning(),"player still recovering");
-  assert.ok(Math.abs(action.time/clip.duration-18/35)<1e-6);
+  assert.ok(Math.abs(action.time/clip.duration-18/26)<1e-6);
   playPlayerAction(action,4,5/25);
-  assert.ok(Math.abs(action.time/clip.duration-30/35)<1e-6);
+  assert.ok(Math.abs(action.time/clip.duration-21/26)<1e-6);
   mixer.update(5/25+1e-8);
   assert.equal(action.isRunning(),false);
 });
@@ -210,11 +210,11 @@ test("stopping a run settles the lifted leg without advancing the stride", async
 test("fall recovery jumps seek the exported clip and resume a clamped pose", async()=>{
  const model=await player(),mixer=new AnimationMixer(model.scene);
  const clip=model.animations.find(c=>c.name==='Hit'),action=mixer.clipAction(clip);
- action.clampWhenFinished=true;playPlayerAction(action,4,1.4);
- syncFallRecovery(action,1.16,.8);mixer.update(0);
- assert.ok(Math.abs(action.time/clip.duration-3/7)<1e-6);
+ action.clampWhenFinished=true;playPlayerAction(action,4,1.04);
+ syncFallRecovery(action,.80,.44);mixer.update(0);
+ assert.ok(Math.abs(action.time/clip.duration-15/26)<1e-6);
  mixer.update(.9);assert.equal(action.paused,true);
- syncFallRecovery(action,.04,.8);mixer.update(.04);
+ syncFallRecovery(action,.04,.44);mixer.update(.04);
  assert.ok(action.isRunning());
- assert.ok(Math.abs(action.time/clip.duration-(.6+.04)/1.4)<1e-6);
+ assert.ok(Math.abs(action.time/clip.duration-(.6+.04)/1.04)<1e-6);
 });

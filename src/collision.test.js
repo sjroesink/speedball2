@@ -124,17 +124,17 @@ test("physical contact is independent of the old viewport", () => {
   Object.assign(p[0], {
     x: 91 * unit,
     action: 4,
-    stun: 0.5,
-    actionTime: 0.5,
+    stun: 0.2,
+    actionTime: 0.2,
     fallX: 25 * unit,
   });
   blockPlayerMovement(p, 0, [0, 2], 1 / 25);
   assert.equal(p[0].x, 91 * unit);
-  assert.equal(p[0].stun, 17 / 25);
+  assert.equal(p[0].stun, 8 / 25);
   assert.equal(p[0].fallX, 0);
   p[1].x = 92 * unit;
   blockPlayerMovement(p, 0, [0, 1], 1 / 25);
-  assert.equal(p[0].stun, 17 / 25);
+  assert.equal(p[0].stun, 8 / 25);
   assert.equal(p[0].fallX, 0);
   const q = fixture(91);
   q[0].x = 93 * unit;
@@ -151,11 +151,11 @@ test("tackled player moves at original fall speed then stops before recovery", (
   s.ball.owner = 7;
   step(s, simulationStep, {}, [true, true]);
   const p = s.players[7];
-  assert.equal(p.stun, 35 / 25);
+  assert.equal(p.stun, 26 / 25);
   assert.ok(Math.abs(p.x) < 1e-9, "near attacker blocks initial fall movement");
   s.players[16].stun = 100;
-  for (let n = 1; n < 34; n++) step(s, simulationStep, {}, [true, true]);
-  assert.ok(Math.abs(p.x - 132 * unit) < 1e-9);
+  for (let n = 1; n < 25; n++) step(s, simulationStep, {}, [true, true]);
+  assert.ok(Math.abs(p.x - 96 * unit) < 1e-9);
   const x = p.x;
   step(s, simulationStep, {}, [true, true]);
   assert.equal(p.x, x, "final fall frame stops velocity");
@@ -170,15 +170,15 @@ test("late fall contact holds recovery until the standing opponent leaves", () =
   const p = s.players[7];
   Object.assign(p, {
     action: 4,
-    actionTime: 18 / 25,
-    stun: 18 / 25,
+    actionTime: 9 / 25,
+    stun: 9 / 25,
     fallX: 4 * 25 * unit,
     fallZ: 0,
   });
   for (let n = 0; n < 4; n++) {
     step(s, simulationStep, {}, [true, true]);
-    assert.equal(p.stun, 17 / 25);
-    assert.equal(p.actionTime, 17 / 25);
+    assert.equal(p.stun, 8 / 25);
+    assert.equal(p.actionTime, 8 / 25);
     assert.equal(p.fallX, 0);
     assert.equal(p.x, 0);
   }

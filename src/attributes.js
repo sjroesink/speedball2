@@ -143,6 +143,6 @@ export function actionDuration(action, speed) {
   return (actionSustain(speed) + (action === 2 ? 4 : 0)) / 25;
 }
 
-// Original anim_tackled: 35 sprite words at 0x7296, terminator at 0x72dc.
-export const fallDuration = 35 / 25;
-export const fallRecovery = (35 - 18) / 25;
+// Original anim_tackled: 26 sprite words at 0x7296, first terminator at 0x72ca.
+export const fallDuration = 26 / 25;
+export const fallRecovery = (26 - 18) / 25;

@@ -83,7 +83,7 @@ test("electroball knockdown follows nominal direction at three terrain units", (
     catchBall(s);
     const p = s.players[16];
     assert.equal(p.action, 4);
-    assert.equal(p.stun, 35 / 25);
+    assert.equal(p.stun, 26 / 25);
     assert.equal(p.fallX, dx * 3 * unit);
     assert.equal(p.fallZ, dz * 3 * unit);
     assert.equal(s.ball.electric, 0);

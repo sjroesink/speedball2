@@ -14,6 +14,10 @@ const (
 
 // Actions are replicated, including misses: 1 slide, 2 jump, 3 throw, 4 hit.
 type Player struct {
+	poseKind                                   int
+	poseRemaining, poseDuration                float64
+	poseCursor                                 float64
+	physicalSprite, physicalFrame              int
 	steerFrame                                 int
 	steerValid                                 bool
 	steerX, steerZ, steerTargetX, steerTargetZ float64
@@ -44,6 +48,7 @@ type Player struct {
 	Gear                                       int
 }
 type Ball struct {
+	heldJump                             bool
 	Charged                              bool
 	ElectricBudget                       int
 	DomeFraction                         float64
@@ -372,7 +377,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			// complete_action_fn jumps the retained fall animation to word 15.
 			finishFall := p.Action == 4 && (p.fallAttack == 1 || p.fallFinishing) && p.fallAttackTime <= 1./25+1e-9
 			if finishFall {
-				p.Stun, p.ActionTime = 20./25, 20./25
+				p.Stun, p.ActionTime = 11./25, 11./25
 				p.fallFinishing = false
 				s.event(19, i, -1, p.X, p.Z, 0)
 			}
@@ -609,6 +614,9 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		p.moveX, p.moveZ = dx*speed, dz*speed
 		blockPlayerMovement(&s.Players, i, &contacts[i], dt)
 	}
+	for i := range s.Players {
+		advancePhysicalPose(&s.Players[i], i, s.Period, dt)
+	}
 	// Original movement follows the complete player-thinking pass.
 	for i := range s.Players {
 		p := &s.Players[i]
@@ -636,8 +644,9 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 	if b.Owner >= 0 {
 		b.MultiplierPath = 0
 		p := s.Players[b.Owner]
-		b.X = p.X + p.FX*.5
-		b.Z = p.Z + p.FZ*.5
+		offsetX, offsetZ := physicalBallOffset(&p, b)
+		b.X = p.X + offsetX
+		b.Z = p.Z + offsetZ
 		b.H = 1 + jumpHeight(p)
 		b.VX = p.moveX
 		b.VZ = p.moveZ
@@ -778,6 +787,7 @@ func (s *State) catchBallAt(only int, distances *[18]int) {
 			s.Charge[team] = 0
 			b.FlightKind = 0
 			b.Owner = i
+			b.heldJump = p.Action == 2 && p.jumping
 			b.LastTouch = i
 			b.After = 0
 			// get_ball (0xece4): impact sound requires horizontal ball movement.

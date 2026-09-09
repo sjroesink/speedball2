@@ -53,7 +53,7 @@ func TestElectroballFallDirection(t *testing.T) {
 		}
 		s.Ball = Ball{Owner: -1, H: .75, DirX: dir[0], DirZ: dir[1], VX: vx, VZ: vz, Charged: true, Electric: 1, ElectricBudget: 1, LastTouch: 7}
 		s.catchBall()
-		if p.Action != 4 || p.Stun != 35./25 || p.fallX != dir[0]*3*velocityUnit || p.fallZ != dir[1]*3*velocityUnit {
+		if p.Action != 4 || p.Stun != 26./25 || p.fallX != dir[0]*3*velocityUnit || p.fallZ != dir[1]*3*velocityUnit {
 			t.Fatal("electroball fall", dir, p)
 		}
 		if s.Ball.Electric != 0 || s.Ball.Owner != -1 {

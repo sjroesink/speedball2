@@ -7,8 +7,8 @@ feel, modern graphics and audio remain an active objective.
 
 | Requirement | Current implementation and evidence | Still open |
 | --- | --- | --- |
-| Original match cadence with independent rendering | JS and Go use 25 Hz; five 10,000-tick parity scenarios compare the implementations | Matching each other does not establish complete Amiga parity |
-| Throws, lobs, wall rebounds and ball-follow camera | Flight tables, source release timing and height-dependent walls; browser high-throw and warp fixtures | Physical held-ball offsets remain fixed at 0.5 units along facing; original 0xd000 uses sprite-specific offsets |
+| Original match cadence with independent rendering | JS and Go use 25 Hz; six 10,000-tick parity scenarios compare the implementations | Matching each other does not establish complete Amiga parity |
+| Throws, lobs, wall rebounds and ball-follow camera | Flight tables, source release timing and height-dependent walls; browser high-throw and warp fixtures | Source pose offsets are integrated; full original per-tick animation/coordinate parity remains unproven |
 | Tackles, punches, jumps and recovery | Source thresholds, damage, retained falling callbacks; delayed real WebTransport recovery probe | Complete original animation opcode/physical-pose equivalence and subjective controls review |
 | Scoring hardware, power-ups, coins and equipment | Source-derived rules, seven field slots, Blender item models; replicated collection probe | Complete original-match parity across interacting hardware/effects; persistent spending/progression absent |
 | Injuries and substitutions | Fatal-fall medical sequence, rotating bench, clock stoppage; tests and browser/network probes | Full original parity across every interruption and medical transition |
@@ -25,13 +25,14 @@ Reconcile held-ball physical placement with step_match at 0xcff4-0xd03e.
 It copies carrier position and velocity, then applies the signed two-byte
 player_ball_offsets entry indexed by the player's displayed sprite, adjusted
 by sprite origins and held-ball sprite size. Current game.js/server game.go
-copy velocity correctly but use a fixed forward offset. The displayed Blender
+now copy velocity and apply source-derived pose offsets. The displayed Blender
 ball follows BallGrip, so visual attachment alone does not prove physical
 collision/release placement. The complete 117 signed ball offsets, 120 sprite origins and 97 complete animation table blocks are now reproducibly extracted by
 `tools/extract-held-ball-reference.py` into `held-ball-reference.json`.
 The complete memory-backed extraction uses `tools/ExportBallTables.java`.
-Simulation integration is still pending; animation opcode/phase handling and
-held-ball sprite selection must be reconciled.
+Physical placement is integrated in JS/Go using generated direction groups,
+a retained run cursor, action timers and jump/catch state. A complete source
+interpreter and origin-aware distance audit remain open.
 
 ## Verification limits
 

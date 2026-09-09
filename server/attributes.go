@@ -192,6 +192,6 @@ func actionDuration(action, speed int) float64 {
 	return float64(frames) / 25
 }
 
-// Original anim_tackled ends at 0x72dc after 35 sprite words.
-const fallDuration = 35. / 25
-const fallRecovery = (35. - 18) / 25
+// Original anim_tackled first terminates at 0x72ca after 26 sprite words.
+const fallDuration = 26. / 25
+const fallRecovery = (26. - 18) / 25

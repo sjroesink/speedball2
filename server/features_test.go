@@ -160,7 +160,7 @@ func TestInjuryMedicalAndReserveRotation(t *testing.T) {
 		if s.Score[0] != points-10 || s.Players[16].Injury != 0 {
 			t.Fatal("medical starts on impact")
 		}
-		for frame := 0; frame < 34; frame++ {
+		for frame := 0; frame < 25; frame++ {
 			s.simulate(simulationStep, [2]Input{}, [2]bool{})
 		}
 		if s.Players[16].Injury != 0 {

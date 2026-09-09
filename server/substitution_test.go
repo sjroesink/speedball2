@@ -86,9 +86,9 @@ func TestSimultaneousFatalFalls(t *testing.T) {
 	}
 	for _, i := range []int{7, 16} {
 		p := &s.Players[i]
-		p.Health, p.Action, p.ActionTime, p.Stun = 0, 4, 35./25, 35./25
+		p.Health, p.Action, p.ActionTime, p.Stun = 0, 4, 26./25, 26./25
 	}
-	for frame := 0; frame < 35; frame++ {
+	for frame := 0; frame < 26; frame++ {
 		s.simulate(simulationStep, [2]Input{}, [2]bool{})
 	}
 	if s.Players[16].Injury != 1 || s.Players[7].Injury != 0 || s.Score != [2]int{10, 0} {

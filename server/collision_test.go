@@ -151,18 +151,18 @@ func TestGlobalMovementAfterThinking(t *testing.T) {
 func TestCollisionIndependentOfViewport(t *testing.T) {
 	const unit = 22.4 / 576
 	var players [18]Player
-	players[0] = Player{X: 91 * unit, Team: 0, Health: 100, Action: 4, Stun: .5, ActionTime: .5, fallX: 25 * unit, moveX: 25 * unit}
+	players[0] = Player{X: 91 * unit, Team: 0, Health: 100, Action: 4, Stun: .2, ActionTime: .2, fallX: 25 * unit, moveX: 25 * unit}
 	players[9] = Player{X: 93 * unit, Team: 1, Health: 100}
 	var distances [18]int
 	distances[9] = 2
 	blockPlayerMovement(&players, 0, &distances, 1./25)
 	p := &players[0]
-	if p.X != 91*unit || p.Stun != 17./25 || p.fallX != 0 {
+	if p.X != 91*unit || p.Stun != 8./25 || p.fallX != 0 {
 		t.Fatal("offscreen contact missing")
 	}
 	players[9].X = 92 * unit
 	blockPlayerMovement(&players, 0, &distances, 1./25)
-	if p.Stun != 17./25 || p.fallX != 0 {
+	if p.Stun != 8./25 || p.fallX != 0 {
 		t.Fatal("visible opponent did not hold fall")
 	}
 	p.X, p.Action, p.Stun, p.moveX = 93*unit, 0, 0, -25*unit
@@ -183,14 +183,14 @@ func TestTackleFallMotion(t *testing.T) {
 	q.ActionTime = .3
 	s.Ball.Owner = 7
 	s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
-	if p.Stun != 35./25 || math.Abs(p.X) > 1e-9 {
+	if p.Stun != 26./25 || math.Abs(p.X) > 1e-9 {
 		t.Fatal("initial fall", p.X, p.Stun)
 	}
 	q.Stun = 100
-	for n := 1; n < 34; n++ {
+	for n := 1; n < 25; n++ {
 		s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
 	}
-	if math.Abs(p.X-132*unit) > 1e-9 {
+	if math.Abs(p.X-96*unit) > 1e-9 {
 		t.Fatal("fall speed", p.X)
 	}
 	x := p.X
@@ -208,13 +208,13 @@ func TestLateFallContactHoldsRecovery(t *testing.T) {
 	s := tackleFixture(20)
 	p := &s.Players[7]
 	p.Action = 4
-	p.ActionTime = 18. / 25
-	p.Stun = 18. / 25
+	p.ActionTime = 9. / 25
+	p.Stun = 9. / 25
 	p.fallX = 4 * velocityUnit
 	p.fallZ = 0
 	for n := 0; n < 4; n++ {
 		s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
-		if p.Stun != 17./25 || p.ActionTime != 17./25 || p.fallX != 0 || p.X != 0 {
+		if p.Stun != 8./25 || p.ActionTime != 8./25 || p.fallX != 0 || p.X != 0 {
 			t.Fatal("late fall contact", p)
 		}
 	}

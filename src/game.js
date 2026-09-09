@@ -1,3 +1,4 @@
+import {advancePhysicalPose,physicalBallOffset} from "./physical-pose.js";
 import { beginRestart, restartStep } from "./restart.js";
 import { forwardDecision } from "./forward-ai.js";
 import { carrierMove } from "./carrier-move.js";
@@ -433,7 +434,7 @@ function simulateStep(
       const finishFall = p.action === 4 && (p.fallAttack === 1 || p.fallFinishing) &&
         p.fallAttackTime <= 1 / 25 + 1e-9;
       if (finishFall) {
-        p.stun = p.actionTime = (35 - 15) / 25;
+        p.stun = p.actionTime = (26 - 15) / 25;
         p.fallFinishing = false;
         event(s, 19, i, -1, p.x, p.z, 0);
       }
@@ -662,6 +663,7 @@ function simulateStep(
     p.moveZ = dz * speed;
     blockPlayerMovement(s.players, i, contacts[i], dt);
   }
+  s.players.forEach((p,i)=>advancePhysicalPose(p,i,s.period,dt));
   // The original moves players only after every player's thinking has run.
   for (let i = 0; i < s.players.length; i++) {
     const p = s.players[i];
@@ -690,8 +692,9 @@ function simulateStep(
   if (b.owner >= 0) {
     b.multiplierPath = 0;
     const p = s.players[b.owner];
-    b.x = p.x + p.fx * 0.5;
-    b.z = p.z + p.fz * 0.5;
+    const offset=physicalBallOffset(p,b);
+    b.x = p.x + offset.x;
+    b.z = p.z + offset.z;
     b.h = 1 + jumpHeight(p);
     b.vx = p.moveX;
     b.vz = p.moveZ;
@@ -848,6 +851,7 @@ export function catchBall(s, only = -1, distances = null) {
       s.charge[team] = 0;
       b.flightKind = 0;
       b.owner = i;
+      b.heldJump = p.action===2&&p.jumping;
       b.lastTouch = i;
       b.after = 0;
       // get_ball (0xece4): impact sound requires horizontal ball movement.

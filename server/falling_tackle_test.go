@@ -73,15 +73,15 @@ func TestRetainedFallRecoveryTail(t *testing.T) {
 			s.Players[i].Z = 10
 		}
 		p := &s.Players[7]
-		p.X, p.Z, p.Stun, p.Action, p.ActionTime = 0, 0, 1.4, 4, 1.4
+		p.X, p.Z, p.Stun, p.Action, p.ActionTime = 0, 0, 1.04, 4, 1.04
 		p.fallAttack, p.fallAttackTime, p.fallFinishing = attack, .32, attack == 7
 		for i := 0; i < 7; i++ {
 			s.simulate(.04, [2]Input{}, [2]bool{true, true})
 		}
-		if p.ActionTime != .8 || p.fallAttack != 0 {
+		if p.ActionTime != .44 || p.fallAttack != 0 {
 			t.Fatal("recovery tail", attack, p.ActionTime, p.fallAttack)
 		}
-		for i := 0; i < 20; i++ {
+		for i := 0; i < 11; i++ {
 			s.simulate(.04, [2]Input{}, [2]bool{true, true})
 		}
 		if p.Stun != 0 || p.Action == 4 {

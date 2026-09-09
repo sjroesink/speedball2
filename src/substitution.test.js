@@ -78,10 +78,10 @@ test("simultaneous fatal falls enter medical care in player processing order", (
     Object.assign(s.players[i], {
       health: 0,
       action: 4,
-      actionTime: 35 / 25,
-      stun: 35 / 25,
+      actionTime: 26 / 25,
+      stun: 26 / 25,
     });
-  for (let frame = 0; frame < 35; frame++)
+  for (let frame = 0; frame < 26; frame++)
     step(s, simulationStep, {}, [false, false]);
   assert.equal(s.players[16].injury, 1);
   assert.equal(s.players[7].injury, 0);

@@ -1,4 +1,5 @@
 <!doctype html><html><head><style>body{margin:0;background:#111;color:white;font:16px sans-serif}#arena{height:100vh}nav{position:fixed;z-index:5;top:8px;left:8px;background:#101824;padding:12px}button{padding:10px}output{display:block;max-width:650px}</style></head><body><nav><button id="start">Start paired clients</button><button id="stop">Stop</button><label><input id="items" type="checkbox"> Collect field items</label><label><input id="loss" type="checkbox"> Drop five of every 25 snapshots on client 2</label><label><input id="throws" type="checkbox"> Throw while carrying</label><label><input id="delay" type="checkbox"> Delay client 2 snapshots by 160 ms</label><label><input id="view2" type="checkbox"> View client 2</label><output id="status">Ready</output></nav><div id="arena"></div><script type="module">
+import {fallDuration} from '/src/attributes.js';
 import {Vector3} from 'three';
 import {ArenaAudio} from '/src/audio.js';
 import {decodeSnapshot} from '/src/wire.js';import {ArenaRenderer} from '/src/renderer.js';
@@ -11,7 +12,7 @@ function draw(now){const c=clients[document.querySelector("#view2").checked?1:0]
  renderer.draw(c.state,frameDt,c.team);
  for(const {p,i,previous} of seeks){
   const hit=Object.entries(renderer.players[i].clips).find(([name])=>name.includes('Hit'))?.[1];
-  if(hit){recoverySeeks++;if(p.actionTime>previous)recoveryExtensions++;const expected=Math.min(1,Math.max(0,(1.4-p.actionTime+frameDt)/1.4));maxRecoveryPhaseError=Math.max(maxRecoveryPhaseError,Math.abs(hit.time/hit.getClip().duration-expected))}
+  if(hit){recoverySeeks++;if(p.actionTime>previous)recoveryExtensions++;const expected=Math.min(1,Math.max(0,(fallDuration-p.actionTime+frameDt)/fallDuration));maxRecoveryPhaseError=Math.max(maxRecoveryPhaseError,Math.abs(hit.time/hit.getClip().duration-expected))}
  }
  if(previousOwner>=0&&b.owner<0&&c.state.players[previousOwner].action===3){releaseFrames++;maxReleaseStep=Math.max(maxReleaseStep,before.distanceTo(renderer.ball.position))}
  if(b.owner>=0){const grip=renderer.players[b.owner].grip;if(grip){grip.getWorldPosition(gripPoint);maxGripError=Math.max(maxGripError,gripPoint.distanceTo(renderer.ball.position))}}

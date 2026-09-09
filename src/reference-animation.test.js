@@ -29,6 +29,12 @@ test("a mid-jump catch inherits the player index and landing seeks both to eight
 
 test("hide and fall-completion opcodes are returned without reading them as frames",()=>{
  assert.deepEqual(advance("anim_big_ball",10),{sprite:4,index:0,control:"hide"});
- const fall=advance("anim_tackled",34);
- assert.equal(fall.control,"finish-fall");assert.equal(fall.index,34);assert.ok(fall.sprite>=0);
+ const fall=advance("anim_tackled",25);
+ assert.equal(fall.control,"finish-fall");assert.equal(fall.index,25);assert.ok(fall.sprite>=0);
+});
+
+test("ordinary fall encounters its first completion at twenty-six frames",()=>{
+ let index=0,count=0,result;
+ do{result=advance("anim_tackled",index);index=result.index;count++;}while(result.control===null);
+ assert.equal(count,26);assert.equal(result.control,"finish-fall");
 });
