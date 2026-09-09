@@ -391,6 +391,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				p.moveX, p.moveZ = p.fallX, p.fallZ
 				blockPlayerMovement(&s.Players, i, &contacts[i], dt)
 			}
+			advancePhysicalPose(p, i, s.Period, dt)
 			continue
 		}
 		s.resolveTackle(i, &contacts[i])
@@ -404,6 +405,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		}
 		if s.active(1, 1-t) {
 			p.moveX, p.moveZ = 0, 0
+			advancePhysicalPose(p, i, s.Period, dt)
 			continue
 		}
 		if !human {
@@ -614,9 +616,8 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		}
 		p.moveX, p.moveZ = dx*speed, dz*speed
 		blockPlayerMovement(&s.Players, i, &contacts[i], dt)
-	}
-	for i := range s.Players {
-		advancePhysicalPose(&s.Players[i], i, s.Period, dt)
+		// step_player updates the pose before the next roster entry (0xe886).
+		advancePhysicalPose(p, i, s.Period, dt)
 	}
 	// Original movement follows the complete player-thinking pass.
 	for i := range s.Players {

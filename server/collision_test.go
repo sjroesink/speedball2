@@ -104,6 +104,13 @@ func TestTackleRosterOrder(t *testing.T) {
 		if len(hits) != 2 || hits[0] != 16 || hits[1] != 7 || s.Players[16].Stun <= 0 {
 			t.Fatal("counter-contact order", hits)
 		}
+		if s.Players[16].poseKind != 1 || s.Players[7].poseKind != 4 {
+			t.Fatal("poses must advance within each roster turn", s.Players[16].poseKind, s.Players[7].poseKind)
+		}
+		s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
+		if s.Players[16].poseKind != 4 {
+			t.Fatal("earlier victim must advance falling on next tick")
+		}
 	}
 }
 

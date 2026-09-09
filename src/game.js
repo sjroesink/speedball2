@@ -446,6 +446,7 @@ function simulateStep(
         p.moveZ = p.fallZ || 0;
         blockPlayerMovement(s.players, i, contacts[i], dt);
       }
+      advancePhysicalPose(p, i, s.period, dt);
       continue;
     }
     resolveTackle(s, i, contacts[i]);
@@ -460,6 +461,7 @@ function simulateStep(
     }
     if (active(s, 1, 1 - t)) {
       p.moveX = p.moveZ = 0;
+      advancePhysicalPose(p, i, s.period, dt);
       continue;
     }
     if (!human) {
@@ -662,8 +664,9 @@ function simulateStep(
     p.moveX = dx * speed;
     p.moveZ = dz * speed;
     blockPlayerMovement(s.players, i, contacts[i], dt);
+    // step_player updates the pose before the next roster entry (0xe886).
+    advancePhysicalPose(p, i, s.period, dt);
   }
-  s.players.forEach((p,i)=>advancePhysicalPose(p,i,s.period,dt));
   // The original moves players only after every player's thinking has run.
   for (let i = 0; i < s.players.length; i++) {
     const p = s.players[i];

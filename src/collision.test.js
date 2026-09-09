@@ -83,6 +83,10 @@ test("simultaneous tackles use roster order independently of tick parity", () =>
     assert.deepEqual(s.events.filter(e => e.kind === 4).map(e => e.actor), [16, 7]);
     assert.ok(s.players[16].stun > 0);
     assert.ok(s.players[7].stun > 0);
+    assert.equal(s.players[16].poseKind, 1, "later damage cannot retroactively advance the earlier player's fall");
+    assert.equal(s.players[7].poseKind, 4, "earlier damage advances during the victim's own turn");
+    step(s, simulationStep, {}, [true, true]);
+    assert.equal(s.players[16].poseKind, 4, "earlier victim advances the fall on the next tick");
   }
 });
 

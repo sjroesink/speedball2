@@ -2802,3 +2802,27 @@ interception signal and planar catch contact each dispatch once, while friendly
 and charged catches omit the interception signal. All 18 targeted JS catch/audio
 tests and the targeted Go catch tests pass. This verifies event dispatch, not
 subjective sound quality or full original-game equivalence.
+
+
+## Per-player physical pose ordering (2026-09-09)
+
+`step_sprites` at 0xe7d8 processes the second team then the first for each
+roster entry. Within `step_player`, control and the action callback precede
+collision handling (0xe882), sprite animation (0xe886) and origin update
+(0xe88a). The remake previously advanced every physical pose together after
+all player actions. A later player's counter-tackle could therefore replace
+the earlier player's already-processed pose within the same tick.
+
+JS and Go now advance poses at the end of each player's action/collision
+processing, including stunned and frozen paths. Global movement still follows
+all player thinking, and cached contact distances remain from the start of
+the pass. Counter-tackle regressions verify that earlier damage reaches the
+later victim's pose immediately, while later damage reaches the earlier
+victim's pose on the following tick. This is a source-order correction, not
+a complete animation interpreter: timer-driven action completion and the
+initial cursor of a fall inflicted after its victim's turn still need a
+complete callback/terminator reconciliation.
+
+All 259 JS tests pass, including six 10,000-tick JS/Go comparisons with internal
+physical pose fields. Go tests/vet and the production build pass. No claim of
+complete original-game equivalence follows from client/server agreement.
