@@ -1,21 +1,35 @@
 <!doctype html>
 <html lang="en"><meta charset="utf-8"><title>Speedball render check</title>
 <style>body{margin:0;background:#090f17;color:#e4ece8;font:14px system-ui}header{padding:16px;display:flex;gap:20px;align-items:center}button{padding:10px}#stage{height:70vh}pre{white-space:pre-wrap;padding:16px;margin:0}</style>
-<header><button id="start" disabled>Measure 300 frames</button><span>Full match renderer · 18 players · AI simulation · native display resolution</span></header>
+<header><button id="start" disabled>Measure 300 frames</button><button id="idle" disabled>Measure idle scheduling</button><span>Full match renderer · 18 players · AI simulation · native display resolution</span></header>
 <div id="stage"></div><pre role="status" id="results">Loading Blender assets…</pre>
 <script type="module">
 import {ArenaRenderer} from '/src/renderer.js';
 import {createMatch,step,simulationStep} from '/src/game.js';
 const view=new ArenaRenderer(document.querySelector('#stage'));
 const button=document.querySelector('#start'),results=document.querySelector('#results');
+const idle=document.querySelector('#idle');
 await view.load();view.setFollow(true);view.resize();
 let state=createMatch({training:true});view.draw(state,1/60,0);
-button.disabled=false;results.textContent='Ready. Keep this tab visible during measurement. CPU timings exclude GPU completion; frame intervals include display scheduling.';
+button.disabled=idle.disabled=false;results.textContent='Ready. Keep this tab visible during measurement. CPU timings exclude GPU completion; frame intervals include display scheduling.';
+idle.onclick=()=>{
+ button.disabled=idle.disabled=true;
+ let last=0;const intervals=[];
+ function sample(now){
+  if(document.visibilityState!=='visible'){results.textContent='Cancelled: tab became hidden.';button.disabled=idle.disabled=false;return}
+  if(last)intervals.push(now-last);last=now;
+  if(intervals.length<120){requestAnimationFrame(sample);return}
+  intervals.sort((a,b)=>a-b);
+  results.textContent=JSON.stringify({mode:'Idle requestAnimationFrame: no simulation or draw calls',samples:120,frameIntervalMs:{median:intervals[59],p95:intervals[113]},note:'Scheduling baseline only. Does not prove a frame-rate cap or GPU capacity.'},null,2);
+  button.disabled=idle.disabled=false;
+ }
+ results.textContent='Measuring idle scheduling…';requestAnimationFrame(sample);
+};
 button.onclick=()=>{
- button.disabled=true;state=createMatch({training:true});
+ button.disabled=idle.disabled=true;state=createMatch({training:true});
  let last=0,frames=0,accumulator=0;const cpu=[],intervals=[],calls=[],triangles=[];
  function frame(now){
-  if(document.visibilityState!=='visible'){results.textContent='Cancelled: tab became hidden. Keep it visible and retry.';button.disabled=false;return}
+  if(document.visibilityState!=='visible'){results.textContent='Cancelled: tab became hidden. Keep it visible and retry.';button.disabled=idle.disabled=false;return}
   const elapsed=last?(now-last)/1000:1/60;last=now;accumulator+=Math.min(elapsed,.1);
   while(accumulator>=simulationStep){step(state,simulationStep,{},[false,false]);accumulator-=simulationStep}
   const start=performance.now();view.draw(state,Math.min(elapsed,.1),0);const duration=performance.now()-start;
@@ -25,7 +39,7 @@ button.onclick=()=>{
   const percentile=(list,p)=>[...list].sort((a,b)=>a-b)[Math.floor((list.length-1)*p)];
   const canvas=view.renderer.domElement;
   results.textContent=JSON.stringify({samples:cpu.length,canvasPixels:[canvas.width,canvas.height],devicePixelRatio,frameIntervalMs:{median:percentile(intervals,.5),p95:percentile(intervals,.95)},cpuDrawMs:{median:percentile(cpu,.5),p95:percentile(cpu,.95)},drawCalls:{median:percentile(calls,.5),max:Math.max(...calls)},triangles:{median:percentile(triangles,.5),max:Math.max(...triangles)},simulationTicks:state.tick,note:'Local browser sample; not a GPU benchmark or a guarantee for other devices.'},null,2);
-  button.disabled=false;
+  button.disabled=idle.disabled=false;
  }
  requestAnimationFrame(frame);
 };

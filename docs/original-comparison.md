@@ -2584,3 +2584,26 @@ JS tests including six long parity traces passed after the behavior changes;
 two additional JS tests and corresponding Go cases passed, along with Go vet
 and build. Source fixed-point rounding, full callback ordering and whole-match
 AI equivalence remain open. This audit does not establish complete fidelity.
+
+### Integrated runtime check after pose distances and teammate avoidance
+
+The local Go server was restarted from 5da4dd0. Room 7TB7P4 used paired native
+WebTransport clients with 160 ms added client-two delay and five dropped
+snapshots in each 25. It stopped at ticks 798/794: 634 shared snapshots matched,
+zero shared events were missing and 159 snapshots were dropped. Both clients
+observed 12 releases, 12 windups and 12 throw cue dispatches. The rendered
+client measured nine releases with maximum frame displacement 0.820 world
+units, zero held-grip error and zero recovery phase error across seven seeks.
+Coin 13 and 100 credits replicated. This run did not exercise medical phases.
+
+The full-match render tool measured 300 frames after warmup at 1280x504/DPR1:
+frame interval median 32.7 ms, p95 33.2; CPU draw median 2.7 ms, p95 4.1;
+draw calls median 353, maximum 423; triangles median 144898, maximum 164598.
+These timings exclude GPU completion and do not establish a 60 FPS capability.
+The tool now includes an idle requestAnimationFrame measurement that does no
+simulation or drawing, to separate scheduling evidence from game work.
+Idle scheduling measured 120 callbacks: median 31.2 ms, p95 31.6 ms with no
+simulation/draw work in the test callback. The similar idle and full-match
+intervals suggest scheduling contributes substantially in this environment;
+this is an inference, not proof of a browser cap or a GPU performance claim.
+A high-refresh external runtime remains necessary to verify the 60+ FPS goal.

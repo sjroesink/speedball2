@@ -16,7 +16,7 @@ feel, modern graphics and audio remain an active objective.
 | Browser multiplayer using WebTransport | Go authority, binary snapshots, retained events; paired local loss/delay probes | Reconnect and WAN validation; no lag compensation or client prediction |
 | Recognizable modern Blender graphics | Authored court, athletes, ball, items, medics and compact impacts; higher camera | Final artistic acceptance, further material/animation refinement |
 | Audio | Synthesized action/item/match cues, source windup timing, priority/voice limits; actual match and goal/medical offline mixes | Subjective audible mix review; current evidence measures signals and routing |
-| Higher FPS and resolution | Independent renderer, bounded turns, time-sampled ball trail, batched meshes | Browser workload measured around 30 FPS in prior environment; 60+ FPS target not proven |
+| Higher FPS and resolution | Independent renderer, bounded turns, time-sampled ball trail, batched meshes | Current full-match interval 32.7 ms median; idle scheduling 31.2 ms. Test environment scheduling contributes; 60+ FPS target not proven |
 | Complete original feature scope | Exhibition match systems are present | Career/league, transfers and persistent team progression are absent; do not silently declare full-original completion without resolving these |
 
 ## Next source-level work
@@ -32,7 +32,7 @@ collision/release placement. The complete 117 signed ball offsets, 120 sprite or
 The complete memory-backed extraction uses `tools/ExportBallTables.java`.
 Physical placement is integrated in JS/Go using generated direction groups,
 a retained run cursor, action timers and jump/catch state. A complete source
-interpreter remains open. Pose-aware ball and opposing-player distances are integrated; collectible, bumper and remaining direct AI point distances still need an audit.
+interpreter remains open. Pose-aware ball and opposing-player distances are integrated; collectible and bumper callers were audited as object-based. Goal-throw distance and selected-teammate avoidance are now integrated. Full source fixed-point coordinate behavior remains open.
 
 ## Verification limits
 
