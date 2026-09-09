@@ -60,6 +60,8 @@ type Event struct {
 	Actor, Target int
 }
 type State struct {
+	RestartPhase      int
+	RestartTicks      float64
 	Medical           *Medical
 	logicalView       [2]int
 	Bench             [2][3][8]int
@@ -140,6 +142,7 @@ func (s *State) direction(team int) float64 {
 }
 func (s *State) resetPitch() {
 	s.Medical = nil
+	s.RestartPhase, s.RestartTicks = 0, 0
 	for i := range s.Players {
 		t := i / 9
 		d := s.direction(t)
@@ -255,6 +258,10 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 	}
 	s.matchClock(dt)
 	if s.medicalStep(dt) {
+		s.previous = inputs
+		return
+	}
+	if s.restartStep(dt) {
 		s.previous = inputs
 		return
 	}

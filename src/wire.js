@@ -30,6 +30,7 @@ export function decodeSnapshot(bytes) {
     flags = u8(),
     team = u8();
   s.over = !!(flags & 1);
+  s.restartPhase = (flags >> 2) & 3;
   s.controlled = [u8(), u8()];
   s.score = [u16(), u16()];
   s.charge = [q(), q()];

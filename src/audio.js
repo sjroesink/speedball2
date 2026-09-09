@@ -147,7 +147,7 @@ export class ArenaAudio {
   }
 
   observe(state, playing, view) {
-    const paused = state.pause > 0;
+    const paused = state.pause > 0 || !!state.medical || !!state.restartPhase;
     if (
       playing &&
       !state.over &&

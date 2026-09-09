@@ -202,6 +202,7 @@ func TestPickupRespawnAndEquipment(t *testing.T) {
 }
 func TestFeatureSnapshot(t *testing.T) {
 	s := initial()
+	s.RestartPhase = 1
 	s.logicalView = [2]int{317, 963}
 	s.Medical = &Medical{Player: 16, Phase: 3, Origin: [2]int{592, 1104}, Medics: [2][2]int{{-50, 1104}, {-22, 1104}}}
 	s.Effect = Effect{10, 1, 5.5}

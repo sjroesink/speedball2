@@ -1,0 +1,61 @@
+import { movementSpeed } from "./attributes.js";
+import { steerToTarget } from "./steering.js";
+import { startInjury } from "./features.js";
+
+// Medical restart: prepare_ball_launch waits for every player, then the deck
+// reaches frame 19 and the ball reaches frame 21 before the clock resumes.
+export function restartStep(s, dt, launchPosition) {
+  if (!s.restartPhase) return false;
+  if (s.restartPhase === 1) {
+    let ready = true;
+    for (let slot = 0; slot < 9; slot++)
+      for (const team of [1, 0]) {
+        const i = team * 9 + slot,
+          p = s.players[i];
+        p.actionTime = Math.max(0, p.actionTime - dt);
+        p.stun = Math.max(0, p.stun - dt);
+        p.aiWait = Math.max(0, (p.aiWait || 0) - dt);
+        if (p.health <= 0) {
+          if (startInjury(s, i)) return true;
+          ready = false;
+          continue;
+        }
+        if (p.actionTime > 1e-9 || p.aiWait > 1e-9) {
+          ready = false;
+          continue;
+        }
+        p.action = 0;
+        p.jumping = false;
+        const [x, z] = launchPosition(s, i),
+          [vx, vz] = steerToTarget(p, x, z);
+        const speed = movementSpeed(p, false);
+        p.moveX = vx * speed;
+        p.moveZ = vz * speed;
+        p.x += Math.sign(vx) * Math.min(Math.abs(x - p.x), speed * dt);
+        p.z += Math.sign(vz) * Math.min(Math.abs(z - p.z), speed * dt);
+        if (p.x !== x || p.z !== z) {
+          ready = false;
+          p.fx = vx;
+          p.fz = vz;
+        } else {
+          p.fx = (team === 0 ? 1 : -1) * (s.period === 2 ? -1 : 1);
+          p.fz = 0;
+          p.moveX = p.moveZ = 0;
+        }
+      }
+    if (ready) {
+      s.restartPhase = 2;
+      s.restartTicks = 0;
+    }
+  } else {
+    s.restartTicks += dt * 25;
+    // Smooth presentation of the otherwise non-interactive launcher sequence.
+    const t = Math.max(0, Math.min(1, (s.restartTicks - 19) / 21));
+    s.ball.h = 0.25 + 2.75 * t + 6 * Math.sin(Math.PI * t);
+    if (s.restartTicks >= 40 - 1e-9) {
+      s.restartPhase = 0;
+      s.ball.h = 3;
+    }
+  }
+  return true;
+}

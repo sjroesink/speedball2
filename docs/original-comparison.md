@@ -978,3 +978,27 @@ All 171 JavaScript tests, Go tests/vet and production build pass. Remaining:
 return-to-formation and central launcher phases after evacuation are still
 missing; current completion still releases the anchor ball in place. This is
 not the original restart sequence and remains an explicit gameplay gap.
+
+
+## Post-medical formation and central restart (2026-09-09)
+
+The medical completion now enters a return-to-formation phase in both Go and
+training. Players walk to their stored original launch positions and face their
+starting direction, retaining health, attributes and bench rotation. Pending
+fatal falls enter medical care before the restart can complete. Modern displays
+do not use the original offscreen-player teleport shortcut. The clock and human
+actions remain paused, and incoming buttons are consumed throughout the restart.
+
+After formation, a 19-frame deck preparation and 21-frame ball sequence follow
+the thresholds in step_ball_launch (0xd816). The vertical curve is a modern
+non-interactive presentation, not a recovered original sprite-height table;
+after release the existing kickoff height/physics are used. The restart phase
+uses spare protocol-v8 flag bits without increasing the 1200-byte packet bound.
+The HUD names both phases and the whistle sounds only when play is released.
+
+Validation: 173 JavaScript tests, Go tests/vet and production build pass, including
+formation travel, retained damage, clock/input lockout, frame thresholds, queued
+injuries, phase replication and whistle deduplication. Full visual/network
+playthrough and original launch-height/frame-order verification remain open.
+Initial/goal/halftime restarts still use the previous reset/countdown mechanism;
+unifying those with this sequence remains outstanding.

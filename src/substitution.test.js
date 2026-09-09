@@ -97,6 +97,7 @@ test("simultaneous fatal falls enter medical care in player processing order", (
 function finishCare(s) {
   for (let i = 0; s.medical && i < 1000; i++) medicalStep(s, 1 / 25);
   assert.equal(s.medical, null);
+  assert.equal(s.restartPhase, 1);
 }
 
 test("medical anchor takes the ball from any carrier and stays behind during evacuation", () => {

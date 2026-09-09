@@ -19,6 +19,7 @@ test("browser decodes actual Go protocol v8 snapshot with every new field", () =
   assert.deepEqual(m.names, ["Blue", "Red"]);
   assert.equal(m.started, true);
   assert.deepEqual(s.logicalView, [317, 963]);
+  assert.equal(s.restartPhase, 1);
   assert.deepEqual(s.medical, {
     player: 16,
     phase: 3,

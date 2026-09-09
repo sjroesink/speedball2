@@ -324,13 +324,18 @@ export async function start() {
         ) + ` · ×${mult}`;
     }
     const medical = state.medical;
-    $("powerStatus").textContent = medical
-      ? `MEDICS · ${["APPROACHING", "POSITIONING", "LIFTING", "EXITING"][medical.phase]} · CLOCK STOPPED`
-      : state.effect.time > 0
-        ? `${state.effect.team === team ? "YOUR TEAM" : "OPPONENT"}: ${powerNames[state.effect.kind]} · ${Math.ceil(state.effect.time)}s`
-        : state.ball.charged
-          ? `ELECTROBALL · ${state.ball.electric} HITS`
-          : "NO ACTIVE POWER-UP";
+    $("powerStatus").textContent =
+      state.restartPhase && !medical
+        ? state.restartPhase === 1
+          ? "RETURNING TO FORMATION � CLOCK STOPPED"
+          : "BALL LAUNCH � CLOCK STOPPED"
+        : medical
+          ? `MEDICS · ${["APPROACHING", "POSITIONING", "LIFTING", "EXITING"][medical.phase]} · CLOCK STOPPED`
+          : state.effect.time > 0
+            ? `${state.effect.team === team ? "YOUR TEAM" : "OPPONENT"}: ${powerNames[state.effect.kind]} · ${Math.ceil(state.effect.time)}s`
+            : state.ball.charged
+              ? `ELECTROBALL · ${state.ball.electric} HITS`
+              : "NO ACTIVE POWER-UP";
     $("healthStatus").textContent =
       `ENERGY ${Math.ceil(p.health)}% · RESERVES ${state.reserves[team]} · CREDITS ${state.credits[team]}`;
     $("gearStatus").textContent = p.gear

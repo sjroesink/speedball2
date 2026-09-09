@@ -194,6 +194,8 @@ func (s *State) medicalStep(dt float64) bool {
 		s.Ball.Electric = 0
 		s.Ball.Charged = false
 		s.Medical = nil
+		s.RestartPhase = 1
+		s.Ball.X, s.Ball.Z, s.Ball.H = 0, 0, .25
 	}
 	return true
 }

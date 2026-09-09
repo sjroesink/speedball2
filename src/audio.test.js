@@ -170,3 +170,21 @@ test("inactive restarts are consumed without playing a late whistle", async () =
   a.observe({ pause: 0, over: false }, true);
   assert.ok(c.scheduled.length > 0);
 });
+
+test("medical whistle waits through evacuation, formation and launcher", () => {
+  const a = new ArenaAudio(),
+    heard = [];
+  a.play = (kind) => heard.push(kind);
+  const s = { pause: 0, medical: { player: 7 }, restartPhase: 0 };
+  a.observe(s, true);
+  s.medical = null;
+  s.restartPhase = 1;
+  a.observe(s, true);
+  s.restartPhase = 2;
+  a.observe(s, true);
+  assert.deepEqual(heard, []);
+  s.restartPhase = 0;
+  a.observe(s, true);
+  a.observe(s, true);
+  assert.deepEqual(heard, ["kickoff"]);
+});

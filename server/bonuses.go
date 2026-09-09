@@ -112,7 +112,7 @@ func (s *State) matchClock(dt float64) {
 			s.Score[owner] += points
 			s.event(8, owner, points, 0, 0, 1)
 		}
-		if s.Pause <= 0 && !s.hasInjury() {
+		if s.RestartPhase == 0 && s.Pause <= 0 && !s.hasInjury() {
 			s.Time = math.Max(0, s.Time-1)
 		}
 		if s.Effect.Kind != 0 {

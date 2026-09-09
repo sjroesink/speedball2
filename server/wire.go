@@ -34,6 +34,7 @@ func encodeSnapshot(m Snapshot) []byte {
 	if m.Started {
 		flags |= 2
 	}
+	flags |= s.RestartPhase << 2
 	u8(flags)
 	u8(m.Team)
 	u8(s.Controlled[0])

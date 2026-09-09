@@ -108,8 +108,8 @@ func finishCare(t *testing.T, s *State) {
 	for i := 0; s.Medical != nil && i < 1000; i++ {
 		s.medicalStep(1. / 25)
 	}
-	if s.Medical != nil {
-		t.Fatal("medical did not finish")
+	if s.Medical != nil || s.RestartPhase != 1 {
+		t.Fatal("medical did not hand over to restart")
 	}
 }
 

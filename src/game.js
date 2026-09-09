@@ -1,3 +1,4 @@
+import { restartStep } from "./restart.js";
 import { forwardDecision } from "./forward-ai.js";
 import { carrierMove } from "./carrier-move.js";
 import { hardwareThrow } from "./hardware-ai.js";
@@ -128,6 +129,8 @@ export function initial() {
 }
 export function resetPitch(s) {
   s.medical = null;
+  s.restartPhase = 0;
+  s.restartTicks = 0;
   const old = s.players;
   s.players = Array.from({ length: 18 }, (_, i) => {
     const team = Math.floor(i / 9),
@@ -324,6 +327,10 @@ function simulateStep(
   if (s.over) return;
   matchClock(s, dt);
   if (medicalStep(s, dt)) {
+    s.previous = inputs.map((u) => ({ ...u }));
+    return;
+  }
+  if (restartStep(s, dt, launchPosition)) {
     s.previous = inputs.map((u) => ({ ...u }));
     return;
   }
@@ -714,7 +721,7 @@ export function matchClock(s, dt) {
       s.score[owner] += n;
       event(s, 8, owner, n, 0, 0, 1);
     });
-    if (s.pause <= 0 && !s.players.some((p) => p.injury > 0))
+    if (!s.restartPhase && s.pause <= 0 && !s.players.some((p) => p.injury > 0))
       s.time = Math.max(0, s.time - 1);
     if (s.effect.kind) {
       s.effect.time = Math.max(0, s.effect.time - 1);
