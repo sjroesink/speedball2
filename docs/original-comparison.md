@@ -1417,3 +1417,21 @@ and click Start paired clients. Stop closes both sessions. This verifies actual
 medical state/event transport and decoding; deliberate packet-loss simulation,
 remote-WAN behavior and subjective sound review are not covered by this run.
 No gameplay code changed in this verification checkpoint.
+
+
+## Burst snapshot-loss playtest (2026-09-09)
+
+Extended tools/network-playtest.html with a visible option to discard five of
+every 25 incoming snapshots on the second real WebTransport client. It compares
+complete decoded states at matching ticks with a bounded 128-tick pairing map,
+and checks event IDs through the latest ID received by both peers. This models
+receiver-side snapshot loss, not QUIC congestion or WAN latency.
+
+Arena 4E888T at tick 720: second client discarded 144 snapshots; 575 shared
+snapshots compared with zero state mismatches and zero missing shared events.
+Both peers reported identical minimum energy 71 and the same action, contact,
+pickup-appearance and launcher event kinds. Stopped both sessions using the UI.
+This bounded run validates recovery under these short loss bursts; extended
+outages beyond the retained event tail can still lose transient sounds. The
+previous live medical run did not enable loss, so no combined loss/medical
+claim is made. No production simulation or network code changed.
