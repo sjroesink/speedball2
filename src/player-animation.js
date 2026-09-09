@@ -5,7 +5,7 @@ import { actionDuration, fallDuration } from "./attributes.js";
 export function playPlayerAction(action, kind, remaining = 0, speed = 100, capturedDuration = 0) {
   action.reset();
   action.setLoop(kind === 5 ? LoopRepeat : LoopOnce, kind === 5 ? Infinity : 1);
-  const duration = kind === 2 && capturedDuration > 0 ? capturedDuration
+  const duration = (kind === 1 || kind === 2) && capturedDuration > 0 ? capturedDuration
     : kind === 1 || kind === 2 ? actionDuration(kind, speed)
     : kind === 4 ? fallDuration
     : kind === 3 ? 8 / 25 : kind === 6 ? 3 / 25 : kind === 7 ? 4 / 25 : 0;

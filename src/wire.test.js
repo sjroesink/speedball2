@@ -57,6 +57,8 @@ test("browser decodes actual Go protocol v9 snapshot with every new field", () =
   });
   assert.equal(s.players[0].poseDuration, 16/25);
   assert.equal(s.players[0].poseKind, 2);
+  assert.equal(s.players[1].poseKind, 1);
+  assert.equal(s.players[1].poseDuration, 12/25);
   assert.equal(s.pickups.length, 7);
   assert.equal(s.pickups[6].kind, 0);
   assert.ok(bytes.length < 1200);

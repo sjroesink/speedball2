@@ -82,8 +82,12 @@ func encodeSnapshot(m Snapshot) []byte {
 		q(p.FZ)
 		q(p.Stun)
 		frames := 0
-		if p.Action == 2 {
-			frames = int(math.Round(jumpDuration(p) * 25))
+		if p.Action == 1 || p.Action == 2 {
+			duration := actionDuration(p.Action, p.Stats[3])
+			if p.poseKind == p.Action && p.poseDuration > 0 {
+				duration = p.poseDuration
+			}
+			frames = int(math.Round(duration * 25))
 		}
 		u8(p.Action | (frames << 3))
 		q(p.ActionTime)

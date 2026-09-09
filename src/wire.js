@@ -93,10 +93,10 @@ export function decodeSnapshot(bytes) {
     p.injury = q();
     p.gear = u8();
     p.stats = Array.from({ length: 8 }, u8);
-    const jumpFrames = p.action >> 3;
+    const actionFrames = p.action >> 3;
     p.action &= 7;
-    p.poseKind = jumpFrames ? 2 : 0;
-    p.poseDuration = jumpFrames / 25;
+    p.poseKind = actionFrames ? p.action : 0;
+    p.poseDuration = actionFrames / 25;
   }
   s.pickups = Array.from({ length: 7 }, () => ({
     kind: u8(),

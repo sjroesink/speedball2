@@ -252,3 +252,14 @@ test('late Blender jump snapshots use launch duration despite changed speed',asy
   assert.equal(action.isRunning(),false,'clip finishes with the remaining action time');
  }
 });
+
+test('late Blender slide uses captured sustain after a speed change',async()=>{
+ for(const team of ['cyan','orange']) for(const fps of [30,60,144]) {
+  const model=await player(team),mixer=new AnimationMixer(model.scene);
+  const clip=model.animations.find(c=>c.name.includes('Slide')),action=mixer.clipAction(clip);
+  playPlayerAction(action,1,.16,250,.32);
+  assert.ok(Math.abs(action.time/clip.duration-.5)<1e-6);
+  let elapsed=0;while(elapsed<.16-1e-9){const dt=Math.min(1/fps,.16-elapsed);mixer.update(dt);elapsed+=dt;}
+  mixer.update(1e-7);assert.equal(action.isRunning(),false);
+ }
+});

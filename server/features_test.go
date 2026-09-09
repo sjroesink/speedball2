@@ -207,6 +207,9 @@ func TestFeatureSnapshot(t *testing.T) {
 	s.Players[0].Action = 2
 	s.Players[0].poseKind = 2
 	s.Players[0].poseDuration = 16. / 25
+	s.Players[1].Action = 1
+	s.Players[1].poseKind = 1
+	s.Players[1].poseDuration = 12. / 25
 
 	s.Pickups[6].Kind = 0 // Held armor must stay hidden after decoding.
 	s.RestartPhase = 1

@@ -270,3 +270,14 @@ have regressions at 30, 60 and 144 FPS: a halfway snapshot starts halfway throug
 the clip and finishes after the remaining 0.24 seconds, even with speed boosted
 from 100 to 250. All 16 player-animation tests and production build pass.
 This establishes clip timing, not final subjective animation approval.
+
+### Captured slide animation timing
+
+The captured-duration path now also covers slides. Protocol v9's upper action
+bits represent captured duration for action 1 or 2; zero retains the stat-derived
+fallback. The renderer decodes the matching pose kind and uses that duration for
+late slide clips. This keeps the animation phase stable when speed changes after
+launch. Exported cyan/orange Slide clips are tested halfway through a captured
+0.32-second slide with current speed 250, at 30/60/144 FPS. All 18 animation/wire
+tests, Go suite and build pass, including maximum datagram size. The actual Go
+snapshot fixture checks both jump and slide durations at different current stats.

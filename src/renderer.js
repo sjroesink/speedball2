@@ -249,7 +249,7 @@ export class ArenaRenderer {
         )?.[1];
         if (name && action) {
           playPlayerAction(action, visualAction, p.actionTime, p.stats?.[3] ?? 100,
-            visualAction === 2 ? jumpDuration(p) : 0);
+            visualAction === 2 ? jumpDuration(p) : p.poseKind === visualAction ? p.poseDuration : 0);
           if (visualAction === 5) action.fadeIn(.12);
         }
       }
