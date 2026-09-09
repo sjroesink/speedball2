@@ -2427,3 +2427,26 @@ Remaining work includes reconciling coordinate anchors, held-ball sprite state,
 running phase, and complete jump/catch/keeper animation selection. Existing
 Blender hand attachment and fixed physical placement are unchanged in this
 commit. The extractor completed successfully with the asserted counts.
+
+
+### Held-ball coordinate conversion
+
+The supplied Entity.Draw centers the image on terrainXY plus originXY; it does
+not treat terrainXY as a raw image top-left. The Amiga distance_to_point at
+0xdaca-0xdad2 uses terrain X and terrain Y plus vertical origin, independently
+of bitmap width. Do not introduce an additional generic half-player-width
+correction into the held-ball offset formula.
+
+Added heldBallOffset as a tested conversion primitive using the extracted
+numeric tables. It requires explicit sprite indices and converts source X to
+world Z and source Y to negative world X. Sprite zero receives the documented
+extra four-unit subtraction. For player sprite 0 / held-ball sprite 0 the
+terrain displacement is (13,6); for north throw sprite 49 it is (0,-18).
+The targeted conversion test passes, including signed values and invalid index
+rejection. This helper is not yet wired into either simulation; animation-index
+selection and full held-ball/catch state remain required before integration.
+
+Inspection of the local Ghidra packed database did not recover complete raw
+animation arrays through simple ZIP expansion. The expanded database remains
+ignored research material. No missing array tails were guessed from truncated
+assembly rows, and no original executable data is shipped.
