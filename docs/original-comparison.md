@@ -2403,3 +2403,27 @@ three launcher/release sequences. This extends the earlier ordinary AI trace
 with actual goal and medical event sequencing and unclipped rendered output at
 the voice limit. It still does not prove subjective prominence or pleasantness
 of the mix; the generated WAV is available in the page's audio player.
+
+
+### Held-ball reference tables extracted
+
+Added extract-held-ball-reference.py and the numeric held-ball-reference.json.
+The extractor verifies all 117 signed byte pairs at 0x3ff8, all 120 signed word
+origin pairs at 0x40e2, and all 24 complete standing/move/throw sequences. It
+rejects missing or truncated rows instead of assuming omitted animation data.
+No images or executable bytes are included in this data artifact.
+
+step_player calls the action handler before advancing the sprite and updating
+its origin (0xe87c-0xe88a). step_match then updates the carried ball position
+(0xcff4-0xd03e). Thus the throwing callback releases from the preceding carried
+pose before frame-four visual advancement. North-facing throw frames are
+48,48,49,49,50,50,49,49; their combined offset/origin minus eight yields
+(17,-10), (4,-14), (5,-13) for the three distinct sprites. These are original
+coordinate displacements, not yet world-center offsets. Ball sprite zero has
+an additional minus-four correction on both axes.
+
+The extraction is groundwork for physical integration, not a completed fix.
+Remaining work includes reconciling coordinate anchors, held-ball sprite state,
+running phase, and complete jump/catch/keeper animation selection. Existing
+Blender hand attachment and fixed physical placement are unchanged in this
+commit. The extractor completed successfully with the asserted counts.

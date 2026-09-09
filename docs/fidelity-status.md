@@ -27,8 +27,11 @@ player_ball_offsets entry indexed by the player's displayed sprite, adjusted
 by sprite origins and held-ball sprite size. Current game.js/server game.go
 copy velocity correctly but use a fixed forward offset. The displayed Blender
 ball follows BallGrip, so visual attachment alone does not prove physical
-collision/release placement. Porting only the 117 offset pairs without the
-associated animation-index and origin mapping would be incomplete.
+collision/release placement. The complete 117 signed ball offsets, 120 sprite origins and 24 standing,
+running and throwing sequences are now reproducibly extracted by
+`tools/extract-held-ball-reference.py` into `held-ball-reference.json`.
+Simulation integration is still pending; jump/catch/keeper sequences and
+coordinate anchoring must also be reconciled.
 
 ## Verification limits
 
