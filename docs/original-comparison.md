@@ -1228,3 +1228,20 @@ original overlay/camera gating remains unverified.
 timed effect kinds and equipment/stat/energy preservation. The JS test also
 exercises the real simulation pause before formation rather than invoking only
 the restart helper. English game rules describe termination on a new ball launch.
+
+
+## Multiplayer checkpoint and ball rotation origin (2026-09-09)
+
+Restarted the local Go server from current sources. Two real browser clients
+joined arena RPU8TP over WebTransport, observed the central launch with a held
+01:30 clock, then both showed 01:22 and the same score. The court filled the
+ultrawide viewport. This is a connection/startup integration check, not a full
+online injury/power-up match verification.
+
+The screenshot exposed a separate visibility bug: the Blender ball has a
+floor-based origin, and rotating its whole scene moved its center above/below
+the court. Centered the imported model inside a rotation pivot and position
+that pivot at the simulation's center height. Trail clones use the same pivot.
+A full-rotation geometry test verifies constant center and no floor penetration;
+a browser screenshot using the real GLB confirmed the grounded ball is visible.
+189 JS tests and production build pass. Simulation physics are unchanged.

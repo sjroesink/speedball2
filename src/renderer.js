@@ -1,3 +1,4 @@
+import { centeredBall } from "./ball-model.js";
 import {
   cameraExtent,
   cameraTarget,
@@ -155,11 +156,11 @@ export class ArenaRenderer {
       }
       return { wrapper, model, mixer, clips, active: -1 };
     });
-    this.ball = ball.scene;
+    this.ball = centeredBall(ball.scene);
     this.scene.add(this.ball);
     this.impact = impact.scene;
     this.trail = Array.from({ length: 10 }, () => {
-      const m = ball.scene.clone();
+      const m = this.ball.clone();
       m.scale.setScalar(0.35);
       m.traverse((o) => {
         if (o.isMesh) {
@@ -363,7 +364,7 @@ export class ArenaRenderer {
         o.material.emissiveIntensity = b.charged ? 3 : 0.15;
       }
     });
-    const ballTarget = new THREE.Vector3(b.x, b.h - 0.25, b.z);
+    const ballTarget = new THREE.Vector3(b.x, b.h, b.z);
     if (b.owner >= 0) {
       const carrier = this.players[b.owner].wrapper.position;
       ballTarget.x += carrier.x - s.players[b.owner].x;
@@ -397,7 +398,7 @@ export class ArenaRenderer {
     this.aim.setDirection(new THREE.Vector3(cp.fx, 0, cp.fz));
     this.aim.setLength(2.2 + Math.min(s.charge[team], 0.5) * 3, 0.6, 0.32);
     if (b.owner < 0 && Math.hypot(b.vx, b.vz) > 4) {
-      this.trailPositions.unshift(new THREE.Vector3(b.x, b.h - 0.25, b.z));
+      this.trailPositions.unshift(new THREE.Vector3(b.x, b.h, b.z));
       this.trailPositions.length = Math.min(10, this.trailPositions.length);
     } else this.trailPositions = [];
     this.trail.forEach((m, i) => {
