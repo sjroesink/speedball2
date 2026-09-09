@@ -118,6 +118,12 @@ const velocityUnit = 25. * 22.4 / 576
 
 func movementSpeed(p *Player, carrying, keeperBlock bool) float64 {
 	ensureStats(p)
+	if p.Action == 2 && p.stationaryJump {
+		return 0
+	}
+	if p.Action == 2 && p.jumpSpeed > 0 {
+		return p.jumpSpeed
+	}
 	speed := p.Stats[3]
 	level := 4
 	if speed > 140 {
@@ -146,9 +152,6 @@ func movementSpeed(p *Player, carrying, keeperBlock bool) float64 {
 	}
 	if p.Action == 1 && keeperBlock {
 		level = 8
-	}
-	if p.Action == 2 && p.stationaryJump {
-		level = 0
 	}
 	if p.Action == 3 || p.Action == 6 || p.Action == 7 {
 		level = 0

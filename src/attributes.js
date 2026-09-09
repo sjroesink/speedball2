@@ -94,6 +94,8 @@ export function randomByte(s) {
 export const velocityUnit = (25 * 22.4) / 576;
 export function movementSpeed(p, carrying, keeperBlock = false) {
   ensureStats(p);
+  if (p.action === 2 && p.stationaryJump) return 0;
+  if (p.action === 2 && p.jumpSpeed > 0) return p.jumpSpeed;
   const speed = p.stats[3];
   let level =
     4 + (speed > 140 ? 1 : 0) + (speed > 200 ? 1 : 0) + (carrying ? 0 : 1);
@@ -104,7 +106,6 @@ export function movementSpeed(p, carrying, keeperBlock = false) {
       (speed > 170 ? 1 : 0) +
       (speed > 200 ? 1 : 0);
   if (p.action === 1 && keeperBlock) level = 8;
-  if (p.action === 2 && p.stationaryJump) level = 0;
   if (p.action === 3 || p.action === 6 || p.action === 7) level = 0;
   return level * velocityUnit;
 }

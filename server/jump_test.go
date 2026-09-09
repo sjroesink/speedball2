@@ -2,6 +2,32 @@ package main
 
 import "testing"
 
+func TestHumanJumpLaunchSpeed(t *testing.T) {
+	for _, c := range [][2]int{{100, 5}, {140, 5}, {141, 6}, {170, 6}, {171, 6}, {200, 6}, {201, 7}, {250, 7}} {
+		s := initial()
+		for i := range s.Players {
+			s.Players[i].Stun = 100
+		}
+		p := &s.Players[7]
+		p.X, p.Z, p.Stun = 0, 0, 0
+		p.Stats[3] = c[0]
+		s.Ball.X, s.Ball.Z, s.Ball.H, s.Ball.Owner = 1, 0, 4, -1
+		s.simulate(simulationStep, [2]Input{{Shoot: true, X: 1}, {}}, [2]bool{true, false})
+		if p.Action != 2 || p.moveX != float64(c[1])*velocityUnit {
+			t.Fatal("launch", c, p.Action, p.moveX)
+		}
+		p.Stats[3] = 100
+		if c[0] == 100 {
+			p.Stats[3] = 250
+		}
+		s.Ball.X = 8
+		s.simulate(simulationStep, [2]Input{{X: -1}, {}}, [2]bool{true, false})
+		if p.moveX != float64(c[1])*velocityUnit {
+			t.Fatal("midair speed changed", c, p.moveX)
+		}
+	}
+}
+
 func TestStationaryJump(t *testing.T) {
 	s := initial()
 	for i := range s.Players {

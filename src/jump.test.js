@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { actionDuration, canJumpAtBall } from "./attributes.js";
+import { actionDuration, canJumpAtBall, velocityUnit } from "./attributes.js";
 test("jump selection uses speed reach, free possession and original flight stage", () => {
   const p = { stats: [100, 100, 100, 100, 100, 100, 100, 100] };
   const b = { owner: -1, flightKind: 2, flightStage: 3, h: 5 };
@@ -18,6 +18,33 @@ test("jump selection uses speed reach, free possession and original flight stage
 });
 
 import { initial, step, simulationStep, jumpHeight } from "./game.js";
+
+test("human jumping keeps launch running speed across stat changes", () => {
+  for (const [speed, level] of [
+    [100, 5],
+    [140, 5],
+    [141, 6],
+    [170, 6],
+    [171, 6],
+    [200, 6],
+    [201, 7],
+    [250, 7],
+  ]) {
+    const s = initial();
+    for (const q of s.players) q.stun = 100;
+    const p = s.players[7];
+    Object.assign(p, { x: 0, z: 0, stun: 0 });
+    p.stats[3] = speed;
+    Object.assign(s.ball, { x: 1, z: 0, h: 4, owner: -1 });
+    step(s, simulationStep, { shoot: true, x: 1 });
+    assert.equal(p.action, 2);
+    assert.equal(p.moveX, level * velocityUnit);
+    p.stats[3] = speed === 100 ? 250 : 100;
+    s.ball.x = 8;
+    step(s, simulationStep, { x: -1 });
+    assert.equal(p.moveX, level * velocityUnit);
+  }
+});
 
 test("jump without movement input stays in place until recovery", () => {
   const s = initial();

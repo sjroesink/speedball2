@@ -616,3 +616,10 @@ Tests exercise moving-opponent prediction, supporting punch direction, coinciden
 Amiga `slide_or_jump_at_target` at 0x100c4–0x1010a selects the zero-velocity table when the predicted target has no direction, retaining facing. Both simulations now preserve this distinction through an internal stationary-jump flag. A coincident slide still falls back to the team initial direction. Human jumps without directional input also retain zero velocity, as in WIP `sub_F47E`, which keeps the movement velocity when selecting the jump animation. The flag is set anew for each jump and affects only action 2, so walking resumes normally afterward. Tests verify a full stationary human jump despite midair movement input, facing preservation, movement after recovery, and coincident selected-AI target direction. Audio continues to use the existing launch and landing events.
 
 The original human moving-jump velocity selection and the full selected-player AI decision tree still need further comparison; this change does not prove full gameplay equivalence.
+
+
+### Human and AI jump launch velocities
+
+Amiga `handle_user_input` configures standing or running velocity at 0x10bc8/0x10bea. The jump branch (0x10c6c–0x10c92) replaces the animation without changing the velocity-table pointer. Human moving jumps therefore launch at running levels 5/6/7, with strict speed thresholds 140 and 200. AI jumps continue using levels 4/5/6/7 with thresholds 140, 170 and 200. Both simulations now capture horizontal speed at launch rather than recalculating it from current stats and possession every airborne tick. Stationary jumps remain zero-speed.
+
+Simulation tests cover both sides of the human speed thresholds, continued direction despite opposite input, and retained launch velocity after a stat change. Existing AI action tests and movement-table tests remain green. Exact action timing and visuals under midair stat changes still need comparison; this entry establishes launch velocity only.

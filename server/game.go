@@ -20,6 +20,7 @@ type Player struct {
 	throwMode                   int
 	jumping                     bool
 	stationaryJump              bool
+	jumpSpeed                   float64
 	aiWait, aiX, aiZ            float64
 	aiTarget                    bool
 	keeperBlock                 bool
@@ -410,6 +411,10 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 						p.tackleResolved = false
 						p.jumping = p.Action == 2
 						p.stationaryJump = p.Action == 2 && nearby.x == 0 && nearby.z == 0
+						p.jumpSpeed = 0
+						if p.Action == 2 {
+							p.jumpSpeed = movementSpeed(p, false, false)
+						}
 						if p.Action == 1 && nearby.x == 0 && nearby.z == 0 {
 							p.FX, p.FZ = s.direction(t), 0
 						}
@@ -513,9 +518,16 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		}
 		if pressed && b.Owner != i && p.Cooldown <= 0 && p.ActionTime <= 0 {
 			if canJumpAtBall(p, b, catchDistances[i], inMultiplier) && !u.Tackle {
+				runningSpeed := movementSpeed(p, false, false)
 				p.Action = 2
 				p.jumping = true
 				p.stationaryJump = dx == 0 && dz == 0
+				p.jumpSpeed = 0
+				if human {
+					p.jumpSpeed = runningSpeed
+				} else {
+					p.jumpSpeed = movementSpeed(p, false, false)
+				}
 				p.ActionTime = actionDuration(2, p.Stats[3])
 				p.Cooldown = p.ActionTime
 				s.event(2, i, -1, p.X, p.Z, 0)

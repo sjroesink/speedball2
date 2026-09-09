@@ -470,6 +470,8 @@ export function step(
             p.tackleResolved = false;
             p.jumping = p.action === 2;
             p.stationaryJump = p.action === 2 && !nearby.x && !nearby.z;
+            p.jumpSpeed = 0;
+            if (p.action === 2) p.jumpSpeed = movementSpeed(p, false);
             if (p.action === 1 && !nearby.x && !nearby.z) {
               p.fx = d;
               p.fz = 0;
@@ -576,9 +578,12 @@ export function step(
     }
     if (pressed && b.owner !== i && p.cooldown <= 0 && p.actionTime <= 0) {
       if (canJumpAtBall(p, b, catchDistances[i], inMultiplier) && !u.tackle) {
+        const runningSpeed = movementSpeed(p, false);
         p.action = 2;
         p.jumping = true;
         p.stationaryJump = !dx && !dz;
+        p.jumpSpeed = 0;
+        p.jumpSpeed = human ? runningSpeed : movementSpeed(p, false);
         p.actionTime = actionDuration(2, p.stats[3]);
         p.cooldown = p.actionTime;
         event(s, 2, i, -1, p.x, p.z, 0);
