@@ -1550,3 +1550,23 @@ collision, scoring, camera target and replicated ball coordinates retain the
 simulation's carried offset. Exact original per-animation collision offsets
 are still a separate fidelity requirement, and live latency testing of the
 visual transition remains pending.
+
+
+### Live delayed-receiver throw playthrough (2026-09-09)
+
+`tools/network-playtest.html` now supports throw inputs, a 160 ms scheduled
+receive delay on client 2 and viewing that client's renderer. The reader
+continues consuming datagrams while delivery is delayed; changing timing
+options is disabled after start, and Stop cancels pending deliveries. This
+is local receive-delay simulation over real WebTransport, not measured WAN
+latency or QUIC congestion.
+
+In room 3S5E6P, client 1 reached tick 954 and client 2 tick 950. Both observed
+11 throws, catches, interceptions and a goal. There were 949 paired snapshot
+comparisons, zero state mismatches and zero missing shared events. The renderer
+observed 10 held-to-loose throw transitions and measured zero held-grip error.
+The largest first-frame release displacement was 0.521 world units. This is
+an observation, not a smoothness acceptance threshold: frame duration and
+normal ball motion also contribute. One throw did not produce a sampled
+held-to-loose rendering transition. Long outages, variable delay and subjective
+release smoothness still need coverage. Both sessions were stopped afterward.

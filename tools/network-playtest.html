@@ -1,8 +1,15 @@
-<!doctype html><html><head><style>body{margin:0;background:#111;color:white;font:16px sans-serif}#arena{height:100vh}nav{position:fixed;z-index:5;top:8px;left:8px;background:#101824;padding:12px}button{padding:10px}output{display:block;max-width:650px}</style></head><body><nav><button id="start">Start paired clients</button><button id="stop">Stop</button><label><input id="loss" type="checkbox"> Drop five of every 25 snapshots on client 2</label><output id="status">Ready</output></nav><div id="arena"></div><script type="module">
+<!doctype html><html><head><style>body{margin:0;background:#111;color:white;font:16px sans-serif}#arena{height:100vh}nav{position:fixed;z-index:5;top:8px;left:8px;background:#101824;padding:12px}button{padding:10px}output{display:block;max-width:650px}</style></head><body><nav><button id="start">Start paired clients</button><button id="stop">Stop</button><label><input id="loss" type="checkbox"> Drop five of every 25 snapshots on client 2</label><label><input id="throws" type="checkbox"> Throw while carrying</label><label><input id="delay" type="checkbox"> Delay client 2 snapshots by 160 ms</label><label><input id="view2" type="checkbox"> View client 2</label><output id="status">Ready</output></nav><div id="arena"></div><script type="module">
+import {Vector3} from 'three';
 import {decodeSnapshot} from '/src/wire.js';import {ArenaRenderer} from '/src/renderer.js';
 const renderer=new ArenaRenderer(document.querySelector('#arena'));await renderer.load();renderer.setFollow(true);renderer.resize();
-const clients=[],status=document.querySelector('#status');let last=performance.now(),comparisons=0,mismatches=0;const paired=new Map();
-function draw(now){if(clients[0]?.state)renderer.draw(clients[0].state,Math.min(.05,(now-last)/1000),0);last=now;requestAnimationFrame(draw)}requestAnimationFrame(draw);
+const clients=[],status=document.querySelector('#status');let last=performance.now(),comparisons=0,mismatches=0;const paired=new Map();let previousOwner=-1,releaseFrames=0,maxReleaseStep=0,maxGripError=0;const before=new Vector3(),gripPoint=new Vector3();
+function draw(now){const c=clients[document.querySelector("#view2").checked?1:0];if(c?.state){
+ const b=c.state.ball;before.copy(renderer.ball.position);
+ renderer.draw(c.state,Math.min(.05,(now-last)/1000),c.team);
+ if(previousOwner>=0&&b.owner<0&&c.state.players[previousOwner].action===3){releaseFrames++;maxReleaseStep=Math.max(maxReleaseStep,before.distanceTo(renderer.ball.position))}
+ if(b.owner>=0){const grip=renderer.players[b.owner].grip;if(grip){grip.getWorldPosition(gripPoint);maxGripError=Math.max(maxGripError,gripPoint.distanceTo(renderer.ball.position))}}
+ previousOwner=b.owner;
+}last=now;requestAnimationFrame(draw)}requestAnimationFrame(draw);
 function compare(c,s){
  const tick=s.tick,record=paired.get(tick)||[];record[clients.indexOf(c)]=JSON.stringify(s);paired.set(tick,record);
  if(record[0]&&record[1]){comparisons++;if(record[0]!==record[1])mismatches++;paired.delete(tick)}
@@ -10,11 +17,27 @@ function compare(c,s){
 }
 function report(){
  let missing=0;if(clients.length===2){const upto=Math.min(clients[0].last,clients[1].last);for(let id=1;id<=upto;id++)if(!clients[0].ids.has(id)||!clients[1].ids.has(id))missing++}
- status.textContent=`Compared snapshots ${comparisons}, state mismatches ${mismatches}, missing shared events ${missing}. `+clients.map((c,i)=>`Client ${i+1}: room ${c.room||'?'} tick ${c.state?.tick||0}, medical phases ${[...c.phases]}, injuries ${c.injuries}, replacements ${c.replacements}, minimum energy ${c.low}, dropped ${c.dropped}, events ${[...c.kinds]}`).join(' | ')}
+ status.textContent=`Rendered releases ${releaseFrames}, largest release frame step ${maxReleaseStep.toFixed(3)} world units, held grip error ${maxGripError.toFixed(6)}. Compared snapshots ${comparisons}, state mismatches ${mismatches}, missing shared events ${missing}. `+clients.map((c,i)=>`Client ${i+1}: room ${c.room||'?'} tick ${c.state?.tick||0}, medical phases ${[...c.phases]}, throws ${c.throws}, injuries ${c.injuries}, replacements ${c.replacements}, minimum energy ${c.low}, dropped ${c.dropped}, events ${[...c.kinds]}`).join(' | ')}
 async function connect(room){const cfg=await(await fetch('/connection.json')).json(),url=new URL(cfg.url);url.searchParams.set('room',room);url.searchParams.set('name','Network test '+(clients.length+1));const session=new WebTransport(url,cfg.hash?{serverCertificateHashes:[{algorithm:'sha-256',value:Uint8Array.from(cfg.hash)}]}:{});session.closed.catch(()=>{});await session.ready;
-const c={session,phases:new Set(),kinds:new Set(),injuries:0,replacements:0,low:100,last:0,seq:0,received:0,dropped:0,ids:new Set()};clients.push(c);const writer=session.datagrams.writable.getWriter(),reader=session.datagrams.readable.getReader();let ready;const first=new Promise(r=>ready=r);
-(async()=>{try{for(;;){const{value,done}=await reader.read();if(done)break;c.received++;if(clients.indexOf(c)===1&&document.querySelector("#loss").checked&&c.received%25<5){c.dropped++;continue}const m=decodeSnapshot(value);c.room=m.room;c.state=m.state;ready(c.room);const s=c.state;compare(c,s);if(s.medical)c.phases.add(s.medical.phase);for(const e of s.events){if(e.id<=c.last)continue;c.last=e.id;c.ids.add(e.id);c.kinds.add(e.kind);if(e.kind===14)c.injuries++;if(e.kind===15)c.replacements++}c.low=Math.min(c.low,...s.players.map(p=>p.health));report();const p=s.players[s.controlled[m.team]],sign=v=>Math.abs(v)<.05?0:Math.sign(v);await writer.write(new TextEncoder().encode(JSON.stringify({seq:c.seq++,x:sign(s.ball.x-p.x),z:sign(s.ball.z-p.z),tackle:s.tick%18<5,shoot:false,lob:false})));}}
-catch(e){status.textContent+=' ERROR '+e.message}})();return first;}
-document.querySelector('#start').onclick=async()=>{try{document.querySelector('#start').disabled=true;await connect(await connect(''))}catch(e){status.textContent=e.message}};
-document.querySelector('#stop').onclick=()=>{for(const c of clients)c.session.close();status.textContent+=' STOPPED'};
+const c={session,phases:new Set(),kinds:new Set(),throws:0,injuries:0,replacements:0,low:100,last:0,seq:0,received:0,dropped:0,ids:new Set()};clients.push(c);const writer=session.datagrams.writable.getWriter(),reader=session.datagrams.readable.getReader();let ready;const first=new Promise(r=>ready=r);
+const pending=new Set();c.pending=pending;
+async function receive(value){
+ if(c.stopped)return;
+ const m=decodeSnapshot(value);c.room=m.room;c.team=m.team;c.state=m.state;ready(c.room);
+ const s=c.state;compare(c,s);if(s.medical)c.phases.add(s.medical.phase);
+ for(const e of s.events){if(e.id<=c.last)continue;c.last=e.id;c.ids.add(e.id);c.kinds.add(e.kind);if(e.kind===3)c.throws++;if(e.kind===14)c.injuries++;if(e.kind===15)c.replacements++}
+ c.low=Math.min(c.low,...s.players.map(p=>p.health));report();
+ const p=s.players[s.controlled[m.team]],sign=v=>Math.abs(v)<.05?0:Math.sign(v),throwing=document.querySelector('#throws').checked;
+ let dx=s.ball.x-p.x,dz=s.ball.z-p.z;
+ if(throwing&&s.ball.owner===s.controlled[m.team]){dx=(m.team===0?1:-1)*(s.period===2?-1:1)*20;dz=-p.z}
+ await writer.write(new TextEncoder().encode(JSON.stringify({seq:c.seq++,x:sign(dx),z:sign(dz),tackle:throwing?s.tick%53===0:s.tick%18<5,shoot:throwing&&s.tick%37<8,lob:throwing&&s.tick%97<7})));
+}
+(async()=>{try{for(;;){const{value,done}=await reader.read();if(done)break;c.received++;
+ if(clients.indexOf(c)===1&&document.querySelector('#loss').checked&&c.received%25<5){c.dropped++;continue}
+ if(clients.indexOf(c)===1&&document.querySelector('#delay').checked){
+  const timer=setTimeout(()=>{pending.delete(timer);receive(value).catch(e=>{if(!c.stopped)status.textContent+=' ERROR '+e.message})},160);pending.add(timer);
+ }else await receive(value);
+}}catch(e){if(!c.stopped)status.textContent+=' ERROR '+e.message}})();return first;}
+document.querySelector('#start').onclick=async()=>{try{document.querySelector('#start').disabled=true;for(const id of ['delay','loss','throws'])document.querySelector('#'+id).disabled=true;await connect(await connect(''))}catch(e){status.textContent=e.message}};
+document.querySelector('#stop').onclick=()=>{for(const c of clients){c.stopped=true;for(const timer of c.pending)clearTimeout(timer);c.session.close();}status.textContent+=' STOPPED'};
 </script></body></html>
