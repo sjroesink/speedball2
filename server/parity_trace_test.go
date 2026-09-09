@@ -53,6 +53,11 @@ func TestSimulationParityTrace(t *testing.T) {
 				for _, v := range p.Stats {
 					row = append(row, float64(v))
 				}
+				poseValid := 0.
+				if p.physicalPoseValid {
+					poseValid = 1
+				}
+				row = append(row, poseValid, float64(p.physicalSprite), float64(p.physicalFrame), p.poseCursor, float64(p.poseKind), p.poseRemaining, p.poseDuration, p.ActionTime)
 			}
 			row = append(row, float64(s.Credits[0]), float64(s.Credits[1]), float64(s.Effect.Kind), s.Effect.Time)
 			rows = append(rows, row)

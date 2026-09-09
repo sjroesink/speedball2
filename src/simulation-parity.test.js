@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createMatch,step } from "./game.js";
 test("browser and Go stay aligned through seeded AI and scripted-input matches", () => {
- const r=spawnSync("go",["test","./server","-run","^TestSimulationParityTrace$","-v"],{encoding:"utf8",maxBuffer:8*1024*1024});
+ const r=spawnSync("go",["test","./server","-run","^TestSimulationParityTrace$","-v"],{encoding:"utf8",maxBuffer:32*1024*1024});
  assert.equal(r.status,0,r.stdout+r.stderr);
  const traces=JSON.parse(r.stdout.match(/TRACE:(.+)/)[1]);
  for(let scenario=0;scenario<6;scenario++){
@@ -19,7 +19,9 @@ test("browser and Go stay aligned through seeded AI and scripted-input matches",
   });
   step(s,.04,inputs[0],[scenario>0,scenario>1],inputs[1]);for(const e of s.events??[])seen.add(e.kind);if(tick%25)continue;
   const row=[tick,s.time,s.period,...s.score,...s.rng,s.ball.x,s.ball.z,s.ball.h,s.ball.owner,s.restartPhase,s.ball.vx,s.ball.vz,s.ball.flightKind??0,s.ball.flightIndex??0,s.ball.speedTimer??0];
-  for(const p of s.players)row.push(p.x,p.z,p.health,p.action,p.fx,p.fz,p.gear,...p.stats);
+  for(const p of s.players)row.push(p.x,p.z,p.health,p.action,p.fx,p.fz,p.gear,...p.stats,
+    p.physicalPoseValid?1:0,p.physicalSprite??0,p.physicalFrame??0,p.poseCursor??0,
+    p.poseKind??0,p.poseRemaining??0,p.poseDuration??0,p.actionTime);
   row.push(...s.credits,s.effect.kind,s.effect.time);
   const expected=rows[sample++];
   // Inactive flight indices and held-ball slowdown timers are not consumed.

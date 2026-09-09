@@ -2762,3 +2762,22 @@ Browser verification focused the volume slider, changed it with Home and
 pressed Escape: the menu closed. Reopening showed Resume focused and the
 selected zero volume retained. All four existing keyboard/input-reset tests
 and the production build pass. This change affects menu controls only.
+
+### Integrated physical-phase and rebuilt-gait verification
+
+The Go server was restarted from current gameplay code at 13:37. Room 9DPKZC
+ran with 160 ms delay and five dropped snapshots per 25 on client two. At stop,
+ticks were 1537/1533: 1223 shared snapshots matched, no shared events were
+missing, and 309 snapshots were dropped. Both clients saw 18 releases and
+19 windups/cue dispatches; the final windup had not yet released. Power-ups
+4/5 replicated. Minimum player energy reached 72; medical phases were absent.
+The displayed client measured 15 releases, maximum frame step 1.083 world
+units, zero grip error and zero recovery phase error over 14 seeks. Rebuilt
+Blender running/falling/carrying poses were inspected in the active renderer.
+
+The six-scenario simulation trace now also compares physical pose validity,
+displayed sprite, frame index, retained cursor, pose kind, previous remaining
+time, captured duration and current action time for every player. All six
+10,000-tick scenarios pass this expanded comparison. Previously they compared
+resulting physical positions/statistics but not those internal pose fields.
+This strengthens JS/Go parity evidence, not proof of full Amiga parity.
