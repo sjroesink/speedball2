@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Speedball render check</title>
+<style>body{margin:0;background:#090f17;color:#e4ece8;font:14px system-ui}header{padding:16px;display:flex;gap:20px;align-items:center}button{padding:10px}#stage{height:70vh}pre{white-space:pre-wrap;padding:16px;margin:0}</style>
+<header><button id="start" disabled>Measure 300 frames</button><span>Full match renderer · 18 players · AI simulation · native display resolution</span></header>
+<div id="stage"></div><pre role="status" id="results">Loading Blender assets…</pre>
+<script type="module">
+import {ArenaRenderer} from '/src/renderer.js';
+import {createMatch,step,simulationStep} from '/src/game.js';
+const view=new ArenaRenderer(document.querySelector('#stage'));
+const button=document.querySelector('#start'),results=document.querySelector('#results');
+await view.load();view.setFollow(true);view.resize();
+let state=createMatch({training:true});view.draw(state,1/60,0);
+button.disabled=false;results.textContent='Ready. Keep this tab visible during measurement. CPU timings exclude GPU completion; frame intervals include display scheduling.';
+button.onclick=()=>{
+ button.disabled=true;state=createMatch({training:true});
+ let last=0,frames=0,accumulator=0;const cpu=[],intervals=[],calls=[],triangles=[];
+ function frame(now){
+  if(document.visibilityState!=='visible'){results.textContent='Cancelled: tab became hidden. Keep it visible and retry.';button.disabled=false;return}
+  const elapsed=last?(now-last)/1000:1/60;last=now;accumulator+=Math.min(elapsed,.1);
+  while(accumulator>=simulationStep){step(state,simulationStep,{},[false,false]);accumulator-=simulationStep}
+  const start=performance.now();view.draw(state,Math.min(elapsed,.1),0);const duration=performance.now()-start;
+  if(frames++>=60){cpu.push(duration);intervals.push(elapsed*1000);calls.push(view.renderer.info.render.calls);triangles.push(view.renderer.info.render.triangles)}
+  results.textContent=`Warming up / measuring: ${Math.min(cpu.length,300)} / 300 frames`;
+  if(cpu.length<300){requestAnimationFrame(frame);return}
+  const percentile=(list,p)=>[...list].sort((a,b)=>a-b)[Math.floor((list.length-1)*p)];
+  const canvas=view.renderer.domElement;
+  results.textContent=JSON.stringify({samples:cpu.length,canvasPixels:[canvas.width,canvas.height],devicePixelRatio,frameIntervalMs:{median:percentile(intervals,.5),p95:percentile(intervals,.95)},cpuDrawMs:{median:percentile(cpu,.5),p95:percentile(cpu,.95)},drawCalls:{median:percentile(calls,.5),max:Math.max(...calls)},triangles:{median:percentile(triangles,.5),max:Math.max(...triangles)},simulationTicks:state.tick,note:'Local browser sample; not a GPU benchmark or a guarantee for other devices.'},null,2);
+  button.disabled=false;
+ }
+ requestAnimationFrame(frame);
+};
+</script></html>

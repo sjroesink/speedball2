@@ -2085,3 +2085,21 @@ before and after. Cyan is 353,220 bytes; red is 353,256 bytes. This reduces
 potential draw submissions without simplifying geometry; no FPS improvement
 has been measured. Inspected standing/running in the browser. Thirteen
 animation tests, production build and diff checks pass.
+
+### Full renderer performance sample
+
+`tools/render-playtest.html` runs the production ArenaRenderer with an 18-player
+AI match, 60 warm-up frames and 300 measured frames. It reports actual canvas
+resolution, frame intervals, CPU draw time and renderer counters, and aborts
+when the tab becomes hidden. CPU time excludes GPU completion; browser frame
+intervals include display scheduling. This development page is not a production
+route.
+
+Local sample at 1280x504 physical pixels, DPR 1: median frame interval 32.7 ms,
+p95 33.2 ms; median CPU draw time 4.0 ms, p95 5.3 ms. Draw calls median 412/max
+520; triangles median 140,502/max 162,826. This does not prove a GPU bottleneck
+or 60 FPS support. It also is not a before/after benchmark of player batching.
+
+Arena inspection found 170 individually exported floor fasteners and 10 seams,
+with 323 total primitives. Static floor batching is the next concrete rendering
+optimization to investigate, preserving score-target nodes and geometry.
