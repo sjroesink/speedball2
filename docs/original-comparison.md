@@ -2215,3 +2215,23 @@ coverage after the changed tackle timing alters earlier scripted match paths.
 The local Go server was restarted with the changes at 12:15. These timings still
 need live visual review under delayed snapshots. The original stash remains as
 a backup and must not be blindly reapplied. Changes are not pushed yet.
+
+
+### Live delayed fall recovery probe
+
+Room WZ3CA8 ran two real WebTransport clients while rendering client 2. That
+client received snapshots with 160 ms delay and dropped five of every 25.
+At stop, client ticks were 805/800, with 640 identical paired snapshots,
+zero state mismatches, zero missing shared events and 164 dropped snapshots.
+The renderer recorded 26 recovery phase seeks, including one extension of
+remaining recovery time. Maximum normalized clip phase error at those seeks
+was 0.000000 at the displayed six-decimal precision. The diagnostic compares
+the actual Blender Hit action time after mixer advancement against the expected
+fall phase, rather than only checking decoded action timers.
+
+This closes the pending local delayed-snapshot recovery timing check above.
+The final screenshot confirms the court rendered, but a still image alone does
+not establish animation quality. This short local probe does not establish WAN,
+reconnection, injury substitution or full-match coverage. Both clients were
+stopped. The test instrumentation is retained in tools/network-playtest.html;
+these changes remain local under the hourly push preference.

@@ -2,10 +2,16 @@
 import {Vector3} from 'three';
 import {decodeSnapshot} from '/src/wire.js';import {ArenaRenderer} from '/src/renderer.js';
 const renderer=new ArenaRenderer(document.querySelector('#arena'));await renderer.load();renderer.setFollow(true);renderer.resize();
-const clients=[],status=document.querySelector('#status');let last=performance.now(),comparisons=0,mismatches=0;const paired=new Map();let previousOwner=-1,releaseFrames=0,maxReleaseStep=0,maxGripError=0;const before=new Vector3(),gripPoint=new Vector3();
+const clients=[],status=document.querySelector('#status');let last=performance.now(),comparisons=0,mismatches=0;const paired=new Map();let previousOwner=-1,releaseFrames=0,maxReleaseStep=0,maxGripError=0;const before=new Vector3(),gripPoint=new Vector3();let recoverySeeks=0,recoveryExtensions=0,maxRecoveryPhaseError=0;
 function draw(now){const c=clients[document.querySelector("#view2").checked?1:0];if(c?.state){
  const b=c.state.ball;before.copy(renderer.ball.position);
- renderer.draw(c.state,Math.min(.05,(now-last)/1000),c.team);
+ const frameDt=Math.min(.05,(now-last)/1000);
+ const seeks=c.state.players.map((p,i)=>({p,i,previous:renderer.players[i].remaining,active:renderer.players[i].active})).filter(({p,previous,active})=>p.action===4&&active===4&&Number.isFinite(previous)&&Math.abs(previous-p.actionTime)>.12);
+ renderer.draw(c.state,frameDt,c.team);
+ for(const {p,i,previous} of seeks){
+  const hit=Object.entries(renderer.players[i].clips).find(([name])=>name.includes('Hit'))?.[1];
+  if(hit){recoverySeeks++;if(p.actionTime>previous)recoveryExtensions++;const expected=Math.min(1,Math.max(0,(1.4-p.actionTime+frameDt)/1.4));maxRecoveryPhaseError=Math.max(maxRecoveryPhaseError,Math.abs(hit.time/hit.getClip().duration-expected))}
+ }
  if(previousOwner>=0&&b.owner<0&&c.state.players[previousOwner].action===3){releaseFrames++;maxReleaseStep=Math.max(maxReleaseStep,before.distanceTo(renderer.ball.position))}
  if(b.owner>=0){const grip=renderer.players[b.owner].grip;if(grip){grip.getWorldPosition(gripPoint);maxGripError=Math.max(maxGripError,gripPoint.distanceTo(renderer.ball.position))}}
  previousOwner=b.owner;
@@ -17,7 +23,7 @@ function compare(c,s){
 }
 function report(){
  let missing=0;if(clients.length===2){const upto=Math.min(clients[0].last,clients[1].last);for(let id=1;id<=upto;id++)if(!clients[0].ids.has(id)||!clients[1].ids.has(id))missing++}
- status.textContent=`Rendered releases ${releaseFrames}, largest release frame step ${maxReleaseStep.toFixed(3)} world units, held grip error ${maxGripError.toFixed(6)}. Compared snapshots ${comparisons}, state mismatches ${mismatches}, missing shared events ${missing}. `+clients.map((c,i)=>`Client ${i+1}: room ${c.room||'?'} tick ${c.state?.tick||0}, medical phases ${[...c.phases]}, throws ${c.throws}, injuries ${c.injuries}, replacements ${c.replacements}, minimum energy ${c.low}, credits ${c.state?.credits}, collected items ${[...c.items]}, equipped ${c.state?.players.filter(p=>p.gear).map(p=>p.gear)}, route ${c.route||"starting"}, dropped ${c.dropped}, events ${[...c.kinds]}`).join(' | ')}
+ status.textContent=`Recovery seeks ${recoverySeeks}, extensions ${recoveryExtensions}, max normalized phase error ${maxRecoveryPhaseError.toFixed(6)}. Rendered releases ${releaseFrames}, largest release frame step ${maxReleaseStep.toFixed(3)} world units, held grip error ${maxGripError.toFixed(6)}. Compared snapshots ${comparisons}, state mismatches ${mismatches}, missing shared events ${missing}. `+clients.map((c,i)=>`Client ${i+1}: room ${c.room||'?'} tick ${c.state?.tick||0}, medical phases ${[...c.phases]}, throws ${c.throws}, injuries ${c.injuries}, replacements ${c.replacements}, minimum energy ${c.low}, credits ${c.state?.credits}, collected items ${[...c.items]}, equipped ${c.state?.players.filter(p=>p.gear).map(p=>p.gear)}, route ${c.route||"starting"}, dropped ${c.dropped}, events ${[...c.kinds]}`).join(' | ')}
 async function connect(room){const cfg=await(await fetch('/connection.json')).json(),url=new URL(cfg.url);url.searchParams.set('room',room);url.searchParams.set('name','Network test '+(clients.length+1));const session=new WebTransport(url,cfg.hash?{serverCertificateHashes:[{algorithm:'sha-256',value:Uint8Array.from(cfg.hash)}]}:{});session.closed.catch(()=>{});await session.ready;
 const c={session,phases:new Set(),items:new Set(),kinds:new Set(),throws:0,injuries:0,replacements:0,low:100,last:0,seq:0,received:0,dropped:0,ids:new Set()};clients.push(c);const writer=session.datagrams.writable.getWriter(),reader=session.datagrams.readable.getReader();let ready;const first=new Promise(r=>ready=r);
 const pending=new Set();c.pending=pending;
