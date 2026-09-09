@@ -98,3 +98,23 @@ when physical sprites are updated, or selection/contact call ordering. The
 initial stack-register naming issue and undefined upper-word warnings were
 resolved before generating the retained measurements. No production change
 was necessary.
+
+## Tackle threshold
+
+`CompareOriginalTackle.java` executes get_tackle_difficulty from 0x105ba to
+its RTS at 0x10618. A4/A5 point to synthetic attacker/victim records in emulator
+memory. Inputs set attack, defense, relative facing and the slide/jump/keeper
+flags. The original modifier table and byte arithmetic run unchanged. The
+comparison uses D4's low byte, as the tackle success decision does.
+
+```text
+node tools/compare-original-tackle.mjs docs/original-tackle.csv
+```
+
+The 4,096-case grid uses attributes 100/140/170/200/204/205/249/250, all eight
+relative directions and all combinations of the three flags. Defense 204/205
+covers the keeper-bonus saturation boundary. Each run is bounded to 64 original
+instructions; the comparator verifies the full input ordering. Result: zero
+mismatches against JS tackleThreshold. Original numeric measurements are in
+original-tackle.csv. No production change was needed. This does not cover RNG
+sequence, victim eligibility/order, collision distances or the damage routine.
