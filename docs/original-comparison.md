@@ -1868,3 +1868,24 @@ asset animation tests pass, including both teams' throwing hand positions and
 both teams in a full-screen training match at 3456x1408. This is an initial
 silhouette/material refinement; the models remain stylized and the broader
 arena, motion polish and final visual acceptance remain outstanding.
+
+### Court readability and shadow cleanup
+
+The diagonal pattern covering the floor in earlier playtest screenshots was
+shadow acne, not an authored metal texture. A small directional-light normal
+bias and depth bias remove the self-shadow striping. Checked the shadow change
+with the old court first, then inspected the revised arena in fullscreen.
+Player contact shadows remain visible in the checked view.
+
+The Blender court now uses rougher, slightly darker blue-gray steel, thinner
+panel seams and flat octagonal steel fasteners in place of glossy spherical
+rivets. The ball and raised score domes retain their brighter rounded forms.
+The native arena and GLB were rebuilt; exported contact alignment remains
+end=21.155556, goal half-width=1.866667 and side=11.2 world units.
+The arena GLB decreased from 2,334,856 to 1,479,208 bytes, primarily by replacing
+170 high-subdivision decorative spheres with simple flat fasteners.
+
+Production build and diff checks pass. Visually inspected the final scene in a
+3456x1408 training match, including the airborne ball/shadow, players, floor
+fasteners and a score dome. Surface wear, stadium dressing and wider lighting
+coverage still need further art work; this is not final visual acceptance.

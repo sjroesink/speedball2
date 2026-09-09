@@ -40,6 +40,10 @@ export class ArenaRenderer {
     l.position.set(-10, 30, 5);
     l.castShadow = true;
     l.shadow.mapSize.set(2048, 2048);
+    // Offset shadow lookups slightly above the surface to prevent self-shadow
+    // striping on the broad metal floor and armor plates.
+    l.shadow.normalBias = 0.025;
+    l.shadow.bias = -0.0001;
     Object.assign(l.shadow.camera, {
       left: -27,
       right: 27,

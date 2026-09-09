@@ -11,7 +11,10 @@ def mat(name,color,metal=0,glow=0):
  if glow: p.inputs['Emission Color'].default_value=(*color,1); p.inputs['Emission Strength'].default_value=glow
  return m
 steel=mat('Graphite titanium',(.075,.105,.14),.8)
-floor=mat('Arena brushed steel',(.24,.35,.39),.35)
+floor=mat('Arena brushed steel',(.20,.28,.30),.45)
+floor.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value=.65
+fastener=mat('Recessed steel fasteners',(.19,.23,.24),.60)
+fastener.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value=.60
 line=mat('Pitch markings',(.38,.56,.56),.3)
 cyan=mat('Cobalt enamel',(.035,.20,.58),.45,.08)
 orange=mat('Vermilion enamel',(.65,.065,.035),.45,.08)
@@ -170,12 +173,13 @@ if '--players-only' in sys.argv:
 # Blender XY ground maps to Three.js XZ. Pitch length along X.
 cube('Arena foundation',(0,0,-.42),(31,20,.8),steel,.3)
 cube('Playing surface',(0,0,0),(28,17,.12),floor)
-for x in [-10.5,-7,0,7,10.5]: cube('Floor panel seam',(x,0,.065),(.055,17,.012),steel,0)
-for y in [-6,-3,0,3,6]: cube('Floor panel seam',(0,y,.065),(28,.045,.012),steel,0)
+for x in [-10.5,-7,0,7,10.5]: cube('Floor panel seam',(x,0,.065),(.020,17,.012),steel,0)
+for y in [-6,-3,0,3,6]: cube('Floor panel seam',(0,y,.065),(28,.020,.012),steel,0)
 for x in [-10.5,-7,0,7,10.5]:
  for y in range(-8,9):
   for side in [-1,1]:
-   sphere('Floor rivet',(x+side*.13,y,.073),.045,armor)
+   bpy.ops.mesh.primitive_cylinder_add(vertices=8,radius=.031,depth=.012,location=(x+side*.10,y,.074))
+   rivet=bpy.context.object;rivet.name='Flush floor fastener';rivet.data.materials.append(fastener)
 for x,label in [(-7,'25'),(0,'50'),(7,'25')]:
  for y in [-6,6]:
   bpy.ops.object.text_add(location=(x,y,.084));o=bpy.context.object;o.name='Court yard marking';o.data.body=label;o.data.align_x='CENTER';o.data.align_y='CENTER';o.data.size=1.05;o.rotation_euler.z=-math.pi/2;o.data.materials.append(mark)
