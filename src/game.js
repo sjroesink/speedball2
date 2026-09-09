@@ -256,13 +256,14 @@ export function throwBall(s, i, lob, input = {}) {
     lock: 0.18,
     after: 0,
     electric: 0,
-    charged: false,
+    charged: !!b.charged,
     electricBudget:
       1 +
       ((p.team === 0 && s.multiplier > 0) || (p.team === 1 && s.multiplier < 0)
         ? Math.abs(s.multiplier)
         : 0),
   });
+  b.electric = b.charged ? b.electricBudget : 0;
   steerRelease(b, input);
   setBallSpeed(b, p.stats[4]);
   startFlight(b, lob);

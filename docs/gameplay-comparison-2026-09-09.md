@@ -182,3 +182,19 @@ Follow-up required: the older documented claim that throwing always clears the
 charged flag is not substantiated by throwing_action_fn 0x107be..0x108de or WIP
 sub_F078. Entity.UpdateBallVelocity clears it for a stationary loose ball.
 Audit the complete flight/held update ordering before changing that lifecycle.
+
+### Corrected electric-ball lifecycle
+
+The previous 'throws reset charge' claim is superseded. Amiga throwing_action_fn
+0x107be..0x108de and WIP Player.sub_F078 retain the charged flag while assigning
+a fresh hit allowance from the thrower's multiplier. JS/Go now retain that flag
+and activate the new allowance when charged. A regression carries a depleted
+charged ball through a friendly catch, rethrow and another successful zap.
+The electro-bounce test now expects the refreshed throw allowance, while repeat
+wall contacts still cannot replenish it themselves.
+
+step_slow_ball 0xd89a..0xd8c4 clears the charged flag when a loose ball is already
+stationary at the start of the pass, with held-ball and multiplier-path guards.
+Both simulations now apply this rule. The allowance is preserved independently
+of the flag. Holding a stationary ball does not clear it. Verification: 272 JS
+tests pass, including long JS/Go parity, plus Go tests, vet and production build.

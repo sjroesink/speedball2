@@ -1,7 +1,8 @@
+import {slowBallFrame} from "./ball.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { initial, catchBall, throwBall } from "./game.js";
-test("depleted electroball remains charged, friendly catch retains it, throw clears it", () => {
+test("depleted electroball remains charged, friendly catch retains it, throw preserves it with a fresh hit budget", () => {
   const s = initial();
   s.controlled[1] = 16;
   Object.assign(s.players[16], { x: 0, z: 0 });
@@ -26,8 +27,15 @@ test("depleted electroball remains charged, friendly catch retains it, throw cle
   assert.equal(s.ball.owner, 7);
   assert.equal(s.ball.charged, true);
   throwBall(s, 7, false);
-  assert.equal(s.ball.charged, false);
+  assert.equal(s.ball.charged, true);
+  assert.equal(s.ball.electric, 1);
   assert.equal(s.ball.electricBudget, 1);
+  s.players[16].stun = 0;
+  s.players[16].action = 0;
+  catchBall(s, 16);
+  assert.equal(s.ball.owner, -1);
+  assert.equal(s.players[16].action, 4, 'rethrow can deliver another electric hit');
+  assert.equal(s.ball.electric, 0);
 });
 test("opposing moving catch clears exhausted charge; stationary catch preserves it", () => {
   for (const vx of [0, 1]) {
@@ -89,4 +97,13 @@ test("electroball knockdown follows nominal direction at three terrain units", (
     assert.equal(s.ball.electric, 0);
     assert.equal(s.ball.owner, -1);
   }
+});
+
+test('stationary loose ball loses charge on the next slowdown pass only',()=>{
+ for(const owner of [-1,7]) for(const multiplierPath of [0,1]) {
+  const b={owner,multiplierPath,vx:0,vz:0,charged:true,electric:2,electricBudget:2};
+  slowBallFrame(b);
+  assert.equal(b.charged,owner>=0||!!multiplierPath);
+  assert.equal(b.electricBudget,2);
+ }
 });

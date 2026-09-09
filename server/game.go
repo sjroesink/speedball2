@@ -270,10 +270,13 @@ func (s *State) throw(i int, lob bool, release ...Input) {
 	}
 	fx, fz := eightWay(p.FX, p.FZ)
 	// throwing_action_fn preserves the current carried-ball position.
-	*b = Ball{X: b.X, Z: b.Z, H: 1, DirX: fx, DirZ: fz, VX: fx * speed, VZ: fz * speed, VH: vh, Owner: -1, LastTouch: i, Lock: .18, After: 0}
+	*b = Ball{X: b.X, Z: b.Z, Charged: b.Charged, H: 1, DirX: fx, DirZ: fz, VX: fx * speed, VZ: fz * speed, VH: vh, Owner: -1, LastTouch: i, Lock: .18, After: 0}
 	b.ElectricBudget = 1
 	if p.Team == 0 && s.Multiplier > 0 || p.Team == 1 && s.Multiplier < 0 {
 		b.ElectricBudget += int(math.Abs(float64(s.Multiplier)))
+	}
+	if b.Charged {
+		b.Electric = b.ElectricBudget
 	}
 	if len(release) > 0 {
 		steerRelease(b, release[0])

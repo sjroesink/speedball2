@@ -43,7 +43,7 @@ test("remaining electric hits are fixed at throw time and are not replenished by
   assert.equal(s.ball.electric, 1);
   throwBall(s, 7, false);
   assert.equal(s.ball.electricBudget, 3);
-  assert.equal(s.ball.electric, 0);
+  assert.equal(s.ball.electric, 3);
 });
 test("electro contact rejects high, carried and outside-rectangle balls", () => {
   for (const change of [

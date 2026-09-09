@@ -21,8 +21,14 @@ func TestElectricChargeLifecycle(t *testing.T) {
 		t.Fatal("friendly catch cleared charge")
 	}
 	s.throw(7, false)
-	if s.Ball.Charged || s.Ball.ElectricBudget != 1 {
+	if !s.Ball.Charged || s.Ball.ElectricBudget != 1 || s.Ball.Electric != 1 {
 		t.Fatal("throw did not reset electric state")
+	}
+	s.Players[16].Stun = 0
+	s.Players[16].Action = 0
+	s.catchBall()
+	if s.Ball.Owner != -1 || s.Players[16].Action != 4 || s.Ball.Electric != 0 {
+		t.Fatal("rethrow did not deliver electric hit", s.Ball)
 	}
 	for _, vx := range []float64{0, 1} {
 		s = initial()
@@ -58,6 +64,18 @@ func TestElectroballFallDirection(t *testing.T) {
 		}
 		if s.Ball.Electric != 0 || s.Ball.Owner != -1 {
 			t.Fatal("charge consumption")
+		}
+	}
+}
+
+func TestStationaryChargeClearsOnlyWhenLoose(t *testing.T) {
+	for _, owner := range []int{-1, 7} {
+		for _, path := range []int{0, 1} {
+			b := Ball{Owner: owner, MultiplierPath: path, Charged: true, Electric: 2, ElectricBudget: 2}
+			slowBallFrame(&b)
+			if b.Charged != (owner >= 0 || path != 0) || b.ElectricBudget != 2 {
+				t.Fatal("stationary charge", owner, path, b)
+			}
 		}
 	}
 }

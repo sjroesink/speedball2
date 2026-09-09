@@ -9,7 +9,11 @@ func setBallSpeed(b *Ball, attribute int) {
 	b.SlowFraction = 0
 }
 func slowBallFrame(b *Ball) {
-	if b.Owner >= 0 || (b.VX == 0 && b.VZ == 0) {
+	if b.Owner >= 0 || b.MultiplierPath != 0 {
+		return
+	}
+	if b.VX == 0 && b.VZ == 0 {
+		b.Charged = false
 		return
 	}
 	terrainY := int(math.Round(576 - b.X/(22.4/576)))
