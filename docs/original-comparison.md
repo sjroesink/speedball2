@@ -2103,3 +2103,95 @@ or 60 FPS support. It also is not a before/after benchmark of player batching.
 Arena inspection found 170 individually exported floor fasteners and 10 seams,
 with 323 total primitives. Static floor batching is the next concrete rendering
 optimization to investigate, preserving score-target nodes and geometry.
+
+### Distinct field item silhouettes
+
+Coins are now round gold Blender meshes marked 100, powers use blue rounded
+capsules, and attribute upgrades use orange hexagonal badges. All 21 item
+identifiers retain their gameplay mapping. Pickup labels rotate to face the
+match camera. The builder supports --pickups-only for isolated asset iteration.
+
+The development pickup fixture displays native two-power/four-coin/one-upgrade
+slots with the production renderer. Verified readable labels in the browser
+and a real featureStep collection: 100 credits awarded, coin respawn wait 1.56
+seconds. Three pickup spawn tests, build and diff checks pass. Fixture item
+positions are deliberately arranged for inspection; live spawn rules are
+unchanged. Rewards/shop progression remains incomplete.
+
+User requested fewer pushes, roughly hourly. These changes are being bundled
+locally for the next push rather than published immediately.
+
+### Pickup reward feedback
+
+Pickup notifications now identify the collecting team and explicitly show
++100 CREDITS for coins or the named attribute upgrade. Pickup toasts remain
+visible for 1.4 seconds. The selected player's equipment line shows the current
+attribute value and its loss on a hit; without equipment it explains the three
+item color categories.
+
+Six feedback/event tests and build pass. Browser fixture collection through
+featureStep produced YOUR TEAM / SPEED UPGRADE and EQUIPMENT: SPEED 250 /
+LOST WHEN HIT. This verifies field equipment feedback; it does not implement
+a post-match shop or persistent rewards economy. Changes remain local for the
+user-requested roughly hourly push cadence.
+
+### Coin and equipment collection sounds
+
+Source collect_coin calls sound 0x15 at 0x1140c; collect_armour calls 0x21 at
+0x11580. The browser now distinguishes these event-11 targets as named coin
+and equipment cues, using newly synthesized tones. They retain court panning,
+event deduplication and pickup-level voice priority; match whistles keep higher
+priority. Other powerups retain their existing cue, including the separate Zap.
+
+Eleven audio tests and build pass. The browser OfflineAudioContext check passes
+all 38 cases, including the two new cues and cancellation checks. Coin peak
+0.0330/RMS 0.00174; equipment peak 0.0791/RMS 0.00435; both release all voices.
+This validates rendered signals and dispatch, not subjective full-match mixing.
+Changes remain local for the next bundled push.
+
+### Static floor batching and follow-up measurement
+
+Blender now joins 170 floor fasteners into one mesh and ten floor seams into
+one mesh. Arena primitives fall from 323 to 145 while triangles remain 70,812;
+GLB size falls from 3,960,812 to 3,845,360 bytes. Contact alignment is unchanged.
+
+A new visible 300-frame sample at the same 1280x504/DPR 1 reports median CPU
+draw 3.3 ms and p95 4.6 ms (previous sample 4.0/5.3), median draw calls 362/max
+445 (previous 412/520). Median frame interval remains 32.7 ms, p95 33.2 ms.
+Triangle submissions increased slightly (median 145,038/max 168,514), consistent
+with coarser culling of merged geometry. The AI matches are live samples rather
+than identical frame traces, so these are observations, not an isolated FPS
+gain claim. All 233 JavaScript tests and production build pass. Changes remain
+local with the field-item bundle.
+
+### Live WebTransport field-item probe
+
+The paired-client development runner now has a Collect field items mode and
+reports pickup kinds, team credits and equipped attributes. Directly chasing
+remote items caused automatic player selection to change the controlled player;
+the runner now acquires the ball before following its item route.
+
+Room 9BJ48A observed power kinds 4 and 5 on both clients. In the subsequent
+ball-first room UXXW6F, both clients reported credits [0,200] and coin events.
+At tick 1662, 1661 paired snapshots matched exactly, with no missing shared
+events. Both sessions were stopped. No equipment collection occurred in this
+probe, so live equipment pickup remains unverified despite the separate local
+fixture and wire-decoding tests. Wire/feedback tests and diff checks pass.
+Changes remain local for the next hourly bundle.
+
+### Online equipment confirmed, including delayed/dropped snapshots
+
+Route diagnostics showed the prior test opponent physically obstructing the
+carrier. In Collect field items mode, the non-carrier team now retreats from
+an opposing carrier instead of pursuing it. This is test-runner behavior only.
+
+Room 6BA76G reached tick 497 with item kinds 13,21,4,5 observed by both clients,
+equipment 21 active and credits [0,600]. At that observation, 496 paired
+snapshots matched and no shared events were missing. The session was stopped.
+
+A second room JAZUV3 dropped five of every 25 client-2 snapshots and delayed
+its remaining snapshots by 160 ms. At ticks 462/458, both clients showed credits
+[400,100], equipment 21 and collected kinds 13,21,5,4. There were 363 identical
+paired snapshots, zero mismatches, zero missing shared events and 94 dropped
+client-2 snapshots. This session was also stopped. This confirms live field
+item replication in these local probes, not WAN/reconnection reliability.

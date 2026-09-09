@@ -1,3 +1,4 @@
+import { pickupMessage, equipmentMessage } from './pickup-feedback.js';
 import { acceptKeyDown, clearControls } from "./keyboard.js";
 import { isOwnGoal } from "./events.js";
 import { ArenaAudio } from "./audio.js";
@@ -341,9 +342,7 @@ export async function start() {
               : "NO ACTIVE POWER-UP";
     $("healthStatus").textContent =
       `ENERGY ${Math.ceil(p.health)}% · RESERVES ${state.reserves[team]} · CREDITS ${state.credits[team]}`;
-    $("gearStatus").textContent = p.gear
-      ? `EQUIPMENT: ${powerNames[p.gear]}`
-      : "RUN OVER A PICKUP TO COLLECT IT";
+    $("gearStatus").textContent = equipmentMessage(p);
     if (state.event.id !== lastEvent) {
       const e = notificationEvent(
         state,
@@ -354,7 +353,7 @@ export async function start() {
       if (e) {
         const featureText =
           e.kind === 11
-            ? powerNames[e.target]
+            ? pickupMessage(e, team)
             : e.kind === 12
               ? "WARP-GATE"
               : e.kind === 13
@@ -385,7 +384,7 @@ export async function start() {
           eventPriority = notificationPriority(e.kind);
           $("eventToast").textContent = text;
           $("eventToast").classList.remove("hidden");
-          eventLife = e.kind === 6 ? 3 : e.kind === 7 ? 1.4 : 0.7;
+          eventLife = e.kind === 6 ? 3 : [7, 11].includes(e.kind) ? 1.4 : 0.7;
         }
       }
     }

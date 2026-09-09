@@ -327,6 +327,36 @@ def build_players():
 if '--players-only' in sys.argv:
  build_players()
  raise SystemExit
+def build_pickups():
+ # Category silhouettes and raised symbols are authored entirely in Blender.
+ labels=['ICE','REV','DOWN','UP','ALL','SLOW','BALL','PASS','LOCK','SAFE','HP','ZAP','100','AGR','ATT','DEF','SPD','THR','POW','STA','INT']
+ gold=mat('Coin gold',(.83,.46,.065),.8,.18)
+ for k,label in enumerate(labels,1):
+  before=set(bpy.context.scene.objects)
+  tint=mat('Pickup color '+str(k),(.035,.38,.75) if k<13 else (.80,.30,.035),.4,.35)
+  if k==13:
+   bpy.ops.mesh.primitive_cylinder_add(vertices=40,radius=.54,depth=.16,location=(0,0,.30))
+   coin=bpy.context.object;coin.name='Gold coin';coin.data.materials.append(gold)
+   bevel=coin.modifiers.new('Coin edge','BEVEL');bevel.width=.025;bevel.segments=3
+   bpy.ops.mesh.primitive_torus_add(major_radius=.46,minor_radius=.025,major_segments=40,minor_segments=8,location=(0,0,.39))
+   bpy.context.object.name='Coin rim';bpy.context.object.data.materials.append(gold)
+  elif k>=14:
+   bpy.ops.mesh.primitive_cylinder_add(vertices=6,radius=.61,depth=.18,location=(0,0,.30))
+   badge=bpy.context.object;badge.name='Upgrade hex badge';badge.data.materials.append(tint)
+   bpy.ops.mesh.primitive_cylinder_add(vertices=6,radius=.49,depth=.035,location=(0,0,.405))
+   bpy.context.object.data.materials.append(steel)
+  else:
+   cube('Power capsule',(0,0,.30),(.95,.95,.18),tint,.16)
+   cube('Power inset',(0,0,.40),(.72,.72,.045),steel,.09)
+  bpy.ops.object.text_add(location=(0,0,.44));o=bpy.context.object;o.name='Embossed symbol';o.data.body=label;o.data.align_x='CENTER';o.data.align_y='CENTER';o.data.size=.25 if len(label)>3 else .32;o.data.extrude=.018;o.data.materials.append(white if k!=13 else steel);bpy.ops.object.convert(target='MESH')
+  parts=set(bpy.context.scene.objects)-before
+  bpy.ops.object.empty_add();root=bpy.context.object;root.name='Pickup_'+str(k)
+  for part in parts:part.parent=root
+ export('pickups',apply_modifiers=True)
+if '--pickups-only' in sys.argv:
+ build_pickups()
+ raise SystemExit
+
 # Blender XY ground maps to Three.js XZ. Pitch length along X.
 cube('Arena foundation',(0,0,-.42),(31,20,.8),steel,.3)
 cube('Playing surface',(0,0,0),(28,17,.12),floor)
@@ -518,7 +548,7 @@ for col,(left,right) in enumerate(zip(x_edges,x_edges[1:])):
   cube('Court replacement plate',((left+right)/2,(bottom+top)/2,.062),
        (right-left-.035,top-bottom-.030,.002),finish,0)
 # Batch only static decoration; animated score targets retain separate names.
-for prefixes,label in [(['Court replacement plate'],'Court plate finishes'),(['Wall service cassette'],'Wall service panels'),(['Recessed vent slot'],'Wall ventilation'),(['Cassette bolt'],'Wall fasteners'),(['Terrace riser','Grandstand seat back'],'Terrace steelwork'),(['Grandstand seat'],'Terrace seating')]:
+for prefixes,label in [(['Flush floor fastener'],'Floor fasteners'),(['Floor panel seam'],'Floor seams'),(['Court replacement plate'],'Court plate finishes'),(['Wall service cassette'],'Wall service panels'),(['Recessed vent slot'],'Wall ventilation'),(['Cassette bolt'],'Wall fasteners'),(['Terrace riser','Grandstand seat back'],'Terrace steelwork'),(['Grandstand seat'],'Terrace seating')]:
  objects=[o for o in bpy.context.scene.objects if o.type=='MESH' and any(o.name.startswith(p) for p in prefixes)]
  bpy.ops.object.select_all(action='DESELECT')
  for o in objects:
@@ -535,18 +565,7 @@ export('ball')
 for i in range(12):
  a=i*math.tau/12;o=cube('Impact spark',(math.cos(a)*.65,math.sin(a)*.65,.25),(.4,.07,.07),white,.015);o.rotation_euler.z=a
 export('impact')
-# All pickup icons are Blender geometry, including raised lettering.
-labels=['ICE','REV','DOWN','UP','ALL','SLOW','BALL','PASS','LOCK','SAFE','HP','ZAP','$','AGR','ATT','DEF','SPD','THR','POW','STA','INT']
-for k,label in enumerate(labels,1):
- before=set(bpy.context.scene.objects)
- tint=mat('Pickup color '+str(k),(.08,.60,.85) if k<7 else ((.14,.65,.3) if k<=12 else (.85,.52,.05)),.35,.25)
- cube('Token body',(0,0,.30),(.9,.9,.18),tint,.14)
- cube('Token inset',(0,0,.40),(.72,.72,.05),steel,.09)
- bpy.ops.object.text_add(location=(0,0,.44));o=bpy.context.object;o.name='Embossed symbol';o.data.body=label;o.data.align_x='CENTER';o.data.align_y='CENTER';o.data.size=.23 if len(label)>3 else .31;o.data.extrude=.018;o.data.materials.append(white);bpy.ops.object.convert(target='MESH')
- parts=set(bpy.context.scene.objects)-before
- bpy.ops.object.empty_add();root=bpy.context.object;root.name='Pickup_'+str(k)
- for part in parts:part.parent=root
-export('pickups')
+build_pickups()
 build_medics()
 for name in ['arena','player-cyan','player-orange','ball']:
  bpy.ops.import_scene.gltf(filepath=os.path.join(OUT,name+'.glb'))

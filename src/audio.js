@@ -16,6 +16,9 @@ export function eventPan(state, event, view) {
 
 // Each layer is [waveform, start Hz, end Hz, seconds, gain, delay seconds].
 export const cues = {
+  // Distinct source collection cues: coin 0x15, equipment 0x21. New synthesized timbres.
+  coin: [["sine", 1568, 1568, .16, .13, 0], ["sine", 2352, 2352, .12, .05, 0], ["triangle", 2093, 2093, .14, .07, .07]],
+  equipment: [["noise", 1600, 500, .06, .08, 0], ["triangle", 440, 440, .13, .10, 0], ["triangle", 660, 660, .13, .10, .08], ["sine", 880, 880, .20, .12, .16]],
   // Tackle contact (Amiga 0x06), including unsuccessful attempts.
   29: [["noise", 1800, 500, .065, .12, 0], ["triangle", 210, 100, .07, .075, 0]],
   // Zap pickup activation (Amiga sound 0x12), distinct from electroball contact.
@@ -206,7 +209,9 @@ export class ArenaAudio {
         : []) {
       if (e.id <= this.lastEvent) continue;
       this.lastEvent = e.id;
-      this.play(e.kind === 11 && e.target === 12 ? "zap" : e.kind, eventPan(state, e, view));
+      const cue = e.kind !== 11 ? e.kind : e.target === 12 ? "zap"
+        : e.target === 13 ? "coin" : e.target >= 14 ? "equipment" : 11;
+      this.play(cue, eventPan(state, e, view));
     }
   }
 
@@ -214,7 +219,7 @@ export class ArenaAudio {
     const c = this.context;
     if (!this.enabled || !this.active || !c || c.state !== "running") return;
     const priority =
-      kind === "zap" ? 1 : typeof kind === "string" ? 3 : Math.max(0, notificationPriority(kind));
+      ["zap", "coin", "equipment"].includes(kind) ? 1 : typeof kind === "string" ? 3 : Math.max(0, notificationPriority(kind));
     for (const layer of cues[kind] ?? []) {
       // Keep whistles and match announcements audible through dense collisions.
       if (this.voices.size >= 32) {

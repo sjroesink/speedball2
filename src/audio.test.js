@@ -227,3 +227,13 @@ test("Zap is protected from collision noise but cannot displace match whistles",
  a.stop();for(let i=0;i<32;i++)a.play("kickoff");const whistles=[...a.voices];
  a.play("zap");assert.deepEqual([...a.voices],whistles);
 });
+
+
+test("coins and equipment play distinct collection cues once per event",()=>{
+ const audio=new ArenaAudio(),heard=[];audio.play=(...args)=>heard.push(args);
+ const events=[{id:1,kind:11,target:13,z:-2},{id:2,kind:11,target:17,z:2}];
+ const state={over:false,pause:1,events};
+ audio.observe(state,true,{centerZ:0,halfWidth:4});
+ audio.observe(state,true,{centerZ:0,halfWidth:4});
+ assert.deepEqual(heard,[["coin",-.5],["equipment",.5]]);
+});

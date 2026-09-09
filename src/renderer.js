@@ -333,6 +333,7 @@ export class ArenaRenderer {
         slot.mesh = this.pickupBank
           .getObjectByName("Pickup_" + item.kind)
           .clone();
+        slot.mesh.rotation.y = -Math.PI / 2;
         slot.kind = item.kind;
         this.scene.add(slot.mesh);
       }
