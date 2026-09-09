@@ -227,7 +227,21 @@ def build_players():
   for part in parts:
    if part.parent is None: part.parent=root
   root.animation_data_create()
-  poses={'Punch':[(1,0,0),(4,.22,0),(11,0,0)],'Catch':[(1,-.12,0),(4,-.08,0),(8,0,0)],'Run':[(1,.06,0),(7,.065,.055),(13,.06,0),(19,.065,.055),(25,.06,0)],'Slide':[(1,0,0),(4,1.3,.12),(19,1.3,.12),(24,0,0)],'Jump':[(1,0,0),(10,-.25,0),(28,.2,0),(42,0,0)],'Throw':[(1,-.1,0),(8,-.2,0),(16.5,.12,0),(24,.04,0),(32,0,0)],'Hit':[(1,0,0),(8,-1.5,.18),(65,-1.5,.18),(81,0,0)]}
+  # Two-link leg solve: stance feet move backward at the renderer's stride speed.
+  def gait_angles(frame,side):
+   phase=((frame-1)/24+(0 if side==1 else .5))%1
+   if phase<=.5: y=-.30+1.2*phase;z=.10
+   else:
+    swing=(phase-.5)*2;y=.30*math.cos(math.pi*swing);z=.10+.22*math.sin(math.pi*swing)
+   bob=.01*math.sin((frame-1)/24*math.tau)**2;pitch=.06+bob;root_height=-.10+bob
+   local_y=y*math.cos(pitch)+(z-root_height)*math.sin(pitch)
+   local_z=-y*math.sin(pitch)+(z-root_height)*math.cos(pitch)
+   down=.915-local_z;upper=.481;lower=.334
+   reach=math.hypot(local_y,down)
+   knee=math.acos(max(-1,min(1,(reach*reach-upper*upper-lower*lower)/(2*upper*lower))))
+   hip=math.atan2(local_y,down)-math.acos(max(-1,min(1,(upper*upper+reach*reach-lower*lower)/(2*upper*reach))))
+   return hip,knee,-pitch-hip-knee
+  poses={'Punch':[(1,0,0),(4,.22,0),(11,0,0)],'Catch':[(1,-.12,0),(4,-.08,0),(8,0,0)],'Run':[(f,.06+.01*math.sin((f-1)/24*math.tau)**2,-.10+.01*math.sin((f-1)/24*math.tau)**2) for f in range(1,26)],'Slide':[(1,0,0),(4,1.3,.12),(19,1.3,.12),(24,0,0)],'Jump':[(1,0,0),(10,-.25,0),(28,.2,0),(42,0,0)],'Throw':[(1,-.1,0),(8,-.2,0),(16.5,.12,0),(24,.04,0),(32,0,0)],'Hit':[(1,0,0),(8,-1.5,.18),(65,-1.5,.18),(81,0,0)]}
   for clip,frames in poses.items():
    action=bpy.data.actions.new(clip);root.animation_data.action=action
    for frame,angle,height in frames:
@@ -239,13 +253,13 @@ def build_players():
    joint.animation_data_create()
    for clip in ['Run','Throw','Jump','Slide','Hit','Catch','Punch']:
     action=bpy.data.actions.new(joint.name+'_'+clip);joint.animation_data.action=action
-    frames=[1,7,13,19,25] if clip=='Run' else [1,6,12,20,32]
+    frames=range(1,26) if clip=='Run' else [1,6,12,20,32]
     if clip=='Throw': frames=[1,8,16.5,24,32]
     if clip=='Catch': frames=[1,4,8]
     if clip=='Punch': frames=[1,4,11]
     for k,frame in enumerate(frames):
      angle=0
-     if clip=='Run': angle=math.sin((frame-1)/24*math.tau)*.65*side*(-1 if isarm else 1)
+     if clip=='Run': angle=-math.sin((frame-1)/24*math.tau)*.65*side if isarm else gait_angles(frame,side)[0]
      elif clip=='Throw' and isarm: angle=([.5,.9,-1.5,-.6,0][k] if side==1 else -.2)
      elif clip=='Jump': angle=-2.5 if isarm else .4
      elif clip=='Slide': angle=-1.2 if isarm else side*.2
@@ -275,11 +289,11 @@ def build_players():
    knee.animation_data_create()
    for clip in poses:
     action=bpy.data.actions.new(knee.name+'_'+clip);knee.animation_data.action=action
-    frames=range(1,26,3) if clip=='Run' else [1,poses[clip][-1][0]]
+    frames=range(1,26) if clip=='Run' else [1,poses[clip][-1][0]]
     for frame in frames:
      # Flex the trailing leg during swing; the planted leg stays near extension.
      phase=(frame-1)/24*math.tau
-     angle=.08+.95*max(0,math.sin(phase)*side) if clip=='Run' else 0
+     angle=gait_angles(frame,side)[1] if clip=='Run' else 0
      knee.rotation_euler.x=angle;knee.keyframe_insert(data_path='rotation_euler',frame=frame)
     knee.animation_data.action=None
     track=knee.animation_data.nla_tracks.new();track.name=clip;track.strips.new(clip,1,action)
@@ -288,40 +302,21 @@ def build_players():
    ankle.animation_data_create()
    for clip in poses:
     action=bpy.data.actions.new(ankle.name+'_'+clip);ankle.animation_data.action=action
-    frames=range(1,26,3) if clip=='Run' else [1,poses[clip][-1][0]]
+    frames=range(1,26) if clip=='Run' else [1,poses[clip][-1][0]]
     for frame in frames:
      angle=0
      if clip=='Run':
       phase=(frame-1)/24*math.tau
       # Counter the authored hip, knee and torso pitch at each gait key.
-      hip=math.sin(phase)*.65*side
-      knee=.08+.95*max(0,math.sin(phase)*side)
-      angle=-hip-knee-.06
+      angle=gait_angles(frame,side)[2]
      ankle.rotation_euler.x=angle;ankle.keyframe_insert(data_path='rotation_euler',frame=frame)
     ankle.animation_data.action=None
     track=ankle.animation_data.nla_tracks.new();track.name=clip;track.strips.new(clip,1,action)
    ankle.rotation_euler=(0,0,0)
-  # Bake body height against the actual authored boot soles for the Run clip.
-  animated=[obj for obj in bpy.context.scene.objects if obj.animation_data]
-  for obj in animated:
-   for track in obj.animation_data.nla_tracks: track.mute=True
-   obj.animation_data.action=next(track for track in obj.animation_data.nla_tracks if track.name=='Run').strips[0].action
-  boots=[obj for obj in bpy.context.scene.objects if obj.name.startswith('Boot')]
-  ground_keys=[]
-  for frame in range(1,26):
-   bpy.context.scene.frame_set(frame);bpy.context.view_layer.update()
-   depsgraph=bpy.context.evaluated_depsgraph_get()
-   evaluated=[boot.evaluated_get(depsgraph) for boot in boots]
-   sole=min((boot.matrix_world @ vertex.co).z for boot in evaluated for vertex in boot.data.vertices)
-   ground_keys.append((frame,root.location.z+.01-sole))
-  run_track=next(track for track in root.animation_data.nla_tracks if track.name=='Run')
-  root.animation_data.action=run_track.strips[0].action
-  for frame,height in ground_keys:
-   root.location=(0,0,height);root.keyframe_insert(data_path='location',frame=frame)
-  root.animation_data.action=None
-  for obj in animated:
-   obj.animation_data.action=None
-   for track in obj.animation_data.nla_tracks: track.mute=False
+  for obj in bpy.context.scene.objects:
+   if obj.animation_data:
+    for track in obj.animation_data.nla_tracks:
+     if track.name=='Run': track.strips[0].frame_start=0
   root.rotation_euler=(0,0,0);root.location=(0,0,0);bpy.context.scene.render.fps=60
   export(name,apply_modifiers=True)
 if '--players-only' in sys.argv:

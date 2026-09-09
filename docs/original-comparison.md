@@ -2674,3 +2674,27 @@ selecting phase one through the original modulo-eight phase retention. All
 258 JS tests, six long parity scenarios, Go tests/vet and build pass. Action
 completion side effects still use the existing simulation callbacks; this
 change implements cursor controls, not an entire original opcode interpreter.
+
+### Blender gait: reduce horizontal stance slip
+
+The previous floor test checked sole height, not horizontal foot stability.
+A new geometry-based tool, tools/analyze-gait.mjs, samples both exported boots
+240 times per run cycle, adds the renderer's 1.2-unit root stride and measures
+horizontal boot-origin speed while consecutive sole heights are <=0.04.
+Before this change, median slip was 4.664, p95 10.716, maximum 13.082 world
+units/second; root speed was 2.88. Both team assets gave the same result.
+
+The Blender authoring script now solves hip/knee angles from a stance/swing
+foot path using the actual 0.481/0.334 leg segments. Stance travels backward
+linearly; swing returns forward with lift. Ankles counter the combined leg
+and body pitch. A small body-height/pitch variation preserves the stance
+transform in glTF export; constant-only root tracks had been omitted. The
+native blend files and both exported GLBs were regenerated in Blender 5.2.
+
+Afterward, median slip is 0.121, p95 3.275, maximum 3.498 across 268 grounded
+intervals; lowest sole 0.00881. Lift/touchdown transitions still contribute
+slip, and this is a straight-cycle measurement without live turning/blending.
+All 258 tests and the build pass, including both-team loop closure, floor
+clearance, ankle leveling and all unchanged action/ball-grip checks. An active
+browser full-match screenshot shows the exported run poses on the court.
+A 300-frame sample remained 32.6 ms median interval; no FPS gain is claimed.
