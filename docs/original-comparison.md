@@ -2781,3 +2781,24 @@ time, captured duration and current action time for every player. All six
 10,000-tick scenarios pass this expanded comparison. Previously they compared
 resulting physical positions/statistics but not those internal pose fields.
 This strengthens JS/Go parity evidence, not proof of full Amiga parity.
+
+
+## Interception identity across halves (2026-09-09)
+
+Audited `get_ball` 0xeca2–0xecd4 together with halftime at 0xd5e6
+and `change_ends` 0x13860–0x138b4. The interception branch reads
+`initial_playing_direction` and the stable team flag at sprite offset 0x22,
+bit 3. Halftime swaps playing-direction fields at 0x46 and the formation
+constraints; it does not swap that team flag or initial direction. Therefore
+the interception cue must remain associated with the same team in both halves.
+The branch comments about playing up/down alone are insufficient grounds for
+changing the cue to follow the current attacking direction. No runtime behavior
+change was needed.
+
+Extended JS and Go catch regressions to both halves, teams, friendly/opponent
+last possession, and charged/unmarked balls. The JS integration now passes
+actual catch events into ArenaAudio and repeats the snapshot: the normal
+interception signal and planar catch contact each dispatch once, while friendly
+and charged catches omit the interception signal. All 18 targeted JS catch/audio
+tests and the targeted Go catch tests pass. This verifies event dispatch, not
+subjective sound quality or full original-game equivalence.

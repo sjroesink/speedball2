@@ -782,6 +782,7 @@ func (s *State) catchBallAt(only int, distances *[18]int) {
 					p.ActionTime = 3. / 25
 				}
 			}
+			// 0xeca2 uses initial direction and team identity, not the current half.
 			if !wasCharged && b.LastTouch >= 0 && s.Players[b.LastTouch].Team != p.Team {
 				s.event(24+p.Team, i, b.LastTouch, b.X, b.Z, b.H)
 			}

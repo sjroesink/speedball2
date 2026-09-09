@@ -846,6 +846,7 @@ export function catchBall(s, only = -1, distances = null) {
           p.actionTime = 3 / 25;
         }
       }
+      // 0xeca2 selects by initial direction and team flag, unchanged at halftime.
       if (!wasCharged && b.lastTouch >= 0 && s.players[b.lastTouch].team !== p.team)
         event(s, p.team === 0 ? 24 : 25, i, b.lastTouch, b.x, b.z, b.h);
       s.charge[team] = 0;

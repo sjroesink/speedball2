@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { initial, catchBall } from "./game.js";
+import { ArenaAudio } from "./audio.js";
 const unit = 22.4 / 576;
 function setup() {
   const s = initial();
@@ -60,17 +61,30 @@ test("contested catches follow interleaved roster order, team two first at equal
   assert.equal(other.ball.owner, 6);
 });
 
-test("interception cue identifies the team and excludes friendly or charged catches", () => {
- for(const team of [0,1]) for(const friendly of [false,true]) for(const charged of [false,true]) {
-  const s=setup(),i=team*9+7;
-  Object.assign(s.players[i],{x:0,z:0});
-  Object.assign(s.ball,{lastTouch:(friendly?team:1-team)*9+6,charged,electric:0});
-  catchBall(s);
-  assert.equal(s.ball.owner,i);
-  const intercepts=(s.events??[]).filter(e=>e.kind===24||e.kind===25);
-  assert.equal(intercepts.length,!friendly&&!charged?1:0);
-  if(intercepts.length) assert.equal(intercepts[0].kind,24+team);
- }
+test("interception signals keep team identity across halves and reach audio once", () => {
+  for (const period of [1, 2]) for (const team of [0, 1])
+    for (const friendly of [false, true]) for (const charged of [false, true]) {
+      const s = setup(), i = team * 9 + 7;
+      s.period = period;
+      Object.assign(s.players[i], { x: 0, z: 0 });
+      Object.assign(s.ball, {
+        lastTouch: (friendly ? team : 1 - team) * 9 + 6,
+        charged, electric: 0, vx: 1,
+      });
+      const audio = new ArenaAudio(), heard = [];
+      audio.play = (cue) => heard.push(cue);
+      // Consume the initial state before delivering the catch snapshot.
+      audio.observe(s, true);
+      heard.length = 0;
+      catchBall(s);
+      assert.equal(s.ball.owner, i);
+      const intercepts = (s.events ?? []).filter(e => e.kind === 24 || e.kind === 25);
+      const expected = !friendly && !charged ? [24 + team, 16] : [16];
+      assert.equal(intercepts.length, expected.length - 1);
+      audio.observe(s, true);
+      audio.observe(s, true);
+      assert.deepEqual(heard, expected, `half ${period}, team ${team}, friendly ${friendly}, charged ${charged}`);
+    }
 });
 
 test("catch impact requires planar motion while interception remains independent", () => {
