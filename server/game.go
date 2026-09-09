@@ -387,9 +387,17 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			if decide {
 				p.aiWait = aiReactionTime(p.Stats[7])
 				p.aiAvoid = false
+				random := s.randomByte()
 				var nearby *interaction
 				if s.Controlled[t] != i || b.Owner != i {
-					nearby = s.localInteraction(i, &contacts[i], s.randomByte())
+					nearby = s.localInteraction(i, &contacts[i], random)
+				}
+				if nearby == nil && s.Controlled[t] == i && b.Owner != i && i%9 != 0 {
+					var chase interaction
+					chase, tx, tz = s.pursuit(i, random, &catchDistances, inMultiplier)
+					if chase.attack {
+						nearby = &chase
+					}
 				}
 				if nearby != nil {
 					if nearby.x != 0 || nearby.z != 0 {
@@ -435,7 +443,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 						tz = clamp(b.Z, -1.55, 1.55)
 					}
 				} else if s.Controlled[t] == i {
-					tx, tz = predictedTarget(b.X, b.Z, b.VX, b.VZ, p.Stats[7])
+					// The field-player pursuit branch above has selected the target.
 				} else {
 					tx, tz = s.supportTarget(i)
 				}
@@ -447,7 +455,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				dx, dz = steerToTarget(p, tx, tz, decide)
 			}
 			u = Input{}
-			if decide && !p.aiAvoid && p.ActionTime <= 0 && s.Controlled[t] == i && p.Cooldown <= 0 && math.Hypot(b.X-p.X, b.Z-p.Z) < gearRange(p.Gear, 14, 3, 4) && b.Owner != i {
+			if decide && !p.aiAvoid && p.ActionTime <= 0 && s.Controlled[t] == i && i%9 == 0 && p.Cooldown <= 0 && math.Hypot(b.X-p.X, b.Z-p.Z) < gearRange(p.Gear, 14, 3, 4) && b.Owner != i {
 				if b.H > 1.4 {
 					u.Shoot = true
 				} else if (b.Owner >= 0 && s.Players[b.Owner].Team != t) || (i%9 == 0 && b.Owner < 0 && math.Hypot(b.VX, b.VZ) > 4) {

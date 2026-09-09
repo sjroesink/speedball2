@@ -644,3 +644,12 @@ Simulation tests verify elevated carry height during ascent and apex, normal hei
 The in-game rules and README now describe stationary punches, moving slides, the E-lob wind-up and the rotating three-player bench consistently with the simulation. README equipment descriptions distinguish tackle success from reach and defence from damage reduction, and list the Catch/Punch Blender clips.
 
 The local Go service was restarted from gameplay commit 6a4eebd. Two browser tabs joined fresh arena P6CZFD, both reported ONLINE / LIVE and WEBTRANSPORT CONNECTED, and both displayed 01:19 at the same observation. Neither tab reported browser errors. The production build passes. This confirms basic online operation of the accumulated changes, not frame-exact original gameplay or network stress behaviour.
+
+
+### Selected field-player pursuit decisions
+
+The no-item branch of WIP `sub_D742_AII` now drives selected field-player pursuit in both simulations. The initial target is the opposing selected player. Unless that player owns the ball or the ball is in a multiplier, a fallen opponent, aggression/2 <= random, or own ball distance <= opponent ball distance switches the target to the ball. Integer half-aggression is compared strictly. The chosen entity uses original intelligence-based position prediction. Aggression/2 > random immediately starts the existing slide/jump-at-target action; otherwise the player walks toward the target. This replaces the generic short-range ball attack heuristic for selected field players; the selected goalkeeper still has separate unfinished logic.
+
+One random byte is shared by local-contact and pursuit decisions, and selected carriers now consume the decision byte too, matching the selected AI entry routine. Tests cover aggression equality, distance equality, fallen opponents, multiplier and possession overrides; all 133 JavaScript tests, Go tests, Go vet and the build pass.
+
+This implements the no-item visible-player branch. Pickup target selection, offscreen eligibility and selected keeper behaviour still need porting; this checkpoint is not full AI equivalence.

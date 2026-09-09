@@ -1,6 +1,7 @@
 import { localInteraction } from "./interaction.js";
+import { pursuit } from "./pursuit.js";
 import { contactDistances, blockPlayerMovement } from "./collision.js";
-import { steerToTarget, predictedTarget } from "./steering.js";
+import { steerToTarget } from "./steering.js";
 import { goalieTarget, deflectBall } from "./goalie.js";
 import { supportTarget } from "./support.js";
 import { emit as event } from "./events.js";
@@ -447,10 +448,18 @@ export function step(
         p.aiWait = aiReactionTime(p.stats[7]);
 
         p.aiAvoid = false;
-        const nearby =
+        const random = randomByte(s);
+        let chase;
+        let nearby =
           s.controlled[t] !== i || b.owner !== i
-            ? localInteraction(s, i, contacts[i], randomByte(s))
+            ? localInteraction(s, i, contacts[i], random)
             : null;
+        if (!nearby && s.controlled[t] === i && b.owner !== i && i % 9 !== 0) {
+          chase = pursuit(s, i, random, catchDistances, inMultiplier);
+          tx = chase.tx;
+          tz = chase.tz;
+          if (chase.attack) nearby = chase;
+        }
         if (nearby) {
           if (nearby.x || nearby.z) {
             p.fx = nearby.x;
@@ -495,7 +504,8 @@ export function step(
             tz = clamp(b.z, -1.55, 1.55);
           }
         } else if (s.controlled[t] === i) {
-          [tx, tz] = predictedTarget(b.x, b.z, b.vx, b.vz, p.stats[7]);
+          tx = chase.tx;
+          tz = chase.tz;
         } else {
           [tx, tz] = supportTarget(s, i);
         }
@@ -512,6 +522,7 @@ export function step(
         !p.aiAvoid &&
         p.actionTime <= 0 &&
         s.controlled[t] === i &&
+        i % 9 === 0 &&
         p.cooldown <= 0 &&
         Math.hypot(b.x - p.x, b.z - p.z) < (p.gear === 14 ? 4 : 3) &&
         b.owner !== i
