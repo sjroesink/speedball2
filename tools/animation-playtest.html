@@ -6,11 +6,13 @@
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {playPlayerAction} from '/src/player-animation.js';
+import {centeredBall} from '/src/ball-model.js';
 const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(40,1,.1,100);
 camera.position.set(4,3,5);camera.lookAt(0,1,0);
 const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));document.querySelector('#view').append(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xe2f5ff,0x404055,3));const light=new THREE.DirectionalLight(0xffffff,3);light.position.set(3,5,2);scene.add(light);
 const gltf=await new GLTFLoader().loadAsync('/assets/player-cyan.glb');scene.add(gltf.scene);
+const ball=centeredBall((await new GLTFLoader().loadAsync('/assets/ball.glb')).scene);scene.add(ball);const grip=gltf.scene.getObjectByName('BallGrip');
 const mixer=new THREE.AnimationMixer(gltf.scene),action=mixer.clipAction(gltf.animations.find(c=>c.name.includes('Throw')));action.clampWhenFinished=true;
 let elapsed=0,rate=1,running=false;
 function start(speed){elapsed=0;rate=speed;running=true;playPlayerAction(action,3,.32)}
@@ -19,5 +21,5 @@ document.querySelector('#slow').onclick=()=>start(.25);
 document.querySelector('#release').onclick=()=>{running=false;elapsed=.16;playPlayerAction(action,3,.16);mixer.update(0);status.textContent='Release — 0.16 / 0.32 seconds';};
 const status=document.querySelector('#status');status.textContent='Ready';
 let last=performance.now();
-function draw(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(running){const step=Math.min(dt*rate,.32-elapsed);elapsed+=step;mixer.update(step);status.textContent=`${elapsed<.16?'Wind-up':'Recovery'} — ${elapsed.toFixed(2)} / 0.32 seconds`;if(elapsed>=.32)running=false}const box=document.querySelector('#view');renderer.setSize(box.clientWidth,box.clientHeight);camera.aspect=box.clientWidth/box.clientHeight;camera.updateProjectionMatrix();renderer.render(scene,camera);requestAnimationFrame(draw)}requestAnimationFrame(draw);
+function draw(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(running){const step=Math.min(dt*rate,.32-elapsed);elapsed+=step;mixer.update(step);status.textContent=`${elapsed<.16?'Wind-up':'Recovery'} — ${elapsed.toFixed(2)} / 0.32 seconds`;if(elapsed>=.32)running=false}const box=document.querySelector('#view');renderer.setSize(box.clientWidth,box.clientHeight);camera.aspect=box.clientWidth/box.clientHeight;camera.updateProjectionMatrix();gltf.scene.updateWorldMatrix(true,true);grip.getWorldPosition(ball.position);renderer.render(scene,camera);requestAnimationFrame(draw)}requestAnimationFrame(draw);
 </script></html>

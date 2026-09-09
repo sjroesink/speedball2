@@ -155,7 +155,7 @@ export class ArenaRenderer {
         action.clampWhenFinished = true;
         clips[clip.name] = action;
       }
-      return { wrapper, model, mixer, clips, active: -1 };
+      return { wrapper, model, mixer, clips, grip: model.getObjectByName("BallGrip"), active: -1 };
     });
     this.ball = centeredBall(ball.scene);
     this.scene.add(this.ball);
@@ -361,9 +361,15 @@ export class ArenaRenderer {
     });
     const ballTarget = new THREE.Vector3(b.x, b.h, b.z);
     if (b.owner >= 0) {
-      const carrier = this.players[b.owner].wrapper.position;
-      ballTarget.x += carrier.x - s.players[b.owner].x;
-      ballTarget.z += carrier.z - s.players[b.owner].z;
+      const actor = this.players[b.owner];
+      if (actor.grip) {
+        actor.wrapper.updateWorldMatrix(true, true);
+        actor.grip.getWorldPosition(ballTarget);
+      } else {
+        const carrier = actor.wrapper.position;
+        ballTarget.x += carrier.x - s.players[b.owner].x;
+        ballTarget.z += carrier.z - s.players[b.owner].z;
+      }
     }
     this.ball.position.lerp(
       ballTarget,
@@ -393,7 +399,7 @@ export class ArenaRenderer {
     this.aim.setDirection(new THREE.Vector3(cp.fx, 0, cp.fz));
     this.aim.setLength(2.2 + Math.min(s.charge[team], 0.5) * 3, 0.6, 0.32);
     if (b.owner < 0 && Math.hypot(b.vx, b.vz) > 4) {
-      this.trailPositions.unshift(new THREE.Vector3(b.x, b.h, b.z));
+      this.trailPositions.unshift(this.ball.position.clone());
       this.trailPositions.length = Math.min(10, this.trailPositions.length);
     } else this.trailPositions = [];
     this.trail.forEach((m, i) => {

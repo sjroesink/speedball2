@@ -53,3 +53,21 @@ test("both Blender team models extend the throwing hand forward at release", asy
     assert.ok(position.y > 1.2, "hand stays at chest level for release");
   }
 });
+
+test("Blender ball grip stays next to the hand through wind-up and release", async () => {
+  for (const team of ["cyan", "orange"]) {
+    const model = await player(team), mixer = new AnimationMixer(model.scene);
+    const action = mixer.clipAction(model.animations.find(c => c.name.includes("Throw")));
+    const grip = model.scene.getObjectByName("BallGrip");
+    const hand = model.scene.getObjectByName("Arm_1").children.find(o => o.name.startsWith("Hand"));
+    assert.ok(grip, "export includes the authored grip");
+    for (const remaining of [.32, .28, .24, .20, .16]) {
+      playPlayerAction(action, 3, remaining); mixer.update(0);
+      model.scene.updateMatrixWorld(true);
+      const point = grip.getWorldPosition(new Vector3());
+      const palm = hand.getWorldPosition(new Vector3());
+      assert.ok(Math.abs(point.distanceTo(palm) - .33) < 1e-5);
+      assert.ok(point.y > .25, "held ball clears the floor");
+    }
+  }
+});

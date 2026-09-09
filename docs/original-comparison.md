@@ -1532,3 +1532,21 @@ hand in both exported teams at the simulation's 0.16-second release. Playback
 at 30/60/144 FPS and late-snapshot timing remain covered. Ball attachment is
 still based on the simulation's fixed carried offset; this change refines the
 pose and does not claim that the ball is now attached to the hand.
+
+
+### Blender hand attachment for the displayed ball (2026-09-09)
+
+Both player assets now export a `BallGrip` empty parented to the throwing arm.
+Its position sits just beyond the fist. While possession is held, the renderer
+reads its animated world position after updating the actor's transform. Older
+assets without the attachment retain the existing fallback. Upon release,
+the existing ball damping follows the authoritative ball position; trailing
+meshes now follow the displayed ball instead of the unsmoothed simulation.
+
+The pose preview includes the real Blender ball mesh and demonstrates the grip
+at the release midpoint. Asset tests check the grip-to-hand distance and floor
+clearance throughout wind-up for both teams. This is a presentation change:
+collision, scoring, camera target and replicated ball coordinates retain the
+simulation's carried offset. Exact original per-animation collision offsets
+are still a separate fidelity requirement, and live latency testing of the
+visual transition remains pending.

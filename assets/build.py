@@ -85,6 +85,11 @@ def build_players():
    parts=set(bpy.context.scene.objects)-before
    bpy.ops.object.empty_add(location=(side*.43,0,1.42));joint=bpy.context.object;joint.name='Arm_'+str(side)
    for part in parts: part.parent=joint;part.matrix_parent_inverse=joint.matrix_world.inverted()
+   if side==1:
+    # Grip center follows the throwing hand, just beyond the closed fist.
+    bpy.ops.object.empty_add(location=(side*.49,-.12,.45))
+    grip=bpy.context.object;grip.name='BallGrip';grip.parent=joint
+    grip.matrix_parent_inverse=joint.matrix_world.inverted()
    limbs.append((joint,side,True))
    before=set(bpy.context.scene.objects)
    cube('Thigh',(side*.22,0,.54),(.31,.37,.37),armor,.10)
