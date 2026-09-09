@@ -560,7 +560,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			if p.ActionTime > 0 || p.aiAvoid {
 				dx, dz = eightWay(p.FX, p.FZ)
 			} else {
-				dx, dz = advanceSteering(p, tx, tz, decide)
+				dx, dz = s.advancePursuitSteering(i, tx, tz, decide)
 			}
 			u = Input{}
 			if decide && b.Owner == i {

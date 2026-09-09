@@ -1,6 +1,24 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { steerToTarget, predictedTarget, advanceSteering } from "./steering.js";
+import { steerToTarget, predictedTarget, advanceSteering, advancePursuitSteering } from "./steering.js";
+import { initial } from "./game.js";
+
+test("selected moving field player resumes carrier pursuit at arrival without another AI decision", () => {
+  for (const mode of ["chase", "fresh", "standing", "support", "keeper", "loose", "self"]) {
+    const s=initial(),i=mode==="keeper"?0:3,p=s.players[i];
+    s.controlled[0]=mode==="support"?8:i;s.ball.owner=mode==="loose"?-1:mode==="self"?i:12;
+    Object.assign(p,{x:0,z:0,aiX:2*u,aiZ:0,aiWait:.4});
+    Object.assign(s.players[12],{x:100*u,z:0,moveX:2*u*25,moveZ:0});
+    advanceSteering(p,2*u,0,true);
+    p.x=0;p.steerX=mode==="standing"?0:1;
+    const rng=[...s.rng];
+    const result=advancePursuitSteering(s,i,2*u,0,mode==="fresh");
+    assert.deepEqual(result,mode==="chase"?[1,0]:[0,0],mode);
+    assert.equal(p.x,2*u,mode);
+    assert.equal(p.aiWait,.4);assert.deepEqual(s.rng,rng);
+    if(mode==="chase")assert.ok(Math.abs(p.aiX-102*u)<1e-9);
+  }
+});
 
 test("near-target box includes vertical origin while direction uses terrain position", () => {
   const airborne={x:0,z:0,physicalSprite:73};

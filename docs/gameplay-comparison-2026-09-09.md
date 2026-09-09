@@ -466,3 +466,21 @@ Full validation: 292 JS tests pass, including six 10,000-tick JS/Go match traces
 Go tests, go vet and production build pass. This branch was checked against the
 disassembly; unlike the six numeric helper corpora, it has not yet been measured
 through original machine-code execution. Full original-match parity remains open.
+
+### Pursuit resumes on movement arrival
+
+player_moving_action_fn (0x1037c..0x103be) reacquires the ball carrier when a
+selected moving field player reaches its target. The remake previously stopped
+until its next timed AI decision. JS and Go now predict the carrier's current
+position and start a fresh movement immediately on that arrival transition.
+Standing players, goalkeepers, support players, loose balls and self-possession
+do not take this branch. The callback preserves the reaction timer and RNG.
+Its caller runs only during active play; restart, medical and pause handling
+already return before this movement path.
+
+Paired tests cover arrival and those exclusions. All 295 JS tests pass,
+including six full JS/Go simulation comparisons; Go tests, go vet and production
+build also pass. The arrival transition is source-derived, not yet a measured
+original execution trace. Separately, the restored opponent selection now has
+1,080 original-execution checks and prediction has 8,575, documented in
+original-routine-emulation.md. Whole-match fidelity remains unproven.

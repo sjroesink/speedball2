@@ -5,6 +5,50 @@ import (
 	"testing"
 )
 
+func TestCarrierPursuitOnArrival(t *testing.T) {
+	const u = 22.4 / 576
+	for _, mode := range []string{"chase", "fresh", "standing", "support", "keeper", "loose", "self"} {
+		s := initial()
+		i := 3
+		if mode == "keeper" {
+			i = 0
+		}
+		p := &s.Players[i]
+		s.Controlled[0] = i
+		s.Ball.Owner = 12
+		if mode == "support" {
+			s.Controlled[0] = 8
+		}
+		if mode == "loose" {
+			s.Ball.Owner = -1
+		}
+		if mode == "self" {
+			s.Ball.Owner = i
+		}
+		p.X, p.Z, p.aiX, p.aiZ, p.aiWait = 0, 0, 2*u, 0, .4
+		q := &s.Players[12]
+		q.X, q.Z, q.moveX, q.moveZ = 100*u, 0, 2*u*25, 0
+		advanceSteering(p, 2*u, 0, true)
+		p.X = 0
+		p.steerX = 1
+		if mode == "standing" {
+			p.steerX = 0
+		}
+		rng := s.RNG
+		x, z := s.advancePursuitSteering(i, 2*u, 0, mode == "fresh")
+		want := 0.
+		if mode == "chase" {
+			want = 1
+		}
+		if x != want || z != 0 || p.X != 2*u || p.aiWait != .4 || s.RNG != rng {
+			t.Fatalf("arrival mode %s: movement %v,%v", mode, x, z)
+		}
+		if mode == "chase" && math.Abs(p.aiX-102*u) > 1e-9 {
+			t.Fatal("carrier prediction was not refreshed")
+		}
+	}
+}
+
 func TestOriginalPrediction(t *testing.T) {
 	const u = 22.4 / 576
 	for _, c := range []struct {

@@ -74,3 +74,17 @@ func advanceSteering(p *Player, x, z float64, fresh bool) (float64, float64) {
 	}
 	return p.steerX, p.steerZ
 }
+
+// player_moving_action_fn arrival callback (0x1037c..0x103be).
+func (s *State) advancePursuitSteering(i int, x, z float64, fresh bool) (float64, float64) {
+	p := &s.Players[i]
+	wasMoving := p.steerX != 0 || p.steerZ != 0
+	dx, dz := advanceSteering(p, x, z, fresh)
+	if fresh || !wasMoving || dx != 0 || dz != 0 || s.Controlled[p.Team] != i || i%9 == 0 || s.Ball.Owner < 0 || s.Ball.Owner == i {
+		return dx, dz
+	}
+	q := s.Players[s.Ball.Owner]
+	p.aiX, p.aiZ = predictedTarget(q.X, q.Z, q.moveX, q.moveZ, p.Stats[7])
+	p.aiTarget = true
+	return advanceSteering(p, p.aiX, p.aiZ, true)
+}

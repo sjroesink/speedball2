@@ -10,7 +10,7 @@ import { keeperAction } from "./keeper-action.js";
 import { defensivePass, defensivePunt } from "./defensive-pass.js";
 import { advanceViewport, worldInViewport } from "./visibility.js";
 import { contactDistances, blockPlayerMovement } from "./collision.js";
-import { advanceSteering } from "./steering.js";
+import { advancePursuitSteering } from "./steering.js";
 import { goalieTarget, deflectBall } from "./goalie.js";
 import { supportTarget, aggressionTarget } from "./support.js";
 import { emit as event } from "./events.js";
@@ -579,7 +579,7 @@ function simulateStep(
       [dx, dz] =
         p.actionTime > 0 || p.aiAvoid
           ? eightWay(p.fx, p.fz)
-          : advanceSteering(p, tx, tz, decide);
+          : advancePursuitSteering(s, i, tx, tz, decide);
       u = {};
       if (decide && b.owner === i) {
         if (!route) {

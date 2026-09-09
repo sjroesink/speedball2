@@ -53,3 +53,16 @@ export function advanceSteering(p, x, z, fresh = false) {
   }
   return [p.steerX, p.steerZ];
 }
+
+// player_moving_action_fn arrival callback (0x1037c..0x103be).
+// Only a moving selected field player reacquires the carrier on arrival.
+export function advancePursuitSteering(s, i, x, z, fresh = false) {
+  const p = s.players[i], wasMoving = !!(p.steerX || p.steerZ);
+  const movement = advanceSteering(p, x, z, fresh);
+  if (fresh || !wasMoving || movement[0] || movement[1] ||
+      s.controlled[p.team] !== i || i % 9 === 0 ||
+      s.ball.owner < 0 || s.ball.owner === i) return movement;
+  const q = s.players[s.ball.owner];
+  [p.aiX, p.aiZ] = predictedTarget(q.x, q.z, q.moveX || 0, q.moveZ || 0, p.stats[7]);
+  return advanceSteering(p, p.aiX, p.aiZ, true);
+}
