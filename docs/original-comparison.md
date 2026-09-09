@@ -1396,3 +1396,24 @@ every 25-tick checkpoint throughout all three runs. This is simulation-level
 integration coverage, not an actual two-client network injury playthrough, nor
 proof of original Amiga frame equivalence. No production behavior changed in
 this checkpoint. The extended trace and full JS/Go suites pass.
+
+
+## Live two-peer WebTransport medical playthrough (2026-09-09)
+
+Ran two actual browser WebTransport sessions against the freshly rebuilt local
+Go server. The reproducible tools/network-playtest.html page sends ordinary
+movement/tackle input toward the ball; it does not change server state or force
+an injury. It decodes the real snapshots and renders one peer with the normal
+Blender renderer while reporting both peers' received events and medical phases.
+
+Arena SYZ9VC: both peers agreed at tick 1002 on minimum energy 50 and at tick
+2186 on energy 8. By tick 2966 both had observed medical phases 0,1,2,3, exactly
+one injury and one replacement, plus the same event-kind set. A screenshot
+confirmed the return to the central ball after substitution. Stopped both test
+sessions through the page's Stop button. The Go server remains running.
+
+To repeat, start the development client/server, open /tools/network-playtest.html
+and click Start paired clients. Stop closes both sessions. This verifies actual
+medical state/event transport and decoding; deliberate packet-loss simulation,
+remote-WAN behavior and subjective sound review are not covered by this run.
+No gameplay code changed in this verification checkpoint.
