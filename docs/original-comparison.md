@@ -1756,3 +1756,16 @@ The real browser audio playtest passed all 35 cases; Zap output peaked at
 0.0337 with RMS 0.00141 and zero remaining voices. These are technical audio
 checks; the final perceptual mix still needs listening review.
 Validation: 219 JavaScript tests and production build pass.
+
+### Bounded presentation turn speed
+
+Abrupt heading changes could produce visual angular speeds above 2,500 degrees
+per second despite shortest-arc interpolation. Player presentation now caps turns
+at 720 degrees per second, then decelerates toward the authoritative heading.
+The capped exponential is integrated analytically, preserving identical timing
+at 30, 60 and 144 FPS. This changes presentation only; authoritative facing,
+throw direction and AI decisions retain their existing simulation behavior.
+Regression tests cover sudden reversals, the angle seam, angular speed limits,
+frame-rate independence and zero/negative elapsed time. JavaScript tests and the
+production build pass. This is not yet a confirmation that every reported
+spinning case has been reproduced or resolved in a live match.

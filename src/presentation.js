@@ -24,5 +24,14 @@ export function smoothFacing(current, target, dt) {
     Math.sin(target - current),
     Math.cos(target - current),
   );
-  return current + delta * damping(16, dt);
+  // Bound abrupt AI/snapshot reversals to 720 degrees per second. Integrate
+  // the capped exponential exactly so rendering FPS does not change the turn.
+  const rate = 16, maxSpeed = 4 * Math.PI;
+  const distance = Math.abs(delta), threshold = maxSpeed / rate;
+  const elapsed = Math.max(0, dt);
+  const linearTime = Math.max(0, (distance - threshold) / maxSpeed);
+  const linear = Math.min(elapsed, linearTime);
+  const remaining = (distance - maxSpeed * linear) *
+    Math.exp(-rate * (elapsed - linear));
+  return current + Math.sign(delta) * (distance - remaining);
 }

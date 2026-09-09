@@ -53,3 +53,20 @@ test("visual facing crosses the angle seam without a full spin", () => {
     assert.ok(Math.abs(angle - Math.PI / 2) < 1e-6);
   }
 });
+
+test("sudden reversals have a bounded, frame-rate independent turn speed", () => {
+  const results = [];
+  for (const fps of [30, 60, 144]) {
+    let angle = 0;
+    for (let frame = 0; frame < fps / 2; frame++) {
+      const next = smoothFacing(angle, Math.PI, 1 / fps);
+      assert.ok(next >= angle && next <= Math.PI);
+      assert.ok((next - angle) * fps <= 4 * Math.PI + 1e-10);
+      angle = next;
+    }
+    results.push(angle);
+  }
+  for (const angle of results) assert.ok(Math.abs(angle - results[0]) < 1e-12);
+  assert.equal(smoothFacing(1, -2, 0), 1);
+  assert.equal(smoothFacing(1, -2, -1), 1);
+});
