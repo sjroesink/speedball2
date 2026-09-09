@@ -123,3 +123,35 @@ func TestFlightStageBeforeWallAndGoal(t *testing.T) {
 		}
 	}
 }
+
+func TestDescendingCornerContact(t *testing.T) {
+	for _, sx := range []float64{-1, 1} {
+		for _, sz := range []float64{-1, 1} {
+			s := initial()
+			for i := range s.Players {
+				s.Players[i].Stun = 100
+			}
+			s.Ball = Ball{Owner: -1, LastTouch: -1, X: sx * 548 * terrainUnit, Z: sz * 292 * terrainUnit, H: 1.75,
+				FlightKind: 2, FlightStage: 3, FlightIndex: 41, VX: sx * 8 * velocityUnit, VZ: sz * 8 * velocityUnit,
+				DirX: sx, DirZ: sz, SpeedTimer: 100, Charged: true, Electric: 3, ElectricBudget: 3}
+			after := s.Event.ID
+			s.simulate(.04, [2]Input{}, [2]bool{true, true})
+			b := s.Ball
+			if b.FlightStage != 2 || math.Abs(b.X-sx*536*terrainUnit) > 1e-8 || math.Abs(b.Z-sz*280*terrainUnit) > 1e-8 {
+				t.Fatal("corner position", b)
+			}
+			if b.DirX != -sx || b.DirZ != -sz || b.SpeedTimer != 50 || !b.Charged || b.Electric != 3 {
+				t.Fatal("corner state", b)
+			}
+			kinds := []int{}
+			for _, e := range s.Events {
+				if e.ID > after {
+					kinds = append(kinds, e.Kind)
+				}
+			}
+			if len(kinds) != 2 || kinds[0] != 5 || kinds[1] != 27 {
+				t.Fatal("corner audio sequence", kinds)
+			}
+		}
+	}
+}

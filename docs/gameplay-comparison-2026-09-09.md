@@ -418,3 +418,16 @@ movement/AI is intentionally not advanced, isolating the lifecycle timer.
 Both JS and Go matrices pass. No further production change was needed.
 These checks close the explicitly listed replacement-order coverage gap for
 attribute powers, not the entire power-up or original-match fidelity scope.
+
+### Descending-ball corner collision audit
+
+Source constrain_sprites 0xe5f4..0xe600 selects inset 24 above stage 2 and 32
+otherwise. constrain_sprite processes lateral reversal at 0xe686 and end
+reversal/timer halving at 0xe6f4..0xe70e. Existing axis and stage-transition
+regressions agree. Added full-step corner cases for all four sign combinations:
+a stage-3 ball at terrain offsets 548/292 descends to stage 2, clips both axes,
+then travels inward to 536/280. Both nominal direction components reverse,
+sustain 100 becomes 50 once, charge count remains 3, and the event tail contains
+side contact 5 followed by end contact 27. JS and Go targeted tests pass.
+No production change was needed. This validates the corner state and event
+sequence, not every sound source coordinate or complete fixed-point behavior.

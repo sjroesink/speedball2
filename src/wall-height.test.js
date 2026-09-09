@@ -35,3 +35,22 @@ test("wall and goal decisions use this tick's rising or falling flight stage",()
   }
  }
 });
+
+test("descending corner contact reflects both axes and retains both wall cues",()=>{
+ for(const sx of [-1,1])for(const sz of [-1,1]) {
+  const s=initial();for(const p of s.players)p.stun=100;
+  Object.assign(s.ball,{owner:-1,lastTouch:-1,x:sx*548*unit,z:sz*292*unit,
+   h:1.75,flightKind:2,flightStage:3,flightIndex:41,flightFraction:0,
+   vx:sx*8*velocityUnit,vz:sz*8*velocityUnit,dirX:sx,dirZ:sz,
+   speedTimer:100,nextSlowdown:0,charged:true,electric:3,electricBudget:3});
+  const after=s.event.id;
+  step(s,.04,{},[true,true]);
+  assert.equal(s.ball.flightStage,2);
+  assert.ok(Math.abs(s.ball.x-sx*536*unit)<1e-8);
+  assert.ok(Math.abs(s.ball.z-sz*280*unit)<1e-8);
+  assert.equal(s.ball.dirX,-sx);assert.equal(s.ball.dirZ,-sz);
+  assert.equal(s.ball.speedTimer,50,"end contact halves sustain exactly once");
+  assert.equal(s.ball.charged,true);assert.equal(s.ball.electric,3);
+  assert.deepEqual(s.events.filter(e=>e.id>after).map(e=>e.kind),[5,27]);
+ }
+});
