@@ -5,6 +5,12 @@ import {
   referenceDistance,
 } from "./attributes.js";
 const unit = 22.4 / 576;
+export function playerTargetDelta(p, target) {
+  const a = data.origins[p.physicalSprite ?? 0];
+  const b = data.origins[target.physicalSprite ?? 0];
+  return { x: target.x - b[1] * unit - p.x + a[1] * unit,
+    z: target.z + b[0] * unit - p.z };
+}
 // distance_to_point (0xdaca) includes only the querying player's Y origin.
 export function playerPointDistance(p, x, z) {
   const origin = data.origins[p.physicalSprite ?? 0];

@@ -169,5 +169,5 @@ func (s *State) goalThrow(i, random int) *passPlan {
 			steer = -1
 		}
 	}
-	return &passPlan{receiver: -1, x: x, z: z, key: passDirection(p, x, z), high: referenceDistance(x-p.X, z-p.Z) > p.Stats[4]*2, steer: steer}
+	return &passPlan{receiver: -1, x: x, z: z, key: passDirection(p, x, z), high: playerPointDistance(p, x, z) > p.Stats[4]*2, steer: steer}
 }

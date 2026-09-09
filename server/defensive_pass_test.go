@@ -2,6 +2,19 @@ package main
 
 import "testing"
 
+func TestGoalThrowPoseThreshold(t *testing.T) {
+	s := initial()
+	p := &s.Players[7]
+	p.X, p.Z, p.Stats[4] = 380*terrainUnit, 16*terrainUnit, 100
+	if s.goalThrow(7, 0).high {
+		t.Fatal("equality must throw low")
+	}
+	p.physicalSprite = 50
+	if !s.goalThrow(7, 0).high {
+		t.Fatal("vertical origin must cross threshold")
+	}
+}
+
 func defensivePassFixture() (State, [18]int) {
 	const u = 22.4 / 576
 	s := initial()

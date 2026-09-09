@@ -2,6 +2,38 @@ package main
 
 import "testing"
 
+func TestSelectedTeammateAvoidance(t *testing.T) {
+	s := interactionSetup()
+	var d [18]int
+	for i := range d {
+		d[i] = 100
+	}
+	s.Controlled[0] = 7
+	q := &s.Players[7]
+	q.X, q.Z, q.Stun = 30*terrainUnit, 0, 0
+	a := s.localInteraction(1, &d, 255)
+	if a == nil || a.attack || a.x != -1 || a.z != 0 {
+		t.Fatal(a)
+	}
+	q.X = 31 * terrainUnit
+	if s.localInteraction(1, &d, 255) != nil {
+		t.Fatal("outside axis bound")
+	}
+	q.X, q.Z = 30*terrainUnit, 30*terrainUnit
+	if s.localInteraction(1, &d, 255) != nil {
+		t.Fatal("outside radial bound")
+	}
+	q.X, q.Z, q.physicalSprite = 0, 32*terrainUnit, 65
+	a = s.localInteraction(1, &d, 255)
+	if a == nil || a.attack || a.x != 0 || a.z != -1 {
+		t.Fatal("target origin", a)
+	}
+	q.Stun = 1
+	if s.localInteraction(1, &d, 255) != nil {
+		t.Fatal("fallen teammate")
+	}
+}
+
 func TestLocalInteractionVisibility(t *testing.T) {
 	const u = 22.4 / 576
 	s := interactionSetup()

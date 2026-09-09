@@ -2558,3 +2558,29 @@ production build. This does not yet port every distance_to_point call site:
 collectibles, bumpers and some direct AI point calculations still require
 individual audits. Full original animation cursor/callback parity and source
 fixed-point coordinate quantization also remain unproven.
+
+### Remaining point-distance call sites and selected-teammate avoidance
+
+Audit of distance_to_point callers: distance_to_collectable (0x115c2) keeps
+the item in A5 and the selected player in A3. step_bumper (0xe3d8) keeps the
+bumper in A5 and the ball in A6. Applying player pose origins in these callers
+would be incorrect. They use object ground positions. The active-player item
+comparison at 0xee98 swaps the ball into A5, not the pursuing player.
+
+The local-interaction tail at 0xffd4-0x1001e was missing. After exhausting
+opponents, supporting players now avoid their own selected teammate if that
+teammate is not fallen, both adjusted axes are within 30 pixels and the
+approximate distance is at most 32. The target includes both sprite origins;
+the querying player includes only its vertical origin. Avoidance direction
+still uses raw terrain positions, as avoid_enemy_player at 0x1020e does.
+Coincident players retain the team's forward direction. Opponents retain
+priority over this teammate fallback.
+
+Goal throws at 0x1067a now use pose-aware distance for the high/low decision;
+equality with twice the throw attribute stays low. Tests cover the 200-pixel
+threshold crossed by a one-pixel vertical origin, teammate axis/radial bounds,
+target horizontal origin, and exclusion of fallen teammates. The 252 existing
+JS tests including six long parity traces passed after the behavior changes;
+two additional JS tests and corresponding Go cases passed, along with Go vet
+and build. Source fixed-point rounding, full callback ordering and whole-match
+AI equivalence remain open. This audit does not establish complete fidelity.

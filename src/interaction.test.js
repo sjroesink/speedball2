@@ -3,6 +3,23 @@ import assert from "node:assert/strict";
 import { initial, step } from "./game.js";
 import { localInteraction } from "./interaction.js";
 
+test("supporting players yield to selected teammates within the original two-stage reach", () => {
+  const u = 22.4 / 576, s = setup(), d = Array(18).fill(100);
+  s.controlled[0] = 7;
+  Object.assign(s.players[7], { x: 30*u, z: 0, stun: 0 });
+  assert.deepEqual(localInteraction(s, 1, d, 255), {attack:false,x:-1,z:0});
+  s.players[7].x=31*u;
+  assert.equal(localInteraction(s, 1, d, 255), null);
+  s.players[7].x=30*u; s.players[7].z=30*u;
+  assert.equal(localInteraction(s, 1, d, 255), null, "radial check rejects square corner");
+  s.players[7].x=0; s.players[7].z=32*u; s.players[1].physicalSprite=48;
+  assert.equal(localInteraction(s, 1, d, 255), null, "query horizontal origin ignored");
+  s.players[1].physicalSprite=0; s.players[7].physicalSprite=65;
+  assert.deepEqual(localInteraction(s, 1, d, 255), {attack:false,x:0,z:-1});
+  s.players[7].stun=1;
+  assert.equal(localInteraction(s, 1, d, 255), null);
+});
+
 test("local AI excludes either offscreen participant but accepts the viewport edge", () => {
   const s = setup(),
     d = Array(18).fill(100),

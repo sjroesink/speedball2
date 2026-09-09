@@ -1,8 +1,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { initial, step, simulationStep } from "./game.js";
-import { defensivePass, defensivePunt } from "./defensive-pass.js";
+import { defensivePass, defensivePunt, goalThrow } from "./defensive-pass.js";
 const u = 22.4 / 576;
+test("goal lob threshold includes the displayed vertical pose origin", () => {
+  const s=initial(), p=s.players[7];
+  Object.assign(p,{x:380*u,z:16*u,physicalSprite:0}); p.stats[4]=100;
+  assert.equal(goalThrow(s,7,0).high,false, "200 pixels equals twice throw skill");
+  p.physicalSprite=50;
+  assert.equal(goalThrow(s,7,0).high,true, "one-pixel pose shift crosses threshold");
+});
 function fixture() {
   const s = initial(),
     d = Array(18).fill(1000);

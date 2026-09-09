@@ -1,4 +1,4 @@
-import { referenceDistance } from "./attributes.js";
+import { playerPointDistance } from "./physical-pose.js";
 import { predictedTarget } from "./steering.js";
 const unit = 22.4 / 576;
 const role = (i) => [0, 1, 1, 2, 2, 2, 4, 4, 3][i % 9];
@@ -123,7 +123,7 @@ export function goalThrow(s, i, random) {
     x,
     z,
     key: directionKey(p, x, z),
-    high: referenceDistance(x - p.x, z - p.z) > p.stats[4] * 2,
+    high: playerPointDistance(p, x, z) > p.stats[4] * 2,
     steer,
   };
 }
