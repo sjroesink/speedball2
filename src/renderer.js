@@ -1,5 +1,5 @@
 import { addArenaLights } from "./lighting.js";
-import { playPlayerAction, startsPlayerAction } from "./player-animation.js";
+import { playPlayerAction, startsPlayerAction, runningAnimationDelta } from "./player-animation.js";
 import { centeredBall } from "./ball-model.js";
 import {
   cameraExtent,
@@ -207,6 +207,8 @@ export class ArenaRenderer {
         o = actor.wrapper,
         dx = p.x - o.position.x,
         dz = p.z - o.position.z;
+      const previousX = o.position.x, previousZ = o.position.z;
+      const teleported = Math.abs(dx) > 5 || Math.abs(dz) > 5;
       o.position.x += dx * (Math.abs(dx) > 5 ? 1 : damping(22, dt));
       o.position.z += dz * (Math.abs(dz) > 5 ? 1 : damping(22, dt));
       const carried = s.medical?.player === i && s.medical.phase >= 2;
@@ -242,7 +244,11 @@ export class ArenaRenderer {
         }
       }
       actor.remaining = p.actionTime;
-      actor.mixer.update(dt);
+      const run = visualAction === 5
+        ? Object.entries(actor.clips).find(([name]) => name.includes("Run"))?.[1] : null;
+      const distance = Math.hypot(o.position.x - previousX, o.position.z - previousZ);
+      actor.mixer.update(run
+        ? runningAnimationDelta(distance, run.getClip().duration, teleported) : dt);
       o.visible = p.health > 0 || p.action === 4 || p.injury > 1;
       actor.model.rotation.x = p.health <= 0 ? Math.PI / 2 : 0;
       // Standing meshes originate at the feet; center the prone body on the stretcher.

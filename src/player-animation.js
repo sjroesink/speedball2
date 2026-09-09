@@ -23,3 +23,9 @@ export function startsPlayerAction(previousKind, kind, previousRemaining, remain
   return healthy && [1, 2, 3, 6, 7].includes(kind) &&
     Number.isFinite(previousRemaining) && remaining > previousRemaining + .015;
 }
+
+// One authored two-step cycle covers approximately 1.2 court units.
+export function runningAnimationDelta(distance, clipDuration, teleported = false) {
+  if (teleported || !Number.isFinite(distance) || distance <= 0) return 0;
+  return distance / 1.2 * clipDuration;
+}

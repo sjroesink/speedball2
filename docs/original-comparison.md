@@ -1996,3 +1996,17 @@ and requires the lowest sole to remain between -0.005 and 0.04 units, including
 interpolated frames. Browser running preview and production build pass. This
 reduces vertical floating; horizontal foot sliding, cadence versus travel speed
 and full weight transfer still need work.
+
+### Distance-driven running cadence
+
+The renderer now advances Run from displayed horizontal travel instead of a
+fixed wall-clock rate, using an initial calibration of 1.2 court units per
+two-step cycle. This follows the interpolated player position used on screen.
+Large position snaps do not advance the gait. Timed tackle, throw, catch, jump
+and fall clips continue to use elapsed time and their simulation timing.
+
+Twelve animation tests pass, including identical stride progression for equal
+travel at 30, 60 and 144 FPS, zero travel and relocation. Fullscreen training
+renders the updated gait; build and diff checks pass. This synchronizes overall
+cadence but does not lock a planted foot to a world-space contact point. The
+stride calibration and turn transitions still need visual refinement.

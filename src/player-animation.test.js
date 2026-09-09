@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { AnimationMixer, Vector3 } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { playPlayerAction, startsPlayerAction } from "./player-animation.js";
+import { playPlayerAction, startsPlayerAction, runningAnimationDelta } from "./player-animation.js";
 
 async function player(team = "cyan") {
   const bytes = await readFile(new URL(`../public/assets/player-${team}.glb`, import.meta.url));
@@ -178,4 +178,15 @@ test("running stance stays near the floor between authored keys", async () => {
       assert.ok(sole>=-.005&&sole<.04,`stance sole stays within floor tolerance: ${sole}`);
     }
   }
+});
+
+
+test("running phase follows distance regardless of frame rate and ignores relocation", () => {
+  for(const fps of [30,60,144]) {
+    let elapsed=0;
+    for(let frame=0;frame<fps;frame++) elapsed+=runningAnimationDelta(2.4/fps,.4);
+    assert.ok(Math.abs(elapsed-.8)<1e-10,"2.4 units produce two stride cycles");
+  }
+  assert.equal(runningAnimationDelta(0,.4),0);
+  assert.equal(runningAnimationDelta(25,.4,true),0);
 });
