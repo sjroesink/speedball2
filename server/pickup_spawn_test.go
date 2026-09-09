@@ -66,3 +66,31 @@ func TestPersistentPickupAndDistance(t *testing.T) {
 		t.Fatal("boundary collection")
 	}
 }
+
+func TestPowerSourceMappingAndSoloExclusion(t *testing.T) {
+	expected := []int{10, 1, 3, 4, 5, 6, 7, 8, 2, 9, 11, 12}
+	for index, kind := range expected {
+		s := initial()
+		s.RNG = [2]uint32{uint32((index*11)%16) << 16, 0}
+		s.spawnPickup(0)
+		if s.Pickups[0].Kind != kind {
+			t.Fatal("source index", index, s.Pickups[0].Kind)
+		}
+	}
+	s := initial()
+	s.Training = true
+	s.RNG = [2]uint32{11 << 16, 0}
+	s.spawnPickup(0)
+	if s.Pickups[0].Kind != 8 || s.RNG != [2]uint32{55 << 16, 33 << 16} {
+		t.Fatal("solo rejection", s.Pickups[0], s.RNG)
+	}
+	s.RNG = [2]uint32{0x31415926, 0x53589793}
+	seen := map[int]bool{}
+	for i := 0; i < 1000; i++ {
+		s.spawnPickup(0)
+		seen[s.Pickups[0].Kind] = true
+	}
+	if seen[1] || !seen[2] || len(seen) != 11 {
+		t.Fatal("solo effect pool", seen)
+	}
+}

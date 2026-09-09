@@ -49,3 +49,24 @@ test("uncollected coins and powers persist; collection requires the original 16-
   assert.ok(item.wait > 0);
   assert.equal(s.credits[0], 100);
 });
+
+test("Amiga random indices select their corresponding effects, with solo freeze rejected", () => {
+  // With zero low words and B=0, the third RNG draw has high word 3*A.
+  // 11 is the inverse of 3 modulo 16, selecting each source table index.
+  const expected = [10, 1, 3, 4, 5, 6, 7, 8, 2, 9, 11, 12];
+  for (let index=0; index<12; index++) {
+    const s=initial();s.rng=[((index*11)%16)<<16,0];
+    spawnPickup(s,0);
+    assert.equal(s.pickups[0].kind,expected[index]);
+  }
+  const s=initial({training:true});s.rng=[11<<16,0];
+  spawnPickup(s,0);
+  assert.equal(s.pickups[0].kind,8); // Freeze draw 33 is rejected; next is 55.
+  assert.deepEqual(s.rng,[55<<16,33<<16]);
+  s.rng=[0x31415926,0x53589793];
+  const seen=new Set();
+  for(let i=0;i<1000;i++){spawnPickup(s,0);seen.add(s.pickups[0].kind)}
+  assert.equal(seen.has(1),false);
+  assert.equal(seen.has(2),true); // Reverse controls remains valid in solo.
+  assert.equal(seen.size,11);
+});

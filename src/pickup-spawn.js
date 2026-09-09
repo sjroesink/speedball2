@@ -1,5 +1,7 @@
 import { randomByte } from "./attributes.js";
 const unit = 22.4 / 576;
+// Amiga powerup_fns (0x4616), translated to our public effect identifiers.
+const powerKinds = [10, 1, 3, 4, 5, 6, 7, 8, 2, 9, 11, 12];
 function random(s) {
   randomByte(s);
   return s.rng[0] >>> 0;
@@ -32,8 +34,8 @@ export function spawnPickup(s, slot) {
     do {
       value = random(s);
       kind = (value >>> 16) & 15;
-    } while (kind >= 12);
-    item.kind = kind + 1;
+    } while (kind >= 12 || (s.training && kind === 1));
+    item.kind = powerKinds[kind];
     item.wait = ((value & 255) | 128) / 25;
   }
   item.life = 0; // Visible coins and powers remain until collected.

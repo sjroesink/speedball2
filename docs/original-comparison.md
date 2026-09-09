@@ -1175,3 +1175,22 @@ regardless of AI income. 184 JS tests, Go tests/vet and production build pass.
 The English rules explain the amounts and distinction between appearance limits
 and collectible floor coins. League/cup economy, starting cash, bonuses and shop
 persistence are not represented by the current training/head-to-head modes.
+
+
+## Amiga power-up selection and solo exclusion (2026-09-09)
+
+Corrected randomise_powerup's index translation using powerup_fns at 0x4616:
+shield, freeze, weaken, boost, manic, slow, grab, teleport, reverse, goal block,
+energy, zap. Our public identifiers use a different order, so a raw random
+index plus one selected the wrong effect for a given source RNG result.
+Both implementations now translate the index while retaining existing asset,
+HUD and protocol identifiers.
+
+The Amiga comparison at 0x1153c excludes sprite 0x38 outside two-player mode.
+Its function-table entry is FREEZE, not reverse controls. Earlier notes naming
+reverse controls as the solo exclusion were incorrect. Training now rejection-
+samples freeze at initialization and every subsequent spawn. Reverse remains
+available. Tests use constructed RNG seeds to select every source table index,
+check the exact extra draw after a rejected freeze, and sample the complete
+11-effect solo pool using the normal seed. 185 JS tests and production build
+pass. No full match RNG/frame-order equivalence is claimed.

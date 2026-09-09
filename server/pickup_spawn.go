@@ -1,5 +1,8 @@
 package main
 
+// Amiga powerup_fns (0x4616), translated to our public effect identifiers.
+var powerKinds = [...]int{10, 1, 3, 4, 5, 6, 7, 8, 2, 9, 11, 12}
+
 func (s *State) spawnPickup(slot int) {
 	const unit = 22.4 / 576
 	item := &s.Pickups[slot]
@@ -33,10 +36,10 @@ func (s *State) spawnPickup(slot int) {
 		for {
 			value := random()
 			kind := (value >> 16) & 15
-			if kind >= 12 {
+			if kind >= 12 || (s.Training && kind == 1) {
 				continue
 			}
-			item.Kind = int(kind) + 1
+			item.Kind = powerKinds[kind]
 			item.Wait = float64((value&255)|128) / 25
 			break
 		}
