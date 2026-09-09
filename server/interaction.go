@@ -28,7 +28,7 @@ func (s *State) localInteraction(i int, distances *[18]int, random int) *interac
 		if absInt(dz) > absInt(dx)/2 {
 			z = math.Copysign(1, float64(dz))
 		}
-		if x == 0 && z == 0 {
+		if x == 0 && z == 0 && !(attack && s.Controlled[p.Team] == i) {
 			x = s.direction(p.Team)
 		} else if !attack {
 			x = -x

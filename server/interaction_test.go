@@ -25,6 +25,12 @@ func TestSelectedInteractionPrediction(t *testing.T) {
 	if s.localInteraction(1, &d, 255).x != 1 {
 		t.Fatal("coincident avoidance direction")
 	}
+	s.Controlled[0] = 1
+	s.Players[9].moveZ = 0
+	a = s.localInteraction(1, &d, 0)
+	if a.x != 0 || a.z != 0 {
+		t.Fatal("coincident attack direction")
+	}
 }
 
 func TestSelectedContactAction(t *testing.T) {

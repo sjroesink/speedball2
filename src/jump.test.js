@@ -18,6 +18,26 @@ test("jump selection uses speed reach, free possession and original flight stage
 });
 
 import { initial, step, simulationStep, jumpHeight } from "./game.js";
+
+test("jump without movement input stays in place until recovery", () => {
+  const s = initial();
+  for (const q of s.players) q.stun = 100;
+  const p = s.players[7];
+  Object.assign(p, { x: 0, z: 0, fx: 0, fz: -1, stun: 0 });
+  Object.assign(s.ball, { x: 1, z: 0, h: 4, owner: -1 });
+  step(s, simulationStep, { shoot: true });
+  assert.equal(p.action, 2);
+  assert.equal(p.stationaryJump, true);
+  s.ball.x = 8;
+  for (let tick = 1; tick < 12; tick++) {
+    step(s, simulationStep, { x: 1 });
+    assert.equal(p.x, 0);
+    assert.equal(p.z, 0);
+    assert.equal(p.fz, -1);
+  }
+  step(s, simulationStep, { x: 1 });
+  assert.ok(p.x > 0);
+});
 test("slide releases control on original sustain frame without extra cooldown", () => {
   for (const [speed, frames] of [
     [100, 8],

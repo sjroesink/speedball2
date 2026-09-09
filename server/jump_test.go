@@ -2,6 +2,31 @@ package main
 
 import "testing"
 
+func TestStationaryJump(t *testing.T) {
+	s := initial()
+	for i := range s.Players {
+		s.Players[i].Stun = 100
+	}
+	p := &s.Players[7]
+	p.X, p.Z, p.FX, p.FZ, p.Stun = 0, 0, 0, -1, 0
+	s.Ball.X, s.Ball.Z, s.Ball.H, s.Ball.Owner = 1, 0, 4, -1
+	s.simulate(simulationStep, [2]Input{{Shoot: true}, {}}, [2]bool{true, false})
+	if p.Action != 2 || !p.stationaryJump {
+		t.Fatal("stationary launch")
+	}
+	s.Ball.X = 8
+	for tick := 1; tick < 12; tick++ {
+		s.simulate(simulationStep, [2]Input{{X: 1}, {}}, [2]bool{true, false})
+		if p.X != 0 || p.Z != 0 || p.FZ != -1 {
+			t.Fatal("jump drift", tick, p.X, p.Z)
+		}
+	}
+	s.simulate(simulationStep, [2]Input{{X: 1}, {}}, [2]bool{true, false})
+	if p.X <= 0 {
+		t.Fatal("movement not restored")
+	}
+}
+
 func TestJumpSelection(t *testing.T) {
 	p := Player{Stats: defaultStats()}
 	b := Ball{Owner: -1, FlightKind: 2, FlightStage: 3, H: 5}

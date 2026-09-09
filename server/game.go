@@ -19,6 +19,7 @@ type Player struct {
 	slideEnding                 bool
 	throwMode                   int
 	jumping                     bool
+	stationaryJump              bool
 	aiWait, aiX, aiZ            float64
 	aiTarget                    bool
 	keeperBlock                 bool
@@ -390,7 +391,9 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 					nearby = s.localInteraction(i, &contacts[i], s.randomByte())
 				}
 				if nearby != nil {
-					p.FX, p.FZ = nearby.x, nearby.z
+					if nearby.x != 0 || nearby.z != 0 {
+						p.FX, p.FZ = nearby.x, nearby.z
+					}
 					if nearby.attack {
 						p.Action = 7
 						p.ActionTime = 4. / 25
@@ -406,6 +409,10 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 						p.Cooldown = p.ActionTime
 						p.tackleResolved = false
 						p.jumping = p.Action == 2
+						p.stationaryJump = p.Action == 2 && nearby.x == 0 && nearby.z == 0
+						if p.Action == 1 && nearby.x == 0 && nearby.z == 0 {
+							p.FX, p.FZ = s.direction(t), 0
+						}
 						p.slideEnding = false
 						p.keeperBlock = p.Action == 1 && i%9 == 0 && b.Owner < 0 && (b.VX != 0 || b.VZ != 0) && math.Abs(p.FZ) > .1
 						s.event(cue, i, -1, p.X, p.Z, 0)
@@ -508,6 +515,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			if canJumpAtBall(p, b, catchDistances[i], inMultiplier) && !u.Tackle {
 				p.Action = 2
 				p.jumping = true
+				p.stationaryJump = dx == 0 && dz == 0
 				p.ActionTime = actionDuration(2, p.Stats[3])
 				p.Cooldown = p.ActionTime
 				s.event(2, i, -1, p.X, p.Z, 0)

@@ -19,7 +19,8 @@ export function localInteraction(s, i, distances, random) {
       dz = Math.round(tz / unit) - Math.round(p.z / unit);
     let x = Math.abs(dx) > Math.floor(Math.abs(dz) / 2) ? Math.sign(dx) : 0;
     let z = Math.abs(dz) > Math.floor(Math.abs(dx) / 2) ? Math.sign(dz) : 0;
-    if (!x && !z) x = (p.team === 0 ? 1 : -1) * (s.period === 2 ? -1 : 1);
+    if (!x && !z && !(attack && selected))
+      x = (p.team === 0 ? 1 : -1) * (s.period === 2 ? -1 : 1);
     else if (!attack) {
       x = -x;
       z = -z;

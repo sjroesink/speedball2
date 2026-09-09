@@ -147,6 +147,9 @@ func movementSpeed(p *Player, carrying, keeperBlock bool) float64 {
 	if p.Action == 1 && keeperBlock {
 		level = 8
 	}
+	if p.Action == 2 && p.stationaryJump {
+		level = 0
+	}
 	if p.Action == 3 || p.Action == 6 || p.Action == 7 {
 		level = 0
 	}

@@ -452,8 +452,10 @@ export function step(
             ? localInteraction(s, i, contacts[i], randomByte(s))
             : null;
         if (nearby) {
-          p.fx = nearby.x;
-          p.fz = nearby.z;
+          if (nearby.x || nearby.z) {
+            p.fx = nearby.x;
+            p.fz = nearby.z;
+          }
           if (nearby.attack) {
             const selected = s.controlled[t] === i;
             p.action = selected
@@ -467,6 +469,11 @@ export function step(
             p.cooldown = p.actionTime;
             p.tackleResolved = false;
             p.jumping = p.action === 2;
+            p.stationaryJump = p.action === 2 && !nearby.x && !nearby.z;
+            if (p.action === 1 && !nearby.x && !nearby.z) {
+              p.fx = d;
+              p.fz = 0;
+            }
             p.slideEnding = false;
             p.keeperBlock =
               p.action === 1 &&
@@ -571,6 +578,7 @@ export function step(
       if (canJumpAtBall(p, b, catchDistances[i], inMultiplier) && !u.tackle) {
         p.action = 2;
         p.jumping = true;
+        p.stationaryJump = !dx && !dz;
         p.actionTime = actionDuration(2, p.stats[3]);
         p.cooldown = p.actionTime;
         event(s, 2, i, -1, p.x, p.z, 0);

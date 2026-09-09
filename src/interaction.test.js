@@ -22,6 +22,9 @@ test("selected attacks lead the opponent; supporting punches use current positio
   assert.deepEqual(localInteraction(s, 1, d, 0), { attack: true, x: 1, z: 0 });
   s.players[9].x = 0;
   assert.equal(localInteraction(s, 1, d, 255).x, 1);
+  s.controlled[0] = 1;
+  s.players[9].moveZ = 0;
+  assert.deepEqual(localInteraction(s, 1, d, 0), { attack: true, x: 0, z: 0 });
 });
 test("selected AI starts a slide or high-ball jump on nearby contact", () => {
   for (const high of [false, true]) {
