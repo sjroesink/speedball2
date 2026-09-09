@@ -54,3 +54,19 @@ func steerToTarget(p *Player, x, z float64, fresh bool) (float64, float64) {
 	}
 	return vx, vz
 }
+
+// sub_EC0C: hold distant heading through the run cycle; correct near arrival.
+func advanceSteering(p *Player, x, z float64, fresh bool) (float64, float64) {
+	const unit = 22.4 / 576
+	dx := math.Abs(math.Round(x/unit) - math.Round(p.X/unit))
+	dz := math.Abs(math.Round(z/unit) - math.Round(p.Z/unit))
+	changed := !p.steerValid || p.steerTargetX != x || p.steerTargetZ != z
+	update := fresh || changed || p.steerFrame == 0 || (dx <= 32 && dz <= 32)
+	p.steerFrame = (p.steerFrame + 1) & 7
+	if update {
+		p.steerX, p.steerZ = steerToTarget(p, x, z, fresh)
+		p.steerTargetX, p.steerTargetZ = x, z
+		p.steerValid = true
+	}
+	return p.steerX, p.steerZ
+}

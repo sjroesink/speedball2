@@ -1,4 +1,9 @@
-import { cameraExtent, cameraTarget, damping } from "./presentation.js";
+import {
+  cameraExtent,
+  cameraTarget,
+  damping,
+  smoothFacing,
+} from "./presentation.js";
 import { active } from "./features.js";
 import { recentEvents } from "./events.js";
 import * as THREE from "three";
@@ -223,7 +228,11 @@ export class ArenaRenderer {
       const carried = s.medical?.player === i && s.medical.phase >= 2;
       const targetHeight = carried ? 0.7 : jumpHeight(p);
       o.position.y += (targetHeight - o.position.y) * damping(30, dt);
-      o.rotation.y = Math.atan2(p.fx, p.fz);
+      const heading = Math.atan2(p.fx, p.fz);
+      o.rotation.y = actor.hasFacing
+        ? smoothFacing(o.rotation.y, heading, dt)
+        : heading;
+      actor.hasFacing = true;
       const moving = Math.hypot(dx, dz) > 0.045;
       const visualAction = p.action || (moving ? 5 : 0);
       if (actor.active !== visualAction) {

@@ -30,7 +30,7 @@ func (s *State) restartStep(dt float64) bool {
 				p.Action = 0
 				p.jumping = false
 				x, z := s.launchPosition(i)
-				vx, vz := steerToTarget(p, x, z, false)
+				vx, vz := advanceSteering(p, x, z, false)
 				speed := movementSpeed(p, false, false)
 				p.moveX, p.moveZ = vx*speed, vz*speed
 				p.X += vx * math.Min(math.Abs(x-p.X), speed*dt)

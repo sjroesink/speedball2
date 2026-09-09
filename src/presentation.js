@@ -17,3 +17,12 @@ export function cameraTarget(x, z, extent) {
     z: bound(z, Math.max(0, 12 - extent.halfWidth)),
   };
 }
+
+// Interpolate headings over the shortest arc, including the -PI/PI seam.
+export function smoothFacing(current, target, dt) {
+  const delta = Math.atan2(
+    Math.sin(target - current),
+    Math.cos(target - current),
+  );
+  return current + delta * damping(16, dt);
+}

@@ -53,3 +53,24 @@ func TestOriginalTargetSteering(t *testing.T) {
 		t.Fatal("snapped at inclusive boundary")
 	}
 }
+
+func TestDistantSteeringCadence(t *testing.T) {
+	const u = 22.4 / 576
+	p := Player{}
+	for tick := 0; tick < 16; tick++ {
+		x, z := advanceSteering(&p, 200*u, 100*u, tick == 0)
+		wantZ := 0.
+		if tick >= 8 {
+			wantZ = 1
+		}
+		if x != 1 || z != wantZ {
+			t.Fatal("rapid heading change", tick, x, z)
+		}
+		p.X += x * 5 * u
+		p.Z += z * 5 * u
+	}
+	x, z := advanceSteering(&p, -200*u, 0, false)
+	if x != -1 || z != 0 {
+		t.Fatal("new target delayed")
+	}
+}

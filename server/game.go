@@ -14,28 +14,31 @@ const (
 
 // Actions are replicated, including misses: 1 slide, 2 jump, 3 throw, 4 hit.
 type Player struct {
-	aiAvoid                     bool
-	fallX, fallZ                float64
-	slideEnding                 bool
-	throwMode                   int
-	throwSteer                  float64
-	jumping                     bool
-	stationaryJump              bool
-	jumpSpeed                   float64
-	aiWait, aiX, aiZ            float64
-	aiTarget                    bool
-	keeperBlock                 bool
-	moveX, moveZ                float64
-	Stats, StatBackup           [8]int
-	GearBackup, GearPowerBackup int
-	X, Z                        float64
-	Team                        int
-	FX, FZ                      float64
-	Stun, ActionTime, Cooldown  float64
-	Action                      int
-	tackleResolved              bool
-	Health, Injury              float64
-	Gear                        int
+	steerFrame                                 int
+	steerValid                                 bool
+	steerX, steerZ, steerTargetX, steerTargetZ float64
+	aiAvoid                                    bool
+	fallX, fallZ                               float64
+	slideEnding                                bool
+	throwMode                                  int
+	throwSteer                                 float64
+	jumping                                    bool
+	stationaryJump                             bool
+	jumpSpeed                                  float64
+	aiWait, aiX, aiZ                           float64
+	aiTarget                                   bool
+	keeperBlock                                bool
+	moveX, moveZ                               float64
+	Stats, StatBackup                          [8]int
+	GearBackup, GearPowerBackup                int
+	X, Z                                       float64
+	Team                                       int
+	FX, FZ                                     float64
+	Stun, ActionTime, Cooldown                 float64
+	Action                                     int
+	tackleResolved                             bool
+	Health, Injury                             float64
+	Gear                                       int
 }
 type Ball struct {
 	Charged                              bool
@@ -469,7 +472,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			if p.ActionTime > 0 || p.aiAvoid {
 				dx, dz = eightWay(p.FX, p.FZ)
 			} else {
-				dx, dz = steerToTarget(p, tx, tz, decide)
+				dx, dz = advanceSteering(p, tx, tz, decide)
 			}
 			u = Input{}
 			if decide && b.Owner == i {

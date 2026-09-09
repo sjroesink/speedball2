@@ -1,5 +1,5 @@
 import { movementSpeed } from "./attributes.js";
-import { steerToTarget } from "./steering.js";
+import { advanceSteering } from "./steering.js";
 import { startInjury } from "./features.js";
 
 // Medical restart: prepare_ball_launch waits for every player, then the deck
@@ -27,7 +27,7 @@ export function restartStep(s, dt, launchPosition) {
         p.action = 0;
         p.jumping = false;
         const [x, z] = launchPosition(s, i),
-          [vx, vz] = steerToTarget(p, x, z);
+          [vx, vz] = advanceSteering(p, x, z);
         const speed = movementSpeed(p, false);
         p.moveX = vx * speed;
         p.moveZ = vz * speed;

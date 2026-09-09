@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { steerToTarget, predictedTarget } from "./steering.js";
+import { steerToTarget, predictedTarget, advanceSteering } from "./steering.js";
 const u = 22.4 / 576;
 test("prediction uses the original intelligence bands in 25 Hz steps", () => {
   for (const [intelligence, expected] of [
@@ -69,4 +69,22 @@ test("arrival snaps axes independently only below four original units", () => {
   assert.deepEqual(q, { x: 0, z: 0 });
   assert.deepEqual(steerToTarget(q, -3 * u, -3 * u), [0, 0]);
   assert.deepEqual(q, { x: -3 * u, z: -3 * u });
+});
+
+test("distant diagonal steering holds direction instead of alternating every tick", () => {
+  const p = { x: 0, z: 0 },
+    target = [200 * u, 100 * u],
+    headings = [];
+  for (let tick = 0; tick < 16; tick++) {
+    const [x, z] = advanceSteering(p, ...target, tick === 0);
+    headings.push([x, z]);
+    p.x += x * 5 * u;
+    p.z += z * 5 * u;
+  }
+  for (let i = 1; i < 8; i++) assert.deepEqual(headings[i], headings[0]);
+  assert.deepEqual(headings[0], [1, 0]);
+  assert.deepEqual(headings[8], [1, 1]);
+  for (let i = 9; i < 16; i++) assert.deepEqual(headings[i], headings[8]);
+  // A changed destination must take effect immediately, without waiting a cycle.
+  assert.deepEqual(advanceSteering(p, -200 * u, 0), [-1, 0]);
 });

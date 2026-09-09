@@ -34,3 +34,20 @@ export function steerToTarget(p, x, z, fresh = false) {
   }
   return [vx, vz];
 }
+
+// sub_EC0C recalculates distant steering only at the run-cycle boundary.
+// Within the 32-unit arrival box it corrects direction every reference tick.
+export function advanceSteering(p, x, z, fresh = false) {
+  const dx = Math.abs(Math.round(x / unit) - Math.round(p.x / unit));
+  const dz = Math.abs(Math.round(z / unit) - Math.round(p.z / unit));
+  const frame = p.steerFrame ?? 0;
+  const changed = p.steerTargetX !== x || p.steerTargetZ !== z;
+  const update = fresh || changed || frame === 0 || (dx <= 32 && dz <= 32);
+  p.steerFrame = (frame + 1) & 7;
+  if (update) {
+    [p.steerX, p.steerZ] = steerToTarget(p, x, z, fresh);
+    p.steerTargetX = x;
+    p.steerTargetZ = z;
+  }
+  return [p.steerX, p.steerZ];
+}

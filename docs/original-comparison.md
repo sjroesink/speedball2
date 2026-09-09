@@ -1049,3 +1049,40 @@ feet. All 173 JavaScript tests and production build pass; GLB structure checks
 confirm evaluated geometry and seven animations per team. Full motion, collision
 readability and different viewport proportions still need playtesting with the
 new camera; this is a visual fidelity improvement, not completed art parity.
+
+
+## Rapid facing-change regression (2026-09-09)
+
+Following the user's report of rapidly spinning players, a deterministic AI
+match reproduced a heading alternating by 45 degrees on successive 25 Hz ticks
+while running diagonally (player 8, ticks 133-143 in the pre-fix simulation).
+The half-axis direction threshold was reevaluated every tick. WIP Player.sub_EC0C
+only reevaluates distant steering at the run-animation boundary, but permits
+every-tick correction within 32 terrain units of the destination.
+
+Added retained steering between eight-tick run-cycle boundaries in Go and JS,
+with immediate updates for new decisions/destinations and near-target arrival.
+Formation returns use it too. Renderer heading changes now interpolate over
+the shortest angular arc rather than snapping to every replicated direction.
+These are presentation turns; throwing and tackling retain authoritative facing.
+
+Regression tests reproduce the distant straight/diagonal threshold and verify
+held headings, immediate destination changes, near arrival, angle-seam crossing
+and frame-rate-independent convergence. All 176 JavaScript tests, Go tests/vet
+and production build passed before the final formation call-site update; the
+formation regression and full Go suite passed after that update. User-observed
+live gameplay confirmation is still pending.
+
+## Contact sound and voice-priority checkpoint (2026-09-09)
+
+Steel wall contacts now use a short noise transient and inharmonic fixed
+resonances; body hits retain a low thump plus a brief armor rattle. The 32-voice
+limit now evicts lower-priority sounds before whistles or match announcements.
+A regression floods the mixer with impacts and verifies announcements survive.
+
+An ignored browser test page rendered every cue, kickoff, fulltime and a
+collision-storm mix through the real OfflineAudioContext. All outputs were
+finite, non-silent, below digital full scale and released all voices. Measured
+peaks: body hit 0.0467, steel contact 0.0265, stress mix 0.2187. This is objective
+signal/lifecycle validation; subjective listening and loudness balance remain
+unverified. Playback controls are available in .reference/audio-preview.html.
