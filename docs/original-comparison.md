@@ -1650,3 +1650,20 @@ changing its event requirements. The modern non-table gravity fallback remains
 separate; this verifies the original flight-table path.
 
 Validation: 209 JavaScript tests, Go tests, Go vet and production build pass.
+
+
+### Four wall-contact sound categories (2026-09-09)
+
+`constrain_sprite` selects low/high side-wall sounds 0x04/0x32 at
+0xe664..0xe680 and low/high end-wall sounds 0x33/0x34 at 0xe6d2..0xe6ee.
+The simulation now distinguishes these contacts as events 5, 26, 27 and 28.
+New WebAudio synth cues provide higher ringing side contact, a lower end-wall
+impact and a brighter high end-wall impact; no commercial samples are used.
+The existing event byte carries these IDs without a snapshot layout change.
+All four preserve wall particles and the existing WALL REBOUND feedback.
+
+All-wall boundary tests assert the appropriate cue for both heights and axes
+in browser and server. The browser audio playtest passed all 34 cases; new
+cues 26/27/28 peaked at 0.0292/0.0318/0.0303 and released every voice. This proves
+finite non-silent output and cleanup, not subjective resemblance or final mix.
+209 JavaScript tests, Go tests, Go vet and production build pass.

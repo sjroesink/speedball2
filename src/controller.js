@@ -365,7 +365,7 @@ export async function start() {
           featureText ||
           (e.kind === 4
             ? "HARD HIT"
-            : e.kind === 5
+            : [5, 26, 27, 28].includes(e.kind)
               ? "WALL REBOUND"
               : e.kind === 6
                 ? "HALFTIME · SWITCH ENDS"

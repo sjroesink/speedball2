@@ -10,7 +10,7 @@ export function notificationPriority(kind) {
   if ([6, 7, 14].includes(kind)) return 3;
   if ([8, 9, 10].includes(kind)) return 2;
   if ([11, 12, 13, 15].includes(kind)) return 1;
-  if ([4, 5].includes(kind)) return 0;
+  if ([4, 5, 26, 27, 28].includes(kind)) return 0;
   return -1;
 }
 

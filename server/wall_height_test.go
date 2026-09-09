@@ -43,6 +43,22 @@ func TestWallHeightInsets(t *testing.T) {
 					}
 					reflected := !high || beyond
 					expected := sign * position
+					if reflected {
+						expectedKind := 5
+						if axis == "x" {
+							expectedKind = 27
+						}
+						if high {
+							if axis == "x" {
+								expectedKind = 28
+							} else {
+								expectedKind = 26
+							}
+						}
+						if s.Event.Kind != expectedKind {
+							t.Fatal("wall cue", axis, high, s.Event.Kind)
+						}
+					}
 					expectedSign := sign
 					if reflected {
 						expected = sign * (center - inset) * terrainUnit

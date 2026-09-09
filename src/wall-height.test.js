@@ -14,6 +14,7 @@ test("high and low balls use original wall insets on all four walls",()=>{
   const before=s.ball[axis];step(s,.04,{},[true,true]);
   const reflected=!high||beyond;
   assert.equal(Math.sign(s.ball["v"+axis]),reflected?-sign:sign,`${axis} high=${high} beyond=${beyond}`);
+  if(reflected)assert.equal(s.event.kind,axis==="z"?(high?26:5):(high?28:27));
   const expected=(reflected?sign*boundary:before)+s.ball["v"+axis]*.04;
   assert.ok(Math.abs(s.ball[axis]-expected)<1e-8);
  }

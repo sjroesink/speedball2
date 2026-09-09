@@ -633,7 +633,11 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		}
 		wallX, wallZ := (576-inset)*terrainUnit, (320-inset)*terrainUnit
 		if math.Abs(b.Z) > wallZ && !specialContact {
-			s.event(5, b.LastTouch, -1, b.X, b.Z, b.H)
+			kind := 5
+			if inset == 24 {
+				kind = 26
+			}
+			s.event(kind, b.LastTouch, -1, b.X, b.Z, b.H)
 			b.Z = math.Copysign(wallZ, b.Z)
 			reflectBall(b, false)
 		}
@@ -651,7 +655,11 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			} else {
 				b.X = math.Copysign(wallX, b.X)
 				reflectBall(b, true)
-				s.event(5, b.LastTouch, -1, b.X, b.Z, b.H)
+				kind := 27
+				if inset == 24 {
+					kind = 28
+				}
+				s.event(kind, b.LastTouch, -1, b.X, b.Z, b.H)
 			}
 		}
 

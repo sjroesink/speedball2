@@ -690,7 +690,7 @@ function simulateStep(
     const inset = (b.flightKind ? b.flightStage > 2 : b.h > 1.25) ? 24 : 32;
     const wallX = (576 - inset) * terrainUnit, wallZ = (320 - inset) * terrainUnit;
     if (Math.abs(b.z) > wallZ && !specialContact) {
-      event(s, 5, b.lastTouch, -1, b.x, b.z, b.h);
+      event(s, inset === 24 ? 26 : 5, b.lastTouch, -1, b.x, b.z, b.h);
       b.z = Math.sign(b.z) * wallZ;
       reflectBall(b, "z");
     }
@@ -710,7 +710,7 @@ function simulateStep(
       } else {
         b.x = Math.sign(b.x) * wallX;
         reflectBall(b, "x");
-        event(s, 5, b.lastTouch, -1, b.x, b.z, b.h);
+        event(s, inset === 24 ? 28 : 27, b.lastTouch, -1, b.x, b.z, b.h);
       }
     }
     b.x += b.vx * dt;

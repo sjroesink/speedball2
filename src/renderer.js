@@ -424,7 +424,7 @@ export class ArenaRenderer {
       );
     });
     for (const e of recentEvents(s, this.lastEvent)) {
-      if ([4, 5, 8, 9, 10, 11, 12, 13, 14, 15].includes(e.kind))
+      if ([4, 5, 8, 9, 10, 11, 12, 13, 14, 15, 26, 27, 28].includes(e.kind))
         this.burst(e.x, e.z, e.h, e.kind === 4 ? 0xffbd65 : 0xa7fcff);
     }
     this.lastEvent = s.event.id;

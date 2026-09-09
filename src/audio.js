@@ -16,6 +16,10 @@ export function eventPan(state, event, view) {
 
 // Each layer is [waveform, start Hz, end Hz, seconds, gain, delay seconds].
 export const cues = {
+  // Amiga wall contacts: high side 0x32, low end 0x33, high end 0x34.
+  26: [["noise", 5100, 3200, 0.03, 0.08, 0], ["sine", 1800, 1800, 0.15, 0.12, 0], ["sine", 2710, 2710, 0.1, 0.05, 0]],
+  27: [["noise", 850, 230, 0.08, 0.14, 0], ["sine", 240, 160, 0.18, 0.16, 0], ["triangle", 650, 440, 0.1, 0.05, 0]],
+  28: [["noise", 3100, 1500, 0.05, 0.1, 0], ["sine", 1200, 900, 0.17, 0.13, 0], ["sine", 2070, 2070, 0.12, 0.06, 0]],
   // Distinct team interception signals, alongside the catch contact sound.
   24: [["triangle", 440, 880, 0.16, 0.1, 0], ["sine", 1100, 1100, 0.12, 0.06, 0.08]],
   25: [["triangle", 880, 440, 0.16, 0.1, 0], ["sine", 550, 550, 0.12, 0.06, 0.08]],
