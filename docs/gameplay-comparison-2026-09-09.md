@@ -151,3 +151,17 @@ A regression first reproduced high flight where the source branch requires low
 flight, then passed after the JS/Go correction. Both teams are covered; forced
 high throws (the modern E action) remain high. All 270 JS tests, including six
 10,000-tick cross-language scenarios, Go tests, vet and the production build pass.
+
+### Tackle visibility and deferred contact
+
+Amiga hitting_action_fn (0x10436) rejects an offscreen attacker; do_tackle
+(0x10482) rejects an offscreen target before consuming the attack or rolling
+success. JS/Go now capture the full logical viewport membership at the start of
+the player pass and use those flags for contact. This is the full 320-by-184
+window, not the 16-unit inset used to hand over human controls. The modern
+rendering remains wider, so this rule concerns the original active play area.
+A missed visibility gate leaves the tackle unresolved: it can hit on a later
+frame if both players enter the area before the animation finishes. Regressions
+cover either participant outside, no damage/no steal on that frame, and contact
+after the logical camera admits both players. All 270 JS tests, six long parity
+scenarios, Go tests, vet and build pass.

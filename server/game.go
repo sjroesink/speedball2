@@ -380,6 +380,10 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 	}
 	s.selectPlayers()
 	contacts := contactDistances(&s.Players)
+	var tackleVisible [18]bool
+	for i, p := range s.Players {
+		tackleVisible[i] = s.worldInViewport(p.X, p.Z, 0)
+	}
 	catchDistances := s.possessionDistances()
 	// step_sprites interleaves the teams, starting with team two.
 	for order := range s.Players {
@@ -410,7 +414,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				s.pendingShoot[p.Team] = false
 				s.event(19, i, -1, p.X, p.Z, 0)
 			}
-			s.resolveTackle(i, &contacts[i])
+			s.resolveTackle(i, &contacts[i], &tackleVisible)
 			if finishFall {
 				p.fallAttack = 0
 			}
@@ -425,7 +429,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			}
 			continue
 		}
-		s.resolveTackle(i, &contacts[i])
+		s.resolveTackle(i, &contacts[i], &tackleVisible)
 		t := p.Team
 		human := humans[t] && s.Controlled[t] == i && s.worldInViewport(p.X, p.Z, 16)
 		u := inputs[t]
@@ -843,7 +847,10 @@ func (s *State) catchBallAt(only int, distances *[18]int) {
 }
 
 // Existing slides resolve contact during thinking, before later players act.
-func (s *State) resolveTackle(i int, distances *[18]int) {
+func (s *State) resolveTackle(i int, distances *[18]int, visible *[18]bool) {
+	if !visible[i] {
+		return
+	}
 	p := &s.Players[i]
 	falling := p.Action == 4 && p.Stun > 0
 	attack := p.Action
@@ -855,7 +862,7 @@ func (s *State) resolveTackle(i int, distances *[18]int) {
 	}
 	for j := range s.Players {
 		q := &s.Players[j]
-		if q.Team == p.Team || q.Stun > 0 || q.Health <= 0 || s.active(10, q.Team) || distances[j] > 30 {
+		if q.Team == p.Team || !visible[j] || q.Stun > 0 || q.Health <= 0 || s.active(10, q.Team) || distances[j] > 30 {
 			continue
 		}
 		p.tackleResolved = true

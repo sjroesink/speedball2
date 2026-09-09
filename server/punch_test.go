@@ -62,7 +62,7 @@ func TestPunchFallVelocity(t *testing.T) {
 	}
 }
 
-func TestHitIndependentOfViewport(t *testing.T) {
+func TestTackleWaitsForViewport(t *testing.T) {
 	const u = 22.4 / 576
 	for _, actorOutside := range []bool{false, true} {
 		s := punchSetup()
@@ -73,7 +73,13 @@ func TestHitIndependentOfViewport(t *testing.T) {
 		if actorOutside {
 			p.X, q.X = 93*u, 91*u
 		}
+		q.aiWait = 100
 		s.Ball.Owner = 16
+		s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
+		if s.Ball.Owner != 16 || p.tackleResolved || q.Health != 100 {
+			t.Fatal("offscreen hit resolved")
+		}
+		s.logicalView = [2]int{160, 480}
 		s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
 		if s.Ball.Owner != 7 || !p.tackleResolved {
 			t.Fatal("offscreen hit missing")

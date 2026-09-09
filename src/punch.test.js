@@ -41,7 +41,7 @@ test("punch contact starts next tick and uses lower fall velocity than slide", (
   assert.equal(s.players[16].fallX, 3 * velocityUnit);
 });
 
-test("hits resolve immediately regardless of the old viewport", () => {
+test("tackle waits until both players enter the original viewport", () => {
   const u = 22.4 / 576;
   for (const actorOutside of [false, true]) {
     const s = setup(),
@@ -53,8 +53,13 @@ test("hits resolve immediately regardless of the old viewport", () => {
       action: 7,
       actionTime: 4 / 25,
     });
-    Object.assign(q, { x: (actorOutside ? 91 : 93) * u, z: 0, stun: 0 });
+    Object.assign(q, { x: (actorOutside ? 91 : 93) * u, z: 0, stun: 0, aiWait: 100 });
     s.ball.owner = 16;
+    step(s, simulationStep, {}, [true, true]);
+    assert.equal(s.ball.owner, 16);
+    assert.ok(!p.tackleResolved);
+    assert.equal(q.health, 100);
+    s.logicalView = [160, 480];
     step(s, simulationStep, {}, [true, true]);
     assert.equal(s.ball.owner, 7);
     assert.ok(p.tackleResolved);

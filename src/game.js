@@ -425,6 +425,7 @@ function simulateStep(
   const catchDistances = possessionDistances(s);
   selectPlayers(s, catchDistances);
   const contacts = contactDistances(s.players);
+  const tackleVisible = s.players.map(p => worldInViewport(s, p));
   // step_sprites processes team two then team one at each roster index.
   for (let order = 0; order < s.players.length; order++) {
     const i = Math.floor(order / 2) + (order % 2 === 0 ? 9 : 0);
@@ -456,7 +457,7 @@ function simulateStep(
         s.pendingShoot[p.team] = false;
         event(s, 19, i, -1, p.x, p.z, 0);
       }
-      resolveTackle(s, i, contacts[i]);
+      resolveTackle(s, i, contacts[i], tackleVisible);
       if (finishFall) p.fallAttack = 0;
       p.moveX = p.moveZ = 0;
       if (p.action === 4 && p.health > 0) {
@@ -470,7 +471,7 @@ function simulateStep(
       }
       continue;
     }
-    resolveTackle(s, i, contacts[i]);
+    resolveTackle(s, i, contacts[i], tackleVisible);
     const t = p.team,
       human = humans[t] && s.controlled[t] === i && worldInViewport(s, p, 16);
     let u = inputs[t],
@@ -894,7 +895,8 @@ export function catchBall(s, only = -1, distances = null) {
 }
 
 // Invoked during the existing slide's thinking, before later players act.
-function resolveTackle(s, i, distances) {
+function resolveTackle(s, i, distances, visible) {
+  if (!visible[i]) return;
   const p = s.players[i];
   const falling = p.action === 4 && p.stun > 0;
   const attack = falling ? p.fallAttack : p.action;
@@ -903,6 +905,7 @@ function resolveTackle(s, i, distances) {
     const q = s.players[j];
     if (
       q.team === p.team ||
+      !visible[j] ||
       q.stun > 0 ||
       q.health <= 0 ||
       shielded(s, q.team) ||
