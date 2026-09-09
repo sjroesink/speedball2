@@ -2607,3 +2607,23 @@ simulation/draw work in the test callback. The similar idle and full-match
 intervals suggest scheduling contributes substantially in this environment;
 this is an inference, not proof of a browser cap or a GPU performance claim.
 A high-refresh external runtime remains necessary to verify the 60+ FPS goal.
+
+### Physical poses during formation restarts
+
+The physical pose integration originally ran only in live simulateStep. The
+restart path returns before that pass, leaving a pre-goal or pre-medical
+sprite origin in place throughout formation. This could affect the first
+resumed ball-distance cache even after the player had visibly stood up.
+
+JS/Go restartStep now advances poses for healthy formation players, including
+remaining action/reaction waits and movement to the launch position. Once a
+player reaches formation, its actual standing direction/group replaces the
+previous pose. The medical patient remains handled by the medical sequence.
+This follows the original separation of formation control and sprite stepping;
+it does not establish equivalence of every restart callback or action timer.
+
+Regression tests seed an airborne physical sprite, verify a running sprite on
+the way back and zero stale vertical origin once the launcher starts. Restart
+tests, six 10,000-tick JS/Go parity scenarios, the Go suite, Go vet and the
+production build pass. Live server must be restarted to serve this latest
+change; the preceding network check covered 5da4dd0, not this revision.

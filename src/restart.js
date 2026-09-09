@@ -3,6 +3,7 @@ import { flightStep } from "./ball.js";
 import { movementSpeed, restorePower } from "./attributes.js";
 import { advanceSteering } from "./steering.js";
 import { startInjury } from "./features.js";
+import { advancePhysicalPose } from "./physical-pose.js";
 
 export function beginRestart(s, pause = 0) {
   s.restartPhase = 1;
@@ -51,6 +52,7 @@ export function restartStep(s, dt, launchPosition, medicalFormation = false) {
         }
         if (p.actionTime > 1e-9 || p.aiWait > 1e-9) {
           ready = false;
+          advancePhysicalPose(p, i, s.period, dt);
           continue;
         }
         p.action = 0;
@@ -71,6 +73,8 @@ export function restartStep(s, dt, launchPosition, medicalFormation = false) {
           p.fz = 0;
           p.moveX = p.moveZ = 0;
         }
+        // Formation movement still advances sprites in the original player pass.
+        advancePhysicalPose(p, i, s.period, dt);
       }
     if (ready && !medicalFormation) {
       emit(s, 22, -1, -1, 0, 0, 0.1);

@@ -5,6 +5,20 @@ import { beginRestart } from "./restart.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { initial, step, simulationStep, launchPosition } from "./game.js";
+import { playerPointDistance } from "./physical-pose.js";
+
+test("formation updates physical poses before the ball launch resumes play", () => {
+  const s = initial(), p = s.players[7];
+  p.physicalSprite = 73; p.physicalFrame = 5;
+  p.x += 5;
+  beginRestart(s);
+  step(s, simulationStep, {});
+  assert.ok(p.physicalSprite >= 16 && p.physicalSprite <= 47, "running pose");
+  for (let n=0;s.restartPhase===1&&n<1000;n++) step(s,simulationStep,{});
+  assert.equal(s.restartPhase,2);
+  assert.equal(p.physicalSprite,0, "north-facing field player is standing");
+  assert.equal(playerPointDistance(p,p.x,p.z),0, "no stale airborne offset");
+});
 
 test("medical restart walks to formation, preserves damage and holds clock/input until launch", () => {
   const s = initial();

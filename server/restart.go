@@ -44,6 +44,7 @@ func (s *State) formationAndLaunchStep(dt float64, medicalFormation bool) bool {
 				}
 				if p.ActionTime > 1e-9 || p.aiWait > 1e-9 {
 					ready = false
+					advancePhysicalPose(p, i, s.Period, dt)
 					continue
 				}
 				p.Action = 0
@@ -61,6 +62,7 @@ func (s *State) formationAndLaunchStep(dt float64, medicalFormation bool) bool {
 					p.FX, p.FZ = s.direction(team), 0
 					p.moveX, p.moveZ = 0, 0
 				}
+				advancePhysicalPose(p, i, s.Period, dt)
 			}
 		}
 		if ready && !medicalFormation {

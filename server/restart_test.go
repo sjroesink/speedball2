@@ -2,6 +2,24 @@ package main
 
 import "testing"
 
+func TestFormationUpdatesPhysicalPose(t *testing.T) {
+	s := initial()
+	p := &s.Players[7]
+	p.physicalSprite, p.physicalFrame = 73, 5
+	p.X += 5
+	s.beginRestart(0)
+	s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
+	if p.physicalSprite < 16 || p.physicalSprite > 47 {
+		t.Fatal("missing running pose", p.physicalSprite)
+	}
+	for n := 0; s.RestartPhase == 1 && n < 1000; n++ {
+		s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
+	}
+	if s.RestartPhase != 2 || p.physicalSprite != 0 || playerPointDistance(p, p.X, p.Z) != 0 {
+		t.Fatal("stale pose at launch", p.physicalSprite)
+	}
+}
+
 func TestMedicalRestartFormationAndLaunch(t *testing.T) {
 	s := initial()
 	s.Pause = 0
