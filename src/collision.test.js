@@ -98,3 +98,20 @@ test("earlier tackle cancels a later player's release on the same tick", () => {
     false,
   );
 });
+
+test("later player's blocking uses positions before the global movement pass", () => {
+  const s = initial();
+  for (const p of s.players) p.stun = 100;
+  Object.assign(s.players[7], { x: 4, z: unit, stun: 0, fx: 0, fz: -1 });
+  Object.assign(s.players[16], { x: 4, z: 0, stun: 0, fx: 1, fz: 0 });
+  Object.assign(s.ball, { owner: 16, x: 4, z: 0 });
+  step(s, simulationStep, { z: -1 }, [true, true], { x: 1 });
+  assert.ok(
+    s.players[16].x > 4,
+    "earlier player still moves during final pass",
+  );
+  assert.ok(
+    Math.abs(s.players[7].z - unit) < 1e-9,
+    "later player remains blocked by pre-movement position",
+  );
+});

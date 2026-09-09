@@ -463,3 +463,18 @@ first-contact/no-reroll and direct-possession assertions after the initial
 slide tick. Remaining differences include action functions retained while
 falling, original fall velocity/animation, offscreen guards and the global
 movement phase; this is not yet a complete original player interpreter.
+
+
+### Player movement after the thinking pass
+
+The reference calls every player's `Think` before the later calls to
+`MoveAndHandleWallsAndBounce`. Both simulations now defer ordinary player
+movement until all player thinking has completed. Earlier roster players no
+longer expose their final moved positions to later players' collision checks.
+The existing pre-movement contact compensation remains in the thinking pass,
+matching the reference's direct coordinate adjustments. Paired tests cover a
+sideways-moving earlier opponent that must still block a later player's approach
+on that tick. Existing throw, catch, tackle and keeper tests remain passing.
+The original relative ordering of goal/ball movement, player boundary clipping,
+and falling-player velocity still needs comparison; stunned players currently
+stop rather than following the original fall-motion sequence.

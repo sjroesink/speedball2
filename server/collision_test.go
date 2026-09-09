@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"math"
+	"testing"
+)
 
 func TestOpponentMovementBlocking(t *testing.T) {
 	const unit = 22.4 / 576
@@ -113,5 +116,24 @@ func TestTacklePreemptsLaterThrow(t *testing.T) {
 		if e.Kind == 3 {
 			t.Fatal("throw executed after tackle")
 		}
+	}
+}
+
+func TestGlobalMovementAfterThinking(t *testing.T) {
+	const unit = 22.4 / 576
+	s := initial()
+	for i := range s.Players {
+		s.Players[i].Stun = 100
+	}
+	p, q := &s.Players[7], &s.Players[16]
+	p.X, p.Z, p.Stun, p.FX, p.FZ = 4, unit, 0, 0, -1
+	q.X, q.Z, q.Stun, q.FX, q.FZ = 4, 0, 0, 1, 0
+	s.Ball.Owner, s.Ball.X, s.Ball.Z = 16, 4, 0
+	s.simulate(simulationStep, [2]Input{{Z: -1}, {X: 1}}, [2]bool{true, true})
+	if q.X <= 4 {
+		t.Fatal("earlier player did not move")
+	}
+	if math.Abs(p.Z-unit) > 1e-9 {
+		t.Fatal("later player saw already-moved opponent", p.Z)
 	}
 }

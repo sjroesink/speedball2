@@ -559,11 +559,19 @@ export function step(
     p.moveX = dx * speed;
     p.moveZ = dz * speed;
     blockPlayerMovement(s.players, i, contacts[i], dt);
+  }
+  // The original moves players only after every player's thinking has run.
+  for (let i = 0; i < s.players.length; i++) {
+    const p = s.players[i];
+    if (p.stun > 0) {
+      p.moveX = p.moveZ = 0;
+      continue;
+    }
     const previousX = p.x;
-    p.x = clamp(p.x + dx * speed * dt, -playerLimitX, playerLimitX);
-    p.z = clamp(p.z + dz * speed * dt, -playerLimitZ, playerLimitZ);
+    p.x = clamp(p.x + p.moveX * dt, -playerLimitX, playerLimitX);
+    p.z = clamp(p.z + p.moveZ * dt, -playerLimitZ, playerLimitZ);
     if (i % 9 === 0) {
-      const d = direction(s, t);
+      const d = direction(s, p.team);
       const advance = (p.x - previousX) * d;
       if (
         (advance > 0 && p.x * d > -384 * (22.4 / 576)) ||

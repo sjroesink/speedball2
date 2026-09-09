@@ -500,11 +500,19 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		}
 		p.moveX, p.moveZ = dx*speed, dz*speed
 		blockPlayerMovement(&s.Players, i, &contacts[i], dt)
+	}
+	// Original movement follows the complete player-thinking pass.
+	for i := range s.Players {
+		p := &s.Players[i]
+		if p.Stun > 0 {
+			p.moveX, p.moveZ = 0, 0
+			continue
+		}
 		previousX := p.X
-		p.X = clamp(p.X+dx*speed*dt, -playerLimitX, playerLimitX)
-		p.Z = clamp(p.Z+dz*speed*dt, -playerLimitZ, playerLimitZ)
+		p.X = clamp(p.X+p.moveX*dt, -playerLimitX, playerLimitX)
+		p.Z = clamp(p.Z+p.moveZ*dt, -playerLimitZ, playerLimitZ)
 		if i%9 == 0 {
-			d := s.direction(t)
+			d := s.direction(p.Team)
 			advance := (p.X - previousX) * d
 			if advance > 0 && p.X*d > -384*(22.4/576) || advance < 0 && p.X*d < -playerLimitX {
 				p.X = previousX
