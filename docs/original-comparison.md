@@ -690,3 +690,12 @@ All 139 JavaScript tests, Go tests, Go vet and the build pass. Human control han
 WIP `sub_D2DE_SetInput` routes the selected player to human input only inside `IsOnscreen_Margin16`; otherwise it invokes the selected AI after the reaction timer. Both simulations now apply that condition. Pending throw release remains separate: `sub_F078` reads the team controller even if the player has moved outside the inset. Normal throws therefore still sample the release button and human-team direction input, while forced AI throw modes retain their chosen height.
 
 Tests verify the inclusive 16-unit inset boundary and AI movement one unit outside, plus both high/low offscreen pending releases with perpendicular steering. Existing isolated human-input fixtures now center their logical viewport over the tested player. All 141 JavaScript tests, Go tests, Go vet and the build pass. The rendered 3D camera is wider than the logical viewport; aligning its presentation with this control region remains pending, as do exact original flag refresh ordering and selected goalkeeper AI.
+
+
+### Authoritative camera viewport
+
+Protocol v7 adds the two logical scroll coordinates as uint16 values. The browser decodes those values directly instead of reconstructing camera motion from received positions, so skipped datagrams do not desynchronize the displayed viewport from server-side visibility. The actual Go packet fixture uses non-default coordinates (317,963), decoded exactly by JavaScript; old v6 packets are rejected and packets remain below 1200 bytes.
+
+The in-match orthographic camera now looks straight down, with world X pointing up-screen and world Z right-screen. Its ground footprint is the original 320 by 184 terrain units and its center comes from the logical scroll coordinates. Letterboxing preserves that footprint on different browser shapes; the preview retains its oblique arena view. First-render viewport initialization was fixed after browser testing exposed an undefined viewport.
+
+All 141 JavaScript tests, Go tests, Go vet and the production build pass. The local Go server was restarted with v7. Two browser tabs joined UXP8LD and both showed LIVE, WebTransport connected and 01:12; the second client reported no browser errors and its screenshot showed the centered original-aspect playfield. The first tab retains the historical pre-fix console error. This verifies basic online framing, not all animation appearance or original medical/presentation camera states.

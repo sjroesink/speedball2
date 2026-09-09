@@ -19,7 +19,7 @@ npm run dev
 
 Open http://localhost:5188 in a WebTransport-capable browser such as Chrome or Edge. Create an arena and share its six-character code with a second player. Training works without the server.
 
-Matches fill the browser viewport and request native fullscreen. The camera follows the ball. Each team has nine players, including a goalkeeper. You control the available player nearest the ball; your teammates use AI. Teams switch ends after the first 90-second half.
+Matches fill the browser viewport and request native fullscreen. The overhead camera follows the original logical viewport around the ball or its carrier. The 320:184 playfield aspect is preserved with letterboxing; online snapshots carry the authoritative viewport. Each team has nine players, including a goalkeeper. You control the available player nearest the ball; your teammates use AI. Teams switch ends after the first 90-second half.
 
 ## Controls and scoring
 
@@ -102,7 +102,7 @@ npm test
 npm run build
 ```
 
-Tests cover actions, throws, catches, collisions, scoring, power effects and expiry, injuries and substitutes, equipment, warp-gates, charged balls, goal locks, audio lifecycle and packet size. JavaScript tests decode an actual Go-generated protocol-v6 snapshot. Two local browser clients are used for WebTransport checks.
+Tests cover actions, throws, catches, collisions, scoring, power effects and expiry, injuries and substitutes, equipment, warp-gates, charged balls, goal locks, audio lifecycle and packet size. JavaScript tests decode an actual Go-generated protocol-v7 snapshot. Two local browser clients are used for WebTransport checks.
 
 This is an exhibition-match adaptation. Career/league management, transfers, persistent injuries between matches, ranked matchmaking, accounts, reconnect and touch controls are not included. Attribute values, damage, pickup timing and AI are tuned for this remake rather than emulated cycle for cycle. See [original-game comparison](docs/original-comparison.md) for source findings and differences.
 

@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { decodeSnapshot } from "./wire.js";
-test("browser decodes actual Go protocol v6 snapshot with every new field", () => {
+test("browser decodes actual Go protocol v7 snapshot with every new field", () => {
   const r = spawnSync(
     "go",
     ["test", "./server", "-run", "^TestFeatureSnapshot$", "-v"],
@@ -18,6 +18,7 @@ test("browser decodes actual Go protocol v6 snapshot with every new field", () =
   assert.equal(m.room, "ABCDEF");
   assert.deepEqual(m.names, ["Blue", "Red"]);
   assert.equal(m.started, true);
+  assert.deepEqual(s.logicalView, [317, 963]);
   assert.deepEqual(s.effect, { kind: 10, team: 1, time: 5.5 });
   assert.deepEqual(s.credits, [100, 50]);
   assert.deepEqual(s.reserves, [2, 1]);
@@ -48,6 +49,6 @@ test("browser decodes actual Go protocol v6 snapshot with every new field", () =
   assert.equal(s.pickups[6].kind, 14);
   assert.ok(bytes.length < 1200);
   const old = Buffer.from(bytes);
-  old[3] = 2;
+  old[3] = 6;
   assert.throws(() => decodeSnapshot(old), /Server version/);
 });

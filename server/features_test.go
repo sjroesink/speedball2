@@ -193,6 +193,7 @@ func TestPickupRespawnAndEquipment(t *testing.T) {
 }
 func TestFeatureSnapshot(t *testing.T) {
 	s := initial()
+	s.logicalView = [2]int{317, 963}
 	s.Effect = Effect{10, 1, 5.5}
 	s.Credits = [2]int{100, 50}
 	s.Reserves = [2]int{2, 1}

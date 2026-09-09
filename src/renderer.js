@@ -25,6 +25,7 @@ export class ArenaRenderer {
     this.effects = [];
     this.lastEvent = 0;
     this.follow = false;
+    this.renderViewport = [0, 0, 1, 1];
     this.scene.add(new THREE.HemisphereLight(0xbcddff, 0x233341, 2.4));
     const l = new THREE.DirectionalLight(0xd5edff, 2.6);
     l.position.set(-10, 30, 5);
@@ -172,11 +173,14 @@ export class ArenaRenderer {
     if (!w || !h) return;
     this.renderer.setSize(w, h);
     this.aspect = w / h;
-    const half = this.follow ? Math.max(8.3, 10.2 / this.aspect) : 24;
-    this.camera.left = -half * this.aspect;
-    this.camera.right = half * this.aspect;
-    this.camera.top = half;
-    this.camera.bottom = -half;
+    const unit = 22.4 / 576;
+    this.camera.left = this.follow ? -160 * unit : -24 * this.aspect;
+    this.camera.right = -this.camera.left;
+    this.camera.top = this.follow ? 92 * unit : 24;
+    this.camera.bottom = -this.camera.top;
+    const width = this.follow ? Math.min(w, (h * 320) / 184) : w;
+    const height = this.follow ? (width * 184) / 320 : h;
+    this.renderViewport = [(w - width) / 2, (h - height) / 2, width, height];
     this.camera.updateProjectionMatrix();
   }
   setFollow(value) {
@@ -386,18 +390,27 @@ export class ArenaRenderer {
       }
     }
     if (this.follow) {
-      const target = new THREE.Vector3(
-        clamp(b.x, -16.5, 16.5),
+      const view = s.logicalView ?? [160, 484],
+        unit = 22.4 / 576;
+      this.focus.set(
+        (576 - view[1] - 92) * unit,
         0,
-        clamp(b.z, -3.8, 3.8),
+        (view[0] + 160 - 320) * unit,
       );
-      this.focus.lerp(target, 1 - Math.exp(-dt * 10));
-      this.camera.position.set(this.focus.x - 16, 32, this.focus.z);
+      this.camera.up.set(1, 0, 0);
+      this.camera.position.set(this.focus.x, 32, this.focus.z);
       this.camera.lookAt(this.focus.x, 0, this.focus.z);
     } else {
+      this.camera.up.set(0, 1, 0);
       this.camera.position.set(-30, 42, 22);
       this.camera.lookAt(0, 0, 0);
     }
+    this.renderer.setScissorTest(false);
+    this.renderer.clear();
+    this.renderer.setViewport(...this.renderViewport);
+    this.renderer.setScissor(...this.renderViewport);
+    this.renderer.setScissorTest(true);
     this.renderer.render(this.scene, this.camera);
+    this.renderer.setScissorTest(false);
   }
 }
