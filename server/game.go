@@ -688,17 +688,12 @@ func (s *State) catchBallAt(only int, distances *[18]int) {
 			if distance > 16 {
 				continue
 			}
-			// get_ball (0xebd6): keeper deflection precedes height and charge checks.
-			if p.Action == 1 && p.keeperBlock {
-				s.deflectBall(i)
-				s.event(17, i, -1, b.X, b.Z, b.H)
-				return
-			}
-			if b.FlightKind != 0 && b.FlightStage > 2 && !(p.Action == 2 && p.jumping) || b.FlightKind == 0 && b.H > 1.25+jumpHeight(*p) {
+			keeperBlock := p.Action == 1 && p.keeperBlock
+			if b.FlightKind != 0 && b.FlightStage > 2 && (keeperBlock || !(p.Action == 2 && p.jumping)) || b.FlightKind == 0 && b.H > 1.25+jumpHeight(*p) {
 				continue
 			}
-			if b.Charged && b.Electric > 0 && b.LastTouch >= 0 && p.Team != s.Players[b.LastTouch].Team && !s.active(10, p.Team) {
-				if s.damage(b.LastTouch, i) {
+			if b.Charged && b.Electric > 0 && b.LastTouch >= 0 && p.Team != s.Players[b.LastTouch].Team && (keeperBlock || !s.active(10, p.Team)) {
+				if s.damageWithProtection(b.LastTouch, i, keeperBlock) {
 					// sub_D632 uses nominal ball direction, not the thrower's facing.
 					if b.DirX != 0 || b.DirZ != 0 {
 						p.FX, p.FZ = eightWay(b.DirX, b.DirZ)
@@ -710,6 +705,12 @@ func (s *State) catchBallAt(only int, distances *[18]int) {
 					b.ElectricBudget = b.Electric
 					continue
 				}
+			}
+			// goalie_deflect_ball (0xed52) also rejects high balls and zaps keepers.
+			if keeperBlock {
+				s.deflectBall(i)
+				s.event(17, i, -1, b.X, b.Z, b.H)
+				return
 			}
 			wasCharged := b.Charged
 			if (b.VX != 0 || b.VZ != 0) && b.LastTouch >= 0 && s.Players[b.LastTouch].Team != p.Team {

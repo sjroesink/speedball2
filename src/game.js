@@ -768,15 +768,10 @@ export function catchBall(s, only = -1, distances = null) {
         16
       )
         continue;
-      // get_ball (0xebd6): keeper deflection precedes height and charge checks.
-      if (p.action === 1 && p.keeperBlock) {
-        deflectBall(s, i);
-        event(s, 17, i, -1, b.x, b.z, b.h);
-        return;
-      }
+      const keeperBlock = p.action === 1 && p.keeperBlock;
       if (
         b.flightKind
-          ? b.flightStage > 2 && !(p.action === 2 && p.jumping)
+          ? b.flightStage > 2 && (keeperBlock || !(p.action === 2 && p.jumping))
           : b.h > 1.25 + jumpHeight(p)
       )
         continue;
@@ -785,9 +780,9 @@ export function catchBall(s, only = -1, distances = null) {
         b.electric > 0 &&
         b.lastTouch >= 0 &&
         p.team !== s.players[b.lastTouch].team &&
-        !shielded(s, p.team)
+        (keeperBlock || !shielded(s, p.team))
       ) {
-        if (damage(s, b.lastTouch, i)) {
+        if (damage(s, b.lastTouch, i, keeperBlock)) {
           // sub_D632 uses nominal ball direction, not the thrower's facing.
           [p.fx, p.fz] =
             b.dirX || b.dirZ ? eightWay(b.dirX, b.dirZ) : eightWay(b.vx, b.vz);
@@ -797,6 +792,12 @@ export function catchBall(s, only = -1, distances = null) {
           b.electricBudget = b.electric;
           continue;
         }
+      }
+      // goalie_deflect_ball (0xed52) also rejects high balls and zaps keepers.
+      if (keeperBlock) {
+        deflectBall(s, i);
+        event(s, 17, i, -1, b.x, b.z, b.h);
+        return;
       }
       const wasCharged = b.charged;
       if (

@@ -58,9 +58,13 @@ func (s *State) goalBlocked(x float64) bool {
 	return s.active(9, defender)
 }
 func (s *State) damage(i, j int) bool {
+	return s.damageWithProtection(i, j, false)
+}
+
+func (s *State) damageWithProtection(i, j int, ignoreShield bool) bool {
 	p := s.Players[i]
 	q := &s.Players[j]
-	if q.Health <= 0 || q.Stun > 0 || s.active(10, q.Team) {
+	if q.Health <= 0 || q.Stun > 0 || (!ignoreShield && s.active(10, q.Team)) {
 		return false
 	}
 	hit := hitDamage(&s.Players[i], q)

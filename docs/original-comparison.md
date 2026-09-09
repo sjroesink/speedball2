@@ -1437,25 +1437,26 @@ previous live medical run did not enable loss, so no combined loss/medical
 claim is made. No production simulation or network code changed.
 
 
-### Keeper deflection precedence (2026-09-09)
+### Keeper contact: complete call chain (2026-09-09)
 
-The Amiga `get_ball` routine checks the selected player's eligibility and the
-16-unit contact radius, then branches to `goalie_deflect_ball` at 0xebd6.
-Only ordinary catches proceed to the height check at 0xebea and charged-ball
-damage at 0xebfe. Browser and server previously ran those checks before a
-keeper block, allowing high shots to bypass a contacting block and electric
-shots to injure the blocking keeper. Both now follow the source ordering.
-This supersedes the earlier test expectation that an electric block injures.
+Correction to commit a8ae2c4: reading only `get_ball` at 0xebd6 was insufficient.
+It calls `goalie_deflect_ball`, whose first instruction at 0xed52 checks ball
+stage <= 2. Higher balls pass the block unchanged. At 0xed5c..0xed80 an enemy
+charged ball with remaining charge calls `zap_player` and returns without a
+deflection. Only the remaining path emits the block sound and rebounds using
+the original direction table. The previous broad deflection change is undone.
 
-Regression coverage combines low/high flight stages with ordinary/charged
-shots, checking deflection, preserved health, loose ball ownership and the
-keeper deflection audio event. Existing direction-table tests cover both ends
-and all eight facing directions. This is a correction to contact resolution;
-it does not make the keeper automatically reach every high shot.
+The full chain also reveals an actual difference: the keeper block path does
+not call `test_shield_powerup`, while ordinary catching does at 0xec10.
+`zap_player` calls `damage_player` directly, which has no shield check. A low
+electric shot therefore damages a blocking keeper even with Shield active;
+a standing shielded keeper can catch it. Browser and server now preserve this
+specific exception without changing shield protection for other damage.
 
-Validation: 198 JavaScript tests, Go tests, Go vet and the production build
-pass. The complete-match parity test now includes a fourth, tackle-focused
-scenario: the keeper correction removed the injury from the previous mixed
-scenario. The fourth scenario independently reaches injury, replacement and
-full time with matching browser/server states; the mixed scenario retains
-warp coverage. All four scenarios run for 10,000 reference ticks.
+Tests combine low/high stages, charged/ordinary balls and shield on/off.
+They check damage, charge consumption, unchanged high-ball movement and the
+presence of a deflection sound only when a rebound actually happens. Existing
+coverage retains both direction tables and all eight facing directions.
+The four full-match parity scenarios remain, including the dedicated medical
+scenario. An inferred caller ordering alone is not evidence for a callee's
+behavior; both functions above support these expectations.

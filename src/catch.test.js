@@ -44,22 +44,25 @@ test("moving catches and stationary balls do not trigger standing recovery", () 
   }
 });
 
-test("keeper block deflects high and charged shots before catch eligibility", () => {
-  for (const stage of [1, 6]) for (const charged of [false, true]) {
+test("keeper block checks height then electric damage, including shield bypass", () => {
+  for (const stage of [1, 3]) for (const charged of [false, true]) for (const shield of [false, true]) {
     const s = initial();
     for (const p of s.players) p.stun = 100;
     const p = s.players[0];
     Object.assign(p, { x: 0, z: 0, stun: 0, action: 1, keeperBlock: true, fx: 0, fz: 1 });
     s.controlled[0] = 0;
+    if (shield) s.effect = {kind: 10, team: 0, time: 10};
     Object.assign(s.ball, { owner: -1, lastTouch: 9, x: 0, z: 0,
       vx: -4, vz: 0, h: 0.25 + stage * 0.5, flightKind: 2,
       flightStage: stage, charged, electric: charged ? 3 : 0 });
     catchBall(s);
-    assert.equal(p.health, 100);
-    assert.equal(p.action, 1);
+    const hit = stage <= 2 && charged;
+    const deflected = stage <= 2 && !charged;
+    assert.equal(p.health < 100, hit);
+    assert.equal(p.action, hit ? 4 : 1);
     assert.equal(s.ball.owner, -1);
-    assert.equal(s.ball.flightStage, 1);
-    assert.equal(s.ball.charged, false);
-    assert.equal(s.events.at(-1).kind, 17);
+    assert.equal(s.ball.flightStage, deflected ? 1 : stage);
+    assert.equal(s.ball.electric, charged ? (hit ? 2 : 3) : 0);
+    assert.equal((s.events ?? []).some(e => e.kind === 17), deflected);
   }
 });

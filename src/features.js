@@ -70,10 +70,10 @@ export function goalBlocked(s, x, direction0) {
   const defender = x * direction0 > 0 ? 1 : 0;
   return active(s, 9, defender);
 }
-export function damage(s, i, j) {
+export function damage(s, i, j, ignoreShield = false) {
   const p = s.players[i],
     q = s.players[j];
-  if (q.health <= 0 || q.stun > 0 || shielded(s, q.team)) return false;
+  if (q.health <= 0 || q.stun > 0 || (!ignoreShield && shielded(s, q.team))) return false;
   const hit = hitDamage(p, q);
   // The renderer exposes energy as a percentage; original full energy is 128.
   q.health = Math.max(0, q.health - (hit * 100) / 128);
