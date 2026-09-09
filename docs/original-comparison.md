@@ -1516,3 +1516,19 @@ carried-ball attachment still need coordinated visual refinement.
 
 Validation: 202 JavaScript tests and production build pass. No server or
 protocol changes in this increment.
+
+
+### Blender throw pose at release (2026-09-09)
+
+The authored throwing arm previously swung forward early and back down by the
+clip midpoint. The throw now winds back, extends forward at frame 16.5 (half
+of the frame 1..32 clip) and recovers afterward. Root lean shares the same
+keyframe timing. Both team `.blend` sources and GLBs were regenerated with
+Blender 5.2 using `--players-only`.
+
+The browser release-pose preview shows the hand extending at chest height.
+An asset-level test checks the forward extension and height of the throwing
+hand in both exported teams at the simulation's 0.16-second release. Playback
+at 30/60/144 FPS and late-snapshot timing remain covered. Ball attachment is
+still based on the simulation's fixed carried offset; this change refines the
+pose and does not claim that the ball is now attached to the hand.

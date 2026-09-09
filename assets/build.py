@@ -102,7 +102,7 @@ def build_players():
   for part in parts:
    if part.parent is None: part.parent=root
   root.animation_data_create()
-  poses={'Punch':[(1,0,0),(4,.22,0),(11,0,0)],'Catch':[(1,-.12,0),(4,-.08,0),(8,0,0)],'Run':[(1,.06,0),(7,.06,.055),(13,.06,0),(19,.06,.055),(25,.06,0)],'Slide':[(1,0,0),(4,1.3,.12),(19,1.3,.12),(24,0,0)],'Jump':[(1,0,0),(10,-.25,0),(28,.2,0),(42,0,0)],'Throw':[(1,-.3,0),(6,.45,0),(20,0,0)],'Hit':[(1,0,0),(8,-1.5,.18),(65,-1.5,.18),(81,0,0)]}
+  poses={'Punch':[(1,0,0),(4,.22,0),(11,0,0)],'Catch':[(1,-.12,0),(4,-.08,0),(8,0,0)],'Run':[(1,.06,0),(7,.06,.055),(13,.06,0),(19,.06,.055),(25,.06,0)],'Slide':[(1,0,0),(4,1.3,.12),(19,1.3,.12),(24,0,0)],'Jump':[(1,0,0),(10,-.25,0),(28,.2,0),(42,0,0)],'Throw':[(1,-.1,0),(8,-.2,0),(16.5,.12,0),(24,.04,0),(32,0,0)],'Hit':[(1,0,0),(8,-1.5,.18),(65,-1.5,.18),(81,0,0)]}
   for clip,frames in poses.items():
    action=bpy.data.actions.new(clip);root.animation_data.action=action
    for frame,angle,height in frames:
@@ -115,12 +115,13 @@ def build_players():
    for clip in ['Run','Throw','Jump','Slide','Hit','Catch','Punch']:
     action=bpy.data.actions.new(joint.name+'_'+clip);joint.animation_data.action=action
     frames=[1,7,13,19,25] if clip=='Run' else [1,6,12,20,32]
+    if clip=='Throw': frames=[1,8,16.5,24,32]
     if clip=='Catch': frames=[1,4,8]
     if clip=='Punch': frames=[1,4,11]
     for k,frame in enumerate(frames):
      angle=0
      if clip=='Run': angle=math.sin((frame-1)/24*math.tau)*.65*side*(-1 if isarm else 1)
-     elif clip=='Throw' and isarm: angle=([-1.5,-1.0,.8,.25,0][k] if side==1 else .2)
+     elif clip=='Throw' and isarm: angle=([.5,.9,-1.5,-.6,0][k] if side==1 else -.2)
      elif clip=='Jump': angle=-2.5 if isarm else .4
      elif clip=='Slide': angle=-1.2 if isarm else side*.2
      elif clip=='Hit': angle=side*.55
