@@ -141,3 +141,13 @@ and verify one throw, cancellation, no repeated punches, and re-pressing.
 The cross-language match trace also compares the retained input state itself.
 These tests establish the listed cases, not exhaustive controller interrupt
 emulation or final perceptual equivalence.
+
+### Release-time input ordering
+
+Throw height now reads retained cooked fire before consuming it, matching
+0x10814..0x10876. Previously it still read the physical held button, bypassing
+consumption by an earlier teammate's slide completion in the same roster pass.
+A regression first reproduced high flight where the source branch requires low
+flight, then passed after the JS/Go correction. Both teams are covered; forced
+high throws (the modern E action) remain high. All 270 JS tests, including six
+10,000-tick cross-language scenarios, Go tests, vet and the production build pass.

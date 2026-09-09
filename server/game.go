@@ -596,7 +596,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			} else {
 				s.Charge[t] = 8./25 - p.ActionTime + dt
 				if p.ActionTime <= 4./25+1e-9 {
-					high := p.throwMode == 3 || p.throwMode == 1 && inputs[t].Shoot
+					high := p.throwMode == 3 || p.throwMode == 1 && s.pendingShoot[t]
 					steering := Input{Z: p.throwSteer}
 					if humans[t] {
 						steering = inputs[t]

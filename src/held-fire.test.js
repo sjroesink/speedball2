@@ -37,3 +37,18 @@ test('a consumed stationary punch does not repeat while fire stays held',()=>{
   assert.ok((s.events??[]).some(e=>e.kind===20 && !punches.has(e.id)));
  }
 });
+
+// complete_action_fn can consume the team controller before a later teammate's
+// throwing_action_fn samples it in the same roster pass.
+test('throw height samples cooked fire after an earlier teammate finishes sliding',()=>{
+ for(const team of [0,1]) for(const mode of [1,3]) {
+  const {s,p}=fixture(team,3);
+  p.actionTime=5/25; p.throwMode=mode;
+  const teammate=s.players[team*9+6];
+  Object.assign(teammate,{x:8,z:0,stun:0,action:1,actionTime:2/25,fx:1,fz:0,aiWait:100});
+  s.previous[team]={shoot:true}; s.pendingShoot=[true,true];
+  tick(s,team,true);
+  assert.equal(s.ball.owner,-1);
+  assert.equal(s.ball.flightKind,mode===3?2:1);
+ }
+});

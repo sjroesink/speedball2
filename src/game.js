@@ -631,7 +631,7 @@ function simulateStep(
         s.charge[t] = 8 / 25 - p.actionTime + dt;
         if (p.actionTime <= 4 / 25 + 1e-9) {
           const high =
-            p.throwMode === 3 || (p.throwMode === 1 && !!inputs[t].shoot);
+            p.throwMode === 3 || (p.throwMode === 1 && s.pendingShoot[t]);
           throwBall(
             s,
             i,

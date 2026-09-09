@@ -74,3 +74,33 @@ func TestHeldPunchDoesNotRepeat(t *testing.T) {
 		}
 	}
 }
+
+func TestReleaseAfterTeammateConsumesFire(t *testing.T) {
+	for team := 0; team < 2; team++ {
+		for _, mode := range []int{1, 3} {
+			s := initial()
+			for i := range s.Players {
+				s.Players[i].X, s.Players[i].Z, s.Players[i].Stun = 20, 10, 100
+			}
+			i := team*9 + 7
+			p := &s.Players[i]
+			p.X, p.Z, p.Stun, p.Action, p.ActionTime, p.throwMode, p.FX = 0, 0, 0, 3, 5./25, mode, 1
+			q := &s.Players[i-1]
+			q.X, q.Z, q.Stun, q.Action, q.ActionTime, q.FX, q.aiWait = 8, 0, 0, 1, 2./25, 1, 100
+			s.Ball.Owner = i
+			s.Ball.X, s.Ball.Z = 0, 0
+			s.previous[team].Shoot = true
+			s.pendingShoot = [2]bool{true, true}
+			inputs := [2]Input{}
+			inputs[team].Shoot = true
+			s.simulate(.04, inputs, [2]bool{true, true})
+			want := 1
+			if mode == 3 {
+				want = 2
+			}
+			if s.Ball.Owner != -1 || s.Ball.FlightKind != want {
+				t.Fatal("release ignored consumed input", team, mode, s.Ball.FlightKind)
+			}
+		}
+	}
+}
