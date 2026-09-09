@@ -1,3 +1,4 @@
+import { acceptKeyDown, clearControls } from "./keyboard.js";
 import { isOwnGoal } from "./events.js";
 import { ArenaAudio } from "./audio.js";
 import { notificationEvent, notificationPriority } from "./events.js";
@@ -61,6 +62,7 @@ export async function start() {
   addEventListener("keydown", (e) => {
     if (["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) return;
     if (e.code === "Escape" && inGame) {
+      if (e.repeat) return;
       e.preventDefault();
       toggleMenu();
       return;
@@ -72,7 +74,7 @@ export async function start() {
       )
     )
       e.preventDefault();
-    keys.add(e.code);
+    if (!acceptKeyDown(keys, e.code, e.repeat)) return;
     if (!e.repeat) {
       if (e.code === "Space") fire++;
       if (e.code === "ShiftLeft" || e.code === "ShiftRight") tackleId++;
@@ -85,7 +87,7 @@ export async function start() {
     send();
   });
   addEventListener("blur", () => {
-    keys.clear();
+    clearControls(keys, state, team, online, input);
     send();
   });
   setInterval(send, 33);
@@ -108,7 +110,7 @@ export async function start() {
   function toggleMenu() {
     menu = !menu;
     audio.setActive(inGame && !menu && !document.hidden);
-    keys.clear();
+    clearControls(keys, state, team, online, input);
     send();
     $("pauseMenu").classList.toggle("hidden", !menu);
     $("pauseText").textContent = online

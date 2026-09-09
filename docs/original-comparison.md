@@ -1702,3 +1702,20 @@ Other tests cover unchanged snapshots, rounding and medical holds. This
 handles an observed timer increase, not arbitrary complete actions lost during
 long outages or cases where a new action arrives with a lower timer.
 Validation: 212 JavaScript tests and production build pass.
+
+
+### Keyboard lifecycle for browser play (2026-09-09)
+
+Repeated Escape keydown events no longer toggle the menu repeatedly. A repeated
+movement/action keydown is accepted only if that key is already held, preventing
+OS key repeat from restoring controls cleared on pause or focus loss. Local
+training also consumes queued input-edge counters when controls are cleared,
+so a Space press immediately followed by pause cannot start a new throw after
+resume. Online input history is not modified; actions already accepted by the
+server remain authoritative. The last network snapshot after disconnection
+need not contain local input history and is handled safely.
+
+Tests simulate held/repeated/fresh key transitions and use the actual training
+simulation to verify canceled queued fire followed by a working fresh press.
+This is browser lifecycle behavior, not a change to the original match rules.
+Validation: 216 JavaScript tests and production build pass.
