@@ -676,3 +676,10 @@ This ports eligibility for local AI decisions only. Hit resolution, movement col
 WIP `sub_ED56` rejects offscreen attackers, and `sub_ED92` skips offscreen defenders before switching attack thinking and drawing the tackle random byte. Both simulations now check the original logical viewport at those points for slide and punch contact. Skipping an invisible participant leaves the attack unresolved and does not consume randomness. Regression tests put each participant outside the viewport in turn, then let normal scrolling reveal them on the next tick and confirm the same attack can transfer possession. The existing punch-fall fixture now explicitly centers the viewport over its players.
 
 All 138 JavaScript tests, Go tests, Go vet and the production build pass. Movement-collision visibility and control handoff still need porting. The logical original viewport remains distinct from the wider rendered camera.
+
+
+### Movement collision visibility
+
+WIP `sub_D448_PreventMoveOnPlayers` rejects an offscreen moving player and skips offscreen standing opponents. Both simulations now pass the logical viewport into movement blocking, including the fall-recovery hold branch. An offscreen opponent cannot cancel movement or reset a fallen player to the recovery tail. Tests verify the inclusive edge, offscreen actor exclusion, and recovery remaining unchanged until the opponent is visible. The global-movement-order fixture explicitly places the viewport over its players.
+
+All 139 JavaScript tests, Go tests, Go vet and the build pass. Human control handoff outside the inset viewport remains pending. Visibility is currently evaluated from terrain coordinates at the interaction point; exact original flag-refresh ordering is still part of the overall frame-order comparison.

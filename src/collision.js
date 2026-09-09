@@ -1,4 +1,5 @@
 import { referenceDistance, fallRecovery } from "./attributes.js";
+import { inViewport } from "./visibility.js";
 const unit = 22.4 / 576;
 export function contactDistances(players) {
   return players.map((p) =>
@@ -7,11 +8,30 @@ export function contactDistances(players) {
 }
 // sub_D448/sub_D4AC: cancel movement toward each nearby standing opponent.
 // Compensation precedes ordinary movement; it does not change velocity.
-export function blockPlayerMovement(players, i, distances, dt) {
+export function blockPlayerMovement(
+  players,
+  i,
+  distances,
+  dt,
+  view = [160, 484],
+) {
   const p = players[i];
+  const visible = (q) =>
+    inViewport(
+      view,
+      Math.round(q.z / unit + 320),
+      Math.round(576 - q.x / unit),
+    );
+  if (!visible(p)) return;
   for (let j = 0; j < players.length; j++) {
     const q = players[j];
-    if (q.team === p.team || q.stun > 0 || q.health <= 0 || distances[j] > 30)
+    if (
+      q.team === p.team ||
+      q.stun > 0 ||
+      q.health <= 0 ||
+      distances[j] > 30 ||
+      !visible(q)
+    )
       continue;
     if (p.action === 4 && p.stun <= fallRecovery + 1e-9) {
       p.fallX = p.fallZ = p.moveX = p.moveZ = 0;

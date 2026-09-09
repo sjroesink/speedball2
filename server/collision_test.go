@@ -13,7 +13,7 @@ func TestOpponentMovementBlocking(t *testing.T) {
 		players[9] = Player{Team: 1, Health: 100, X: float64(tc[0]) * unit, Z: float64(tc[1]) * unit}
 		var distances [18]int
 		distances[9] = tc[2]
-		blockPlayerMovement(&players, 0, &distances, 1./25)
+		blockPlayerMovement(&players, 0, &distances, 1./25, [2]int{160, 484})
 		x, z := 0., 0.
 		if tc[3] > 0 {
 			x = -unit
@@ -47,7 +47,7 @@ func TestContactExclusions(t *testing.T) {
 			players[0].moveX = -25 * unit
 		}
 		distances := contactDistances(&players)
-		blockPlayerMovement(&players, 0, &distances[0], 1./25)
+		blockPlayerMovement(&players, 0, &distances[0], 1./25, [2]int{160, 484})
 		if players[0].X != 0 || players[0].Z != 0 {
 			t.Fatal("unexpected push", kind)
 		}
@@ -122,6 +122,7 @@ func TestTacklePreemptsLaterThrow(t *testing.T) {
 func TestGlobalMovementAfterThinking(t *testing.T) {
 	const unit = 22.4 / 576
 	s := initial()
+	s.logicalView = [2]int{160, 380}
 	for i := range s.Players {
 		s.Players[i].Stun = 100
 	}
@@ -135,6 +136,31 @@ func TestGlobalMovementAfterThinking(t *testing.T) {
 	}
 	if math.Abs(p.Z-unit) > 1e-9 {
 		t.Fatal("later player saw already-moved opponent", p.Z)
+	}
+}
+
+func TestCollisionVisibility(t *testing.T) {
+	const unit = 22.4 / 576
+	var players [18]Player
+	players[0] = Player{X: 91 * unit, Team: 0, Health: 100, Action: 4, Stun: .5, ActionTime: .5, fallX: 25 * unit, moveX: 25 * unit}
+	players[9] = Player{X: 93 * unit, Team: 1, Health: 100}
+	var distances [18]int
+	distances[9] = 2
+	blockPlayerMovement(&players, 0, &distances, 1./25, [2]int{160, 484})
+	p := &players[0]
+	if p.X != 91*unit || p.Stun != .5 || p.fallX != 25*unit {
+		t.Fatal("offscreen opponent held fall")
+	}
+	players[9].X = 92 * unit
+	blockPlayerMovement(&players, 0, &distances, 1./25, [2]int{160, 484})
+	if p.Stun != 17./25 || p.fallX != 0 {
+		t.Fatal("visible opponent did not hold fall")
+	}
+	p.X, p.Action, p.Stun, p.moveX = 93*unit, 0, 0, -25*unit
+	players[9].X = 91 * unit
+	blockPlayerMovement(&players, 0, &distances, 1./25, [2]int{160, 484})
+	if p.X != 93*unit {
+		t.Fatal("offscreen actor blocked")
 	}
 }
 

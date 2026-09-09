@@ -101,6 +101,7 @@ test("earlier tackle cancels a later player's release on the same tick", () => {
 
 test("later player's blocking uses positions before the global movement pass", () => {
   const s = initial();
+  s.logicalView = [160, 380];
   for (const p of s.players) p.stun = 100;
   Object.assign(s.players[7], { x: 4, z: unit, stun: 0, fx: 0, fz: -1 });
   Object.assign(s.players[16], { x: 4, z: 0, stun: 0, fx: 1, fz: 0 });
@@ -114,6 +115,30 @@ test("later player's blocking uses positions before the global movement pass", (
     Math.abs(s.players[7].z - unit) < 1e-9,
     "later player remains blocked by pre-movement position",
   );
+});
+
+test("offscreen opponents do not block motion or hold fallen players down", () => {
+  const p = fixture(93);
+  Object.assign(p[0], {
+    x: 91 * unit,
+    action: 4,
+    stun: 0.5,
+    actionTime: 0.5,
+    fallX: 25 * unit,
+  });
+  blockPlayerMovement(p, 0, [0, 2], 1 / 25);
+  assert.equal(p[0].x, 91 * unit);
+  assert.equal(p[0].stun, 0.5);
+  assert.equal(p[0].fallX, 25 * unit);
+  p[1].x = 92 * unit;
+  blockPlayerMovement(p, 0, [0, 1], 1 / 25);
+  assert.equal(p[0].stun, 17 / 25);
+  assert.equal(p[0].fallX, 0);
+  const q = fixture(91);
+  q[0].x = 93 * unit;
+  q[0].moveX = -25 * unit;
+  blockPlayerMovement(q, 0, [0, 2], 1 / 25);
+  assert.equal(q[0].x, 93 * unit);
 });
 
 test("tackled player moves at original fall speed then stops before recovery", () => {

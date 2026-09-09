@@ -13,11 +13,17 @@ func contactDistances(players *[18]Player) [18][18]int {
 }
 
 // sub_D448/sub_D4AC: compensate before ordinary movement, retaining velocity.
-func blockPlayerMovement(players *[18]Player, i int, distances *[18]int, dt float64) {
+func blockPlayerMovement(players *[18]Player, i int, distances *[18]int, dt float64, view [2]int) {
 	p := &players[i]
 	const unit = 22.4 / 576
+	visible := func(q Player) bool {
+		return inViewport(view, int(math.Round(q.Z/unit+320)), int(math.Round(576-q.X/unit)), 0)
+	}
+	if !visible(*p) {
+		return
+	}
 	for j, q := range players {
-		if q.Team == p.Team || q.Stun > 0 || q.Health <= 0 || distances[j] > 30 {
+		if q.Team == p.Team || q.Stun > 0 || q.Health <= 0 || distances[j] > 30 || !visible(q) {
 			continue
 		}
 		if p.Action == 4 && p.Stun <= fallRecovery+1e-9 {

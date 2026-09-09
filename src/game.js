@@ -426,7 +426,7 @@ function simulateStep(
       if (p.action === 4 && p.health > 0) {
         p.moveX = p.fallX || 0;
         p.moveZ = p.fallZ || 0;
-        blockPlayerMovement(s.players, i, contacts[i], dt);
+        blockPlayerMovement(s.players, i, contacts[i], dt, s.logicalView);
       }
       continue;
     }
@@ -635,7 +635,7 @@ function simulateStep(
       : movementSpeed(p, b.owner === i, keeperBlock);
     p.moveX = dx * speed;
     p.moveZ = dz * speed;
-    blockPlayerMovement(s.players, i, contacts[i], dt);
+    blockPlayerMovement(s.players, i, contacts[i], dt, s.logicalView);
   }
   // The original moves players only after every player's thinking has run.
   for (let i = 0; i < s.players.length; i++) {
