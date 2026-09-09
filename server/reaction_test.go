@@ -15,6 +15,7 @@ func TestAIReactionAndTargetPersistence(t *testing.T) {
 		s := initial()
 		for i := range s.Players {
 			s.Players[i].Stun = 100
+			s.Players[i].X, s.Players[i].Z = 20, 10
 		}
 		p := &s.Players[7]
 		p.X, p.Z, p.Stun = 0, 0, 0
@@ -45,6 +46,7 @@ func TestBusyAIWaitsForAction(t *testing.T) {
 	s := initial()
 	for i := range s.Players {
 		s.Players[i].Stun = 100
+		s.Players[i].X, s.Players[i].Z = 20, 10
 	}
 	p := &s.Players[7]
 	p.X, p.Z, p.Stun = 0, 0, 0

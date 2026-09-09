@@ -10,7 +10,7 @@ test("AI reaction table and retained target until next decision", () => {
     assert.equal(aiReactionTime(100 + i * 10), expected[i] / 25);
   for (const intelligence of [100, 250]) {
     const s = initial();
-    s.players.forEach((p) => (p.stun = 100));
+    s.players.forEach((p) => Object.assign(p, { stun: 100, x: 20, z: 10 }));
     const p = s.players[7];
     Object.assign(p, { x: 0, z: 0, stun: 0 });
     p.stats[7] = intelligence;
@@ -27,7 +27,7 @@ test("AI reaction table and retained target until next decision", () => {
 });
 test("busy AI waits for action completion before choosing a new target", () => {
   const s = initial();
-  s.players.forEach((p) => (p.stun = 100));
+  s.players.forEach((p) => Object.assign(p, { stun: 100, x: 20, z: 10 }));
   const p = s.players[7];
   Object.assign(p, {
     x: 0,

@@ -6,7 +6,7 @@ import { ArenaAudio } from "./audio.js";
 test("tackle contact sounds on failure and possession signals only on a steal", () => {
   for (const team of [0, 1]) for (const success of [false, true]) for (const carrying of [false, true]) {
     const s = initial(), i = team * 9 + 7, j = (1 - team) * 9 + 7;
-    for (const p of s.players) p.stun = 100;
+    for (const p of s.players) Object.assign(p, {stun: 100, x: -20, z: -10, aiWait: 100});
     Object.assign(s.players[i], { x: 0, z: 0, stun: 0, action: 7, actionTime: .16, fx: 1, fz: 0 });
     Object.assign(s.players[j], { x: .5, z: 0, stun: 0, fx: 1, fz: 0 });
     Object.assign(s.ball, { owner: carrying ? j : -1, x: 10, z: 10 });

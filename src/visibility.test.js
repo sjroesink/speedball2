@@ -4,16 +4,24 @@ import { scrollViewport, inViewport } from "./visibility.js";
 import { initial, step, simulationStep } from "./game.js";
 import { velocityUnit } from "./attributes.js";
 
-test("human control stays active beyond the old inset viewport", () => {
-  const u = 22.4 / 576;
+test("human input uses the original inclusive inset and AI takes over outside", () => {
+  const unit = 22.4 / 576;
   for (const distance of [76, 77, 300]) {
-    const s = initial();
-    for (const p of s.players) p.stun = 100;
-    const p = s.players[7];
-    Object.assign(p, { x: distance * u, z: 0, stun: 0 });
-    Object.assign(s.ball, { x: 0, z: 0, h: 4, owner: -1 });
-    step(s, simulationStep, { x: 1 });
-    assert.equal(Math.sign(p.x - distance * u), 1);
+    const run = (x) => {
+      const s = initial();
+      for (const p of s.players) Object.assign(p, {x: -20, z: 10, stun: 100});
+      Object.assign(s.players[7], {x: distance * unit, z: 0, stun: 0});
+      Object.assign(s.ball, {x: 0, z: 0, h: 4, owner: -1});
+      step(s, simulationStep, {x});
+      assert.equal(s.controlled[0], 7);
+      return s.players[7];
+    };
+    const forward = run(1), backward = run(-1);
+    if (distance === 76) assert.ok(forward.x > backward.x);
+    else {
+      assert.equal(forward.x, backward.x, "offscreen direction comes from AI");
+      assert.ok(forward.aiWait > 1 / 25, "AI reaction timer is active");
+    }
   }
 });
 

@@ -13,6 +13,7 @@ func TestTackleAudio(t *testing.T) {
 				i, j := team*9+7, (1-team)*9+7
 				for n := range s.Players {
 					s.Players[n].Stun = 100
+					s.Players[n].X, s.Players[n].Z, s.Players[n].aiWait = -20, -10, 100
 				}
 				p, q := &s.Players[i], &s.Players[j]
 				p.X, p.Z, p.Stun, p.Action, p.ActionTime, p.FX, p.FZ = 0, 0, 0, 7, .16, 1, 0

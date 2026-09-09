@@ -8,7 +8,7 @@ import { localInteraction } from "./interaction.js";
 import { pursuit } from "./pursuit.js";
 import { keeperAction } from "./keeper-action.js";
 import { defensivePass, defensivePunt } from "./defensive-pass.js";
-import { advanceViewport } from "./visibility.js";
+import { advanceViewport, worldInViewport } from "./visibility.js";
 import { contactDistances, blockPlayerMovement } from "./collision.js";
 import { advanceSteering } from "./steering.js";
 import { goalieTarget, deflectBall } from "./goalie.js";
@@ -203,7 +203,12 @@ export const jumpHeight = (p) =>
         ) * Math.PI,
       ) * 1.8
     : 0;
-export function selectPlayers(s) {
+// Amiga 0xd95e: all cached player distances target the carrier when held.
+export function possessionDistances(s) {
+  const target = s.ball.owner >= 0 ? s.players[s.ball.owner] : s.ball;
+  return s.players.map((p) => playerPointDistance(p, target.x, target.z));
+}
+export function selectPlayers(s, distances = possessionDistances(s)) {
   for (let t = 0; t < 2; t++) {
     const b = s.ball;
     if (b.owner >= 0 && s.players[b.owner].team === t) {
@@ -213,8 +218,8 @@ export function selectPlayers(s) {
     let best = -1,
       dist = Infinity;
     s.players.forEach((p, i) => {
-      if (p.team !== t || p.stun > 0) return;
-      const d = playerPointDistance(p, b.x, b.z);
+      if (p.team !== t) return;
+      const d = distances[i];
       if (d <= dist) {
         best = i;
         dist = d;
@@ -346,20 +351,24 @@ function simulateStep(
   matchClock(s, dt);
   if (s.medical) restartStep(s, dt, launchPosition, true);
   if (medicalStep(s, dt)) {
+    s.pendingShoot = [false, false];
     s.previous = inputs.map((u) => ({ ...u }));
     return;
   }
   if (s.pause > 0) {
     s.pause = Math.max(0, s.pause - dt);
+    s.pendingShoot = [false, false];
     s.previous = inputs.map((u) => ({ ...u }));
     return;
   }
   if (restartStep(s, dt, launchPosition)) {
+    s.pendingShoot = [false, false];
     s.previous = inputs.map((u) => ({ ...u }));
     return;
   }
   featureStep(s, dt);
   if (s.players.some((p) => p.injury > 0)) {
+    s.pendingShoot = [false, false];
     s.previous = inputs.map((u) => ({ ...u }));
     return;
   }
@@ -374,6 +383,13 @@ function simulateStep(
     } else s.over = true;
     return;
   }
+  // Cooked fire stays pending while held until an action consumes it.
+  // Amiga control_player skips busy players without clearing the controller.
+  s.pendingShoot ??= [false, false];
+  inputs.forEach((u, t) => {
+    s.pendingShoot[t] = !!((u.shoot && (s.pendingShoot[t] || !s.previous[t].shoot)) ||
+      (u.fire || 0) > (s.previous[t].fire || 0));
+  });
   const b = s.ball;
   b.lock = Math.max(0, b.lock - dt);
   b.after = Math.max(0, b.after - dt);
@@ -406,11 +422,9 @@ function simulateStep(
       domeBounce(s);
     }
   }
-  selectPlayers(s);
+  const catchDistances = possessionDistances(s);
+  selectPlayers(s, catchDistances);
   const contacts = contactDistances(s.players);
-  const catchDistances = s.players.map((p) =>
-    playerPointDistance(p, b.x, b.z),
-  );
   // step_sprites processes team two then team one at each roster index.
   for (let order = 0; order < s.players.length; order++) {
     const i = Math.floor(order / 2) + (order % 2 === 0 ? 9 : 0);
@@ -423,10 +437,12 @@ function simulateStep(
     // Catching precedes jumping_action_fn, which clears jumping on landing.
     if (p.action === 2 && p.jumping && p.actionTime <= 2 / 25 + 1e-9) {
       p.jumping = false;
+      s.pendingShoot[p.team] = false;
       event(s, 18, i, -1, p.x, p.z, 0);
     }
     if (p.action === 1 && !p.slideEnding && p.actionTime <= 1 / 25 + 1e-9) {
       p.slideEnding = true;
+      s.pendingShoot[p.team] = false;
       event(s, 19, i, -1, p.x, p.z, 0);
     }
     if (p.stun > 0) {
@@ -437,6 +453,7 @@ function simulateStep(
       if (finishFall) {
         p.stun = p.actionTime = (26 - 15) / 25;
         p.fallFinishing = false;
+        s.pendingShoot[p.team] = false;
         event(s, 19, i, -1, p.x, p.z, 0);
       }
       resolveTackle(s, i, contacts[i]);
@@ -455,7 +472,7 @@ function simulateStep(
     }
     resolveTackle(s, i, contacts[i]);
     const t = p.team,
-      human = humans[t] && s.controlled[t] === i;
+      human = humans[t] && s.controlled[t] === i && worldInViewport(s, p, 16);
     let u = inputs[t],
       dx = u.x || 0,
       dz = u.z || 0;
@@ -596,15 +613,14 @@ function simulateStep(
       [p.fx, p.fz] = norm(dx, dz);
     const prev = s.previous[t],
       pressed = human
-        ? (u.shoot && !prev.shoot) ||
+        ? s.pendingShoot[t] ||
           (u.tackle && !prev.tackle) ||
-          (u.fire || 0) > (prev.fire || 0) ||
           (u.tackleId || 0) > (prev.tackleId || 0)
         : u.shoot || u.tackle;
     if (human && b.owner === i && p.actionTime <= 0) {
       if ((u.lob && !prev.lob) || (u.lobId || 0) > (prev.lobId || 0))
         beginThrow(s, i, 3);
-      else if ((u.shoot && !prev.shoot) || (u.fire || 0) > (prev.fire || 0))
+      else if (s.pendingShoot[t])
         beginThrow(s, i, 1);
     }
     if (p.throwMode) {
@@ -623,6 +639,7 @@ function simulateStep(
             humans[t] ? inputs[t] : { z: p.throwSteer || 0 },
           );
           p.throwMode = 0;
+          s.pendingShoot[t] = false;
           s.charge[t] = 0;
         }
       }
@@ -639,6 +656,7 @@ function simulateStep(
         p.cooldown = p.actionTime;
         event(s, 2, i, -1, p.x, p.z, 0);
       } else if (Math.hypot(dx, dz) < 0.01) {
+        s.pendingShoot[t] = false;
         p.action = 7;
         p.actionTime = 4 / 25;
         p.cooldown = p.actionTime;
@@ -699,6 +717,7 @@ function simulateStep(
     }
   }
   if (s.players.some((p) => p.injury > 0)) {
+    s.pendingShoot = [false, false];
     s.previous = inputs.map((u) => ({ ...u }));
     return;
   }

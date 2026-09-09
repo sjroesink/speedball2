@@ -2,20 +2,32 @@ package main
 
 import "testing"
 
-func TestHumanControlBeyondOldViewport(t *testing.T) {
-	const u = 22.4 / 576
+func TestHumanControlViewportGate(t *testing.T) {
+	const unit = 22.4 / 576
 	for _, distance := range []int{76, 77, 300} {
-		s := initial()
-		for i := range s.Players {
-			s.Players[i].Stun = 100
+		run := func(input float64) Player {
+			s := initial()
+			for i := range s.Players {
+				s.Players[i].X, s.Players[i].Z, s.Players[i].Stun = -20, 10, 100
+			}
+			p := &s.Players[7]
+			p.X, p.Z, p.Stun = float64(distance)*unit, 0, 0
+			s.Ball.X, s.Ball.Z, s.Ball.H, s.Ball.Owner = 0, 0, 4, -1
+			s.simulate(simulationStep, [2]Input{{X: input}, {}}, [2]bool{true, false})
+			if s.Controlled[0] != 7 {
+				t.Fatal("fixture selection")
+			}
+			return *p
 		}
-		p := &s.Players[7]
-		p.X, p.Z, p.Stun = float64(distance)*u, 0, 0
-		s.Ball.X, s.Ball.Z, s.Ball.H, s.Ball.Owner = 0, 0, 4, -1
-		before := p.X
-		s.simulate(simulationStep, [2]Input{{X: 1}, {}}, [2]bool{true, false})
-		if p.X <= before {
-			t.Fatal("human movement lost", distance, p.X)
+		forward, backward := run(1), run(-1)
+		if distance == 76 {
+			if forward.X <= backward.X {
+				t.Fatal("lost on-screen input")
+			}
+		} else {
+			if forward.X != backward.X || forward.aiWait <= 1./25 {
+				t.Fatal("missing AI takeover", distance, forward.X, backward.X, forward.aiWait)
+			}
 		}
 	}
 }

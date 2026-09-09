@@ -94,6 +94,7 @@ type State struct {
 	Charge            [2]float64
 	Event             Event
 	previous          [2]Input
+	pendingShoot      [2]bool
 	Stars             [2]uint8
 	Multiplier        int
 	Effect            Effect
@@ -211,7 +212,21 @@ func jumpHeight(p Player) float64 {
 	}
 	return 0
 }
+
+// Amiga 0xd95e: held-ball distances target the carrier terrain position.
+func (s *State) possessionDistances() [18]int {
+	x, z := s.Ball.X, s.Ball.Z
+	if s.Ball.Owner >= 0 {
+		x, z = s.Players[s.Ball.Owner].X, s.Players[s.Ball.Owner].Z
+	}
+	var distances [18]int
+	for i := range s.Players {
+		distances[i] = playerPointDistance(&s.Players[i], x, z)
+	}
+	return distances
+}
 func (s *State) selectPlayers() {
+	distances := s.possessionDistances()
 	for t := 0; t < 2; t++ {
 		if s.Ball.Owner >= 0 && s.Players[s.Ball.Owner].Team == t {
 			s.Controlled[t] = s.Ball.Owner
@@ -220,10 +235,10 @@ func (s *State) selectPlayers() {
 		best := -1
 		distance := math.MaxFloat64
 		for i, p := range s.Players {
-			if p.Team != t || p.Stun > 0 {
+			if p.Team != t {
 				continue
 			}
-			d := float64(playerPointDistance(&p, s.Ball.X, s.Ball.Z))
+			d := float64(distances[i])
 			if d <= distance {
 				best = i
 				distance = d
@@ -281,20 +296,24 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		s.formationAndLaunchStep(dt, true)
 	}
 	if s.medicalStep(dt) {
+		s.pendingShoot = [2]bool{}
 		s.previous = inputs
 		return
 	}
 	if s.Pause > 0 {
 		s.Pause = math.Max(0, s.Pause-dt)
+		s.pendingShoot = [2]bool{}
 		s.previous = inputs
 		return
 	}
 	if s.restartStep(dt) {
+		s.pendingShoot = [2]bool{}
 		s.previous = inputs
 		return
 	}
 	s.featureStep(dt)
 	if s.hasInjury() {
+		s.pendingShoot = [2]bool{}
 		s.previous = inputs
 		return
 	}
@@ -310,6 +329,10 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			s.Over = true
 		}
 		return
+	}
+	// Retain cooked fire through busy animations until consumed or released.
+	for t, u := range inputs {
+		s.pendingShoot[t] = u.Shoot && (s.pendingShoot[t] || !s.previous[t].Shoot) || u.Fire > s.previous[t].Fire
 	}
 	b := &s.Ball
 	b.Lock = math.Max(0, b.Lock-dt)
@@ -357,10 +380,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 	}
 	s.selectPlayers()
 	contacts := contactDistances(&s.Players)
-	var catchDistances [18]int
-	for i, p := range s.Players {
-		catchDistances[i] = playerPointDistance(&p, b.X, b.Z)
-	}
+	catchDistances := s.possessionDistances()
 	// step_sprites interleaves the teams, starting with team two.
 	for order := range s.Players {
 		i := order/2 + (1-order%2)*9
@@ -373,10 +393,12 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		// Catching precedes jumping_action_fn clearing the airborne flag.
 		if p.Action == 2 && p.jumping && p.ActionTime <= 2./25+1e-9 {
 			p.jumping = false
+			s.pendingShoot[p.Team] = false
 			s.event(18, i, -1, p.X, p.Z, 0)
 		}
 		if p.Action == 1 && !p.slideEnding && p.ActionTime <= 1./25+1e-9 {
 			p.slideEnding = true
+			s.pendingShoot[p.Team] = false
 			s.event(19, i, -1, p.X, p.Z, 0)
 		}
 		if p.Stun > 0 {
@@ -385,6 +407,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			if finishFall {
 				p.Stun, p.ActionTime = 11./25, 11./25
 				p.fallFinishing = false
+				s.pendingShoot[p.Team] = false
 				s.event(19, i, -1, p.X, p.Z, 0)
 			}
 			s.resolveTackle(i, &contacts[i])
@@ -404,7 +427,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		}
 		s.resolveTackle(i, &contacts[i])
 		t := p.Team
-		human := humans[t] && s.Controlled[t] == i
+		human := humans[t] && s.Controlled[t] == i && s.worldInViewport(p.X, p.Z, 16)
 		u := inputs[t]
 		dx, dz := u.X, u.Z
 		if human && s.active(2, 1-t) {
@@ -555,14 +578,14 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		if p.Action != 1 && p.Action != 2 && p.Action != 3 && p.Action != 6 && p.Action != 7 && math.Hypot(dx, dz) > .01 {
 			p.FX, p.FZ = normalized(dx, dz)
 		}
-		pressed := (u.Shoot && !s.previous[t].Shoot) || (u.Tackle && !s.previous[t].Tackle) || u.Fire > s.previous[t].Fire || u.TackleID > s.previous[t].TackleID
+		pressed := s.pendingShoot[t] || (u.Tackle && !s.previous[t].Tackle) || u.TackleID > s.previous[t].TackleID
 		if !human {
 			pressed = u.Shoot || u.Tackle
 		}
 		if human && b.Owner == i && p.ActionTime <= 0 {
 			if (u.Lob && !s.previous[t].Lob) || u.LobID > s.previous[t].LobID {
 				s.beginThrow(i, 3)
-			} else if (u.Shoot && !s.previous[t].Shoot) || u.Fire > s.previous[t].Fire {
+			} else if s.pendingShoot[t] {
 				s.beginThrow(i, 1)
 			}
 		}
@@ -580,6 +603,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 					}
 					s.throw(i, high, steering)
 					p.throwMode = 0
+					s.pendingShoot[t] = false
 					s.Charge[t] = 0
 				}
 			}
@@ -600,6 +624,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				p.Cooldown = p.ActionTime
 				s.event(2, i, -1, p.X, p.Z, 0)
 			} else if math.Hypot(dx, dz) < .01 {
+				s.pendingShoot[t] = false
 				p.Action = 7
 				p.ActionTime = 4. / 25
 				p.Cooldown = p.ActionTime
@@ -654,6 +679,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		}
 	}
 	if s.hasInjury() {
+		s.pendingShoot = [2]bool{}
 		s.previous = inputs
 		return
 	}
