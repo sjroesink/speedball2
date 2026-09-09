@@ -1956,3 +1956,16 @@ Inspected successive running poses in the browser. Nine exported-model tests
 pass, including opposite knee phases, loop continuity and the prior throwing
 hand/action timing checks; production build passes. This does not yet provide
 foot planting, articulated elbows or a complete animation polish pass.
+
+### Articulated elbows and throwing grip
+
+Both Blender athletes now have elbow pivots carrying forearm armor, hands and
+(on the throwing arm) BallGrip. Running uses bent arms; catching and punching
+flex/extend the forearms. Throw wind-up bends the elbow and the release key
+extends it, preserving the previously checked forward hand position.
+
+All nine exported-model animation tests pass after updating hand lookup for
+the nested hierarchy. Grip distance and floor clearance remain checked through
+wind-up/release for both teams. Inspected running and the release pose in the
+browser; production build passes. Full-body weight transfer and foot planting
+still require animation work.

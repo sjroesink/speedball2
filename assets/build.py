@@ -123,22 +123,29 @@ def build_players():
   cube('Chin strap',(0,-.237,1.53),(.16,.018,.035),rubber,.006)
   limbs=[]
   knees=[]
+  elbows=[]
   for side in [-1,1]:
    before=set(bpy.context.scene.objects)
    shoulder=contoured_shell('Silver shoulder pad',(side*.46,0,1.40),[(-.13,.30,.34),(-.07,.42,.46),(.06,.40,.43),(.13,.25,.29)],athlete_steel)
    cube('Shoulder crown inlay',(side*.46,0,1.54),(.20,.29,.025),color,.035)
    cube('Shoulder team band',(side*.5,-.235,1.40),(.27,.04,.085),color,.02)
    bicep=sphere('Bicep',(side*.49,0,1.13),.16,athlete_skin);bicep.scale.z=1.35
+   forearm_start=set(bpy.context.scene.objects)
    contoured_shell('Forearm armor',(side*.49,-.06,.98),[(-.165,.18,.21),(-.10,.23,.27),(.07,.28,.30),(.165,.23,.25)],athlete_steel)
    sphere('Hand',(side*.49,-.12,.78),.13,athlete_skin)
+   forearm_parts=set(bpy.context.scene.objects)-forearm_start
+   bpy.ops.object.empty_add(location=(side*.49,0,1.10));elbow=bpy.context.object;elbow.name='Elbow_'+str(side)
+   for part in forearm_parts: part.parent=elbow;part.matrix_parent_inverse=elbow.matrix_world.inverted()
+   elbows.append((elbow,side))
    parts=set(bpy.context.scene.objects)-before
    bpy.ops.object.empty_add(location=(side*.43,0,1.42));joint=bpy.context.object;joint.name='Arm_'+str(side)
-   for part in parts: part.parent=joint;part.matrix_parent_inverse=joint.matrix_world.inverted()
+   for part in parts:
+    if part.parent is None: part.parent=joint;part.matrix_parent_inverse=joint.matrix_world.inverted()
    if side==1:
     # Grip center follows the throwing hand, just beyond the closed fist.
     bpy.ops.object.empty_add(location=(side*.49,-.12,.45))
-    grip=bpy.context.object;grip.name='BallGrip';grip.parent=joint
-    grip.matrix_parent_inverse=joint.matrix_world.inverted()
+    grip=bpy.context.object;grip.name='BallGrip';grip.parent=elbow
+    grip.matrix_parent_inverse=elbow.matrix_world.inverted()
    limbs.append((joint,side,True))
    before=set(bpy.context.scene.objects)
    contoured_shell('Thigh',(side*.22,0,.56),[(-.15,.22,.26),(-.06,.28,.32),(.09,.33,.36),(.165,.28,.31)],athlete_steel)
@@ -191,6 +198,21 @@ def build_players():
     joint.animation_data.action=None
     track=joint.animation_data.nla_tracks.new();track.name=clip;track.strips.new(clip,1,action)
    joint.rotation_euler=(0,0,0)
+  for elbow,side in elbows:
+   elbow.animation_data_create()
+   for clip in poses:
+    action=bpy.data.actions.new(elbow.name+'_'+clip);elbow.animation_data.action=action
+    frames=[1,7,13,19,25] if clip=='Run' else [f[0] for f in poses[clip]]
+    for k,frame in enumerate(frames):
+     angle=0
+     if clip=='Run': angle=-.65-.20*math.sin((frame-1)/24*math.tau)*side
+     elif clip=='Throw': angle=[-.45,-.85,0,-.25,0][k] if side==1 else -.4
+     elif clip=='Catch': angle=[-.5,-.35,0][k]
+     elif clip=='Punch': angle=[-.6,0,0][k] if side==1 else -.5
+     elbow.rotation_euler.x=angle;elbow.keyframe_insert(data_path='rotation_euler',frame=frame)
+    elbow.animation_data.action=None
+    track=elbow.animation_data.nla_tracks.new();track.name=clip;track.strips.new(clip,1,action)
+   elbow.rotation_euler=(0,0,0)
   for knee,side in knees:
    knee.animation_data_create()
    for clip in poses:

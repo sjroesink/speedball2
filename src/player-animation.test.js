@@ -45,8 +45,8 @@ test("both Blender team models extend the throwing hand forward at release", asy
     playPlayerAction(action, 3, .16);
     mixer.update(0);
     model.scene.updateMatrixWorld(true);
-    const arm = model.scene.getObjectByName("Arm_1");
-    const hand = arm.children.find(o => o.name.startsWith("Hand"));
+    const elbow = model.scene.getObjectByName("Elbow_1");
+    const hand = elbow.children.find(o => o.name.startsWith("Hand"));
     assert.ok(hand, "Blender throwing hand is present");
     const position = hand.getWorldPosition(new Vector3());
     assert.ok(position.z > .7, "hand extends toward the model's front");
@@ -59,7 +59,7 @@ test("Blender ball grip stays next to the hand through wind-up and release", asy
     const model = await player(team), mixer = new AnimationMixer(model.scene);
     const action = mixer.clipAction(model.animations.find(c => c.name.includes("Throw")));
     const grip = model.scene.getObjectByName("BallGrip");
-    const hand = model.scene.getObjectByName("Arm_1").children.find(o => o.name.startsWith("Hand"));
+    const hand = model.scene.getObjectByName("Elbow_1").children.find(o => o.name.startsWith("Hand"));
     assert.ok(grip, "export includes the authored grip");
     for (const remaining of [.32, .28, .24, .20, .16]) {
       playPlayerAction(action, 3, remaining); mixer.update(0);
