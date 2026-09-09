@@ -100,3 +100,29 @@ func TestInterceptionCues(t *testing.T) {
 		}
 	}
 }
+
+func TestCatchImpactRequiresPlanarMotion(t *testing.T) {
+	for _, velocity := range [][2]float64{{0, 0}, {1, 0}, {0, -1}} {
+		for _, enemy := range []bool{false, true} {
+			s := catchFixture()
+			s.Players[7].X, s.Players[7].Z = 0, 0
+			s.Ball.VX, s.Ball.VZ, s.Ball.VH = velocity[0], velocity[1], -1
+			s.Ball.LastTouch = 6
+			if enemy {
+				s.Ball.LastTouch = 16
+			}
+			s.catchBall()
+			if s.Ball.Owner != 7 {
+				t.Fatal("catch failed")
+			}
+			impact, intercept := false, false
+			for _, e := range s.Events[:s.EventCount] {
+				impact = impact || e.Kind == 16
+				intercept = intercept || e.Kind == 24
+			}
+			if impact != (velocity[0] != 0 || velocity[1] != 0) || intercept != enemy {
+				t.Fatal("incorrect cues", velocity, enemy)
+			}
+		}
+	}
+}

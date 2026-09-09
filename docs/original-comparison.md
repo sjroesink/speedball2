@@ -1460,3 +1460,19 @@ coverage retains both direction tables and all eight facing directions.
 The four full-match parity scenarios remain, including the dedicated medical
 scenario. An inferred caller ordering alone is not evidence for a callee's
 behavior; both functions above support these expectations.
+
+
+### Catch impact audio eligibility (2026-09-09)
+
+`get_ball` sets possession at 0xece0, then tests both planar velocity words
+at 0xece4 before playing sound 0x0e at 0xecf0. A stationary pickup or a purely
+vertical launcher catch does not play that impact. Browser and server now
+emit event 16 only for planar motion. Interception events 24/25 remain
+independent, matching the preceding 0xec88 branch. No new audio asset or
+protocol field is required.
+
+Tests cover both movement axes, zero planar velocity with vertical movement,
+friendly catches and interceptions. The tackle-only parity scenario no longer
+requires impact event 16 because it never throws; the other three complete
+match scenarios still require it. The peak vertical catch fixture explicitly
+asserts silence rather than assuming any successful catch makes a sound.

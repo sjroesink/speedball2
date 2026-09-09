@@ -67,8 +67,21 @@ test("interception cue identifies the team and excludes friendly or charged catc
   Object.assign(s.ball,{lastTouch:(friendly?team:1-team)*9+6,charged,electric:0});
   catchBall(s);
   assert.equal(s.ball.owner,i);
-  const intercepts=s.events.filter(e=>e.kind===24||e.kind===25);
+  const intercepts=(s.events??[]).filter(e=>e.kind===24||e.kind===25);
   assert.equal(intercepts.length,!friendly&&!charged?1:0);
   if(intercepts.length) assert.equal(intercepts[0].kind,24+team);
+ }
+});
+
+test("catch impact requires planar motion while interception remains independent", () => {
+ for (const [vx,vz] of [[0,0],[1,0],[0,-1]]) for (const enemy of [false,true]) {
+  const s=setup();
+  Object.assign(s.players[7],{x:0,z:0});
+  Object.assign(s.ball,{vx,vz,vh:-1,lastTouch:enemy?16:6});
+  catchBall(s);
+  assert.equal(s.ball.owner,7);
+  const kinds=(s.events??[]).map(e=>e.kind);
+  assert.equal(kinds.includes(16),!!(vx||vz));
+  assert.equal(kinds.includes(24),enemy);
  }
 });

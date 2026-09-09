@@ -742,7 +742,10 @@ func (s *State) catchBallAt(only int, distances *[18]int) {
 			b.Owner = i
 			b.LastTouch = i
 			b.After = 0
-			s.event(16, i, -1, b.X, b.Z, b.H)
+			// get_ball (0xece4): impact sound requires horizontal ball movement.
+			if b.VX != 0 || b.VZ != 0 {
+				s.event(16, i, -1, b.X, b.Z, b.H)
+			}
 			return
 		}
 	}

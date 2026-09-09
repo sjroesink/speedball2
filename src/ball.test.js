@@ -225,7 +225,7 @@ test("peak lob clears standing players but jumping players can catch it", () => 
     flightStep(s.ball, 21 / 25);
     step(s, 1 / 60, {}, [true, true]);
     assert.equal(s.ball.owner, jumping ? 16 : -1);
-    if (jumping) assert.equal(s.event.kind, 16);
+    if (jumping) assert.notEqual(s.event.kind, 16, "vertical-only catch has no impact cue");
   }
 });
 test("height stage three cannot score even though it is below the old geometric goal threshold", () => {

@@ -831,7 +831,8 @@ export function catchBall(s, only = -1, distances = null) {
       b.owner = i;
       b.lastTouch = i;
       b.after = 0;
-      event(s, 16, i, -1, b.x, b.z, b.h);
+      // get_ball (0xece4): impact sound requires horizontal ball movement.
+      if (b.vx || b.vz) event(s, 16, i, -1, b.x, b.z, b.h);
       return;
     }
 }
