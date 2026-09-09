@@ -1378,3 +1378,21 @@ and tiny positive/negative floating-point noise.
 197 JS tests, Go tests/vet and production build pass. The full 5000-tick seeded
 scenario now matches at every sampled checkpoint. This establishes parity for
 that scenario, not exhaustive JS/Go equivalence or original-game frame parity.
+
+
+## Complete-match parity with player input (2026-09-09)
+
+Expanded the cross-language trace to three 10000-tick scenarios: AI versus AI,
+one scripted human versus AI, and two scripted humans. Inputs chase the ball or
+advance toward goal while exercising held fire, lob and tackle controls. Samples
+now include current attributes, equipment, credits and temporary effects, in
+addition to positions, actions, RNG, score and flight state. Held/stationary
+ball slowdown counters are excluded when inert, like inactive flight indices.
+
+All three scenarios reach full time in the second half. Assertions require
+throw/contact/goal/pickup/catch/restart events in each; the mixed-input scenario
+also requires warp, injury and substitution events. Both simulations agree at
+every 25-tick checkpoint throughout all three runs. This is simulation-level
+integration coverage, not an actual two-client network injury playthrough, nor
+proof of original Amiga frame equivalence. No production behavior changed in
+this checkpoint. The extended trace and full JS/Go suites pass.
