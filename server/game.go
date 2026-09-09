@@ -221,7 +221,7 @@ func (s *State) selectPlayers() {
 			if p.Team != t || p.Stun > 0 {
 				continue
 			}
-			d := float64(referenceDistance(p.X-s.Ball.X, p.Z-s.Ball.Z))
+			d := float64(playerPointDistance(&p, s.Ball.X, s.Ball.Z))
 			if d <= distance {
 				best = i
 				distance = d
@@ -353,7 +353,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 	contacts := contactDistances(&s.Players)
 	var catchDistances [18]int
 	for i, p := range s.Players {
-		catchDistances[i] = referenceDistance(p.X-b.X, p.Z-b.Z)
+		catchDistances[i] = playerPointDistance(&p, b.X, b.Z)
 	}
 	// step_sprites interleaves the teams, starting with team two.
 	for order := range s.Players {
@@ -728,7 +728,7 @@ func (s *State) catchBallAt(only int, distances *[18]int) {
 			if s.Controlled[team] != i || p.Stun > 0 || p.Health <= 0 || p.Action == 3 {
 				continue
 			}
-			distance := referenceDistance(p.X-b.X, p.Z-b.Z)
+			distance := playerPointDistance(p, b.X, b.Z)
 			if distances != nil {
 				distance = distances[i]
 			}

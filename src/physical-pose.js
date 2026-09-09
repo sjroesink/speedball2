@@ -1,6 +1,27 @@
 import data from "./physical-pose-data.json" with { type: "json" };
-import { actionDuration, fallDuration } from "./attributes.js";
+import {
+  actionDuration,
+  fallDuration,
+  referenceDistance,
+} from "./attributes.js";
 const unit = 22.4 / 576;
+// distance_to_point (0xdaca) includes only the querying player's Y origin.
+export function playerPointDistance(p, x, z) {
+  const origin = data.origins[p.physicalSprite ?? 0];
+  return referenceDistance(p.x - origin[1] * unit - x, p.z - z);
+}
+// calculate_player_distances (0xda20) adds both origins to team one's target,
+// queries team two, then stores the same result for both opponents.
+export function opponentDistance(p, q) {
+  const target = p.team === 0 ? p : q;
+  const query = p.team === 0 ? q : p;
+  const origin = data.origins[target.physicalSprite ?? 0];
+  return playerPointDistance(
+    query,
+    target.x - origin[1] * unit,
+    target.z + origin[0] * unit,
+  );
+}
 // Advance original sprite selection for physical carried-ball placement.
 export function advancePhysicalPose(p, i, period, dt) {
   const direction =

@@ -1,4 +1,4 @@
-import {advancePhysicalPose,physicalBallOffset} from "./physical-pose.js";
+import {advancePhysicalPose,physicalBallOffset,playerPointDistance} from "./physical-pose.js";
 import { beginRestart, restartStep } from "./restart.js";
 import { forwardDecision } from "./forward-ai.js";
 import { carrierMove } from "./carrier-move.js";
@@ -213,7 +213,7 @@ export function selectPlayers(s) {
       dist = Infinity;
     s.players.forEach((p, i) => {
       if (p.team !== t || p.stun > 0) return;
-      const d = referenceDistance(p.x - b.x, p.z - b.z);
+      const d = playerPointDistance(p, b.x, b.z);
       if (d <= dist) {
         best = i;
         dist = d;
@@ -408,7 +408,7 @@ function simulateStep(
   selectPlayers(s);
   const contacts = contactDistances(s.players);
   const catchDistances = s.players.map((p) =>
-    referenceDistance(p.x - b.x, p.z - b.z),
+    playerPointDistance(p, b.x, b.z),
   );
   // step_sprites processes team two then team one at each roster index.
   for (let order = 0; order < s.players.length; order++) {
@@ -786,7 +786,7 @@ export function catchBall(s, only = -1, distances = null) {
       )
         continue;
       if (
-        (distances ? distances[i] : referenceDistance(p.x - b.x, p.z - b.z)) >
+        (distances ? distances[i] : playerPointDistance(p, b.x, b.z)) >
         16
       )
         continue;

@@ -11,7 +11,7 @@ for group,address in [('standing',0x75a2),('slide',0x75c2),('punch',0x75e2),('ru
  groups[group]=[data['animations'][names[a]]['frames'] for a in struct.unpack_from('>8I',raw,address-0x3ff8)]
  groups[group]=[frames[:next((i for i,v in enumerate(frames) if v<0),len(frames))] for frames in groups[group]]
  assert all(all(0<=frame<117 for frame in frames) for frames in groups[group])
-runtime={'groups':groups,'offsets':[[a[0]+b[0],a[1]+b[1]] for a,b in zip(data['ballOffsets'],data['originOffsets'])]}
+runtime={'groups':groups,'origins':data['originOffsets'][:117],'offsets':[[a[0]+b[0],a[1]+b[1]] for a,b in zip(data['ballOffsets'],data['originOffsets'])]}
 serialized=json.dumps(runtime,separators=(',',':'))+'\n'
 for folder in ['src','server']:(root/folder/'physical-pose-data.json').write_text(serialized,encoding='utf-8')
 print('Generated 14 direction groups and 117 combined offsets for browser/server')

@@ -1,8 +1,13 @@
 import { referenceDistance, fallRecovery } from "./attributes.js";
+import { opponentDistance } from "./physical-pose.js";
 const unit = 22.4 / 576;
 export function contactDistances(players) {
   return players.map((p) =>
-    players.map((q) => referenceDistance(q.x - p.x, q.z - p.z)),
+    players.map((q) =>
+      p.team === q.team
+        ? referenceDistance(q.x - p.x, q.z - p.z)
+        : opponentDistance(p, q),
+    ),
   );
 }
 // sub_D448/sub_D4AC: cancel movement toward each nearby standing opponent.

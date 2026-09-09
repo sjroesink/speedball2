@@ -7,6 +7,9 @@ func contactDistances(players *[18]Player) [18][18]int {
 	for i, p := range players {
 		for j, q := range players {
 			distances[i][j] = referenceDistance(q.X-p.X, q.Z-p.Z)
+			if p.Team != q.Team {
+				distances[i][j] = opponentDistance(&p, &q)
+			}
 		}
 	}
 	return distances

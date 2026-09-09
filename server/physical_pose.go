@@ -11,6 +11,21 @@ var physicalPoseJSON []byte
 var physicalPoseData struct {
 	Groups  map[string][][]int
 	Offsets [][2]int
+	Origins [][2]int
+}
+
+// distance_to_point includes the querying player's vertical sprite origin.
+func playerPointDistance(p *Player, x, z float64) int {
+	origin := physicalPoseData.Origins[p.physicalSprite]
+	return referenceDistance(p.X-float64(origin[1])*terrainUnit-x, p.Z-z)
+}
+func opponentDistance(p, q *Player) int {
+	target, query := p, q
+	if p.Team != 0 {
+		target, query = q, p
+	}
+	origin := physicalPoseData.Origins[target.physicalSprite]
+	return playerPointDistance(query, target.X-float64(origin[1])*terrainUnit, target.Z+float64(origin[0])*terrainUnit)
 }
 
 func init() {

@@ -2533,3 +2533,28 @@ and held-grip and recovery-phase errors were zero across six recovery seeks.
 Client 1 had five windups/cue dispatches, client 2 four at its older stop tick;
 this final unequal tick is not a same-tick event mismatch. Coin 13 collection
 and 100 credits replicated. This short run did not exercise medical phases.
+
+### Pose-aware ball and opponent distances — 9 September
+
+The source distance_to_point at 0xdaca-0xdad2 adds only the querying player's
+vertical sprite origin. calculate_player_distances at 0xda20-0xda4c adds both
+origins of team one's target before querying team two and stores that single
+result for both players. The horizontal asymmetry is preserved, rather than
+replaced with two fully centered points. Sprite origins are assigned by
+set_player_sprite_offset at 0x10dfe from the displayed physical sprite.
+
+Generated runtime data now includes the 117 relevant origins. JS and Go use
+them for controlled-player selection, cached ball distances, direct catches
+and opposing-player contact distances. These caches use the preceding pose,
+before the next thinking/animation pass. Standing sprites keep zero origins;
+airborne sprite 73 contributes -12 source Y pixels and fallen sprite 94 +4.
+
+Tests establish the 28/29-pixel ground-position boundary for a jumping catch
+(the adjusted distances are 16/17), fallen and horizontal-only origins, and
+the team-one target convention in both query directions. The existing 249 JS
+tests including six 10,000-tick parity scenarios passed after integration;
+three additional JS tests and matching Go cases passed, as did Go vet and
+production build. This does not yet port every distance_to_point call site:
+collectibles, bumpers and some direct AI point calculations still require
+individual audits. Full original animation cursor/callback parity and source
+fixed-point coordinate quantization also remain unproven.

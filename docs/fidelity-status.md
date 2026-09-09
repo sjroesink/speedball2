@@ -32,7 +32,7 @@ collision/release placement. The complete 117 signed ball offsets, 120 sprite or
 The complete memory-backed extraction uses `tools/ExportBallTables.java`.
 Physical placement is integrated in JS/Go using generated direction groups,
 a retained run cursor, action timers and jump/catch state. A complete source
-interpreter and origin-aware distance audit remain open.
+interpreter remains open. Pose-aware ball and opposing-player distances are integrated; collectible, bumper and remaining direct AI point distances still need an audit.
 
 ## Verification limits
 
