@@ -16,6 +16,8 @@ export function eventPan(state, event, view) {
 
 // Each layer is [waveform, start Hz, end Hz, seconds, gain, delay seconds].
 export const cues = {
+  // Tackle contact (Amiga 0x06), including unsuccessful attempts.
+  29: [["noise", 1800, 500, .065, .12, 0], ["triangle", 210, 100, .07, .075, 0]],
   // Zap pickup activation (Amiga sound 0x12), distinct from electroball contact.
   zap: [
     ["noise", 4800, 600, .24, .19, 0],

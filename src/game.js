@@ -856,10 +856,15 @@ function resolveTackle(s, i, distances) {
     )
       continue;
     p.tackleResolved = true;
+    // do_tackle plays contact (0x06) before the success roll.
+    event(s, 29, i, j, q.x, q.z, 0);
     if (randomByte(s) > tackleThreshold(p, q, j % 9 === 0)) return;
     const hadBall = s.ball.owner === j;
     if (damage(s, i, j)) {
-      if (hadBall) giveBall(s, i);
+      if (hadBall) {
+        giveBall(s, i);
+        event(s, p.team === 0 ? 24 : 25, i, j, q.x, q.z, 0);
+      }
       [q.fx, q.fz] = eightWay(p.fx, p.fz);
       const speed = (p.action === 1 ? 4 : 3) * velocityUnit;
       q.fallX = q.fx * speed;

@@ -780,6 +780,8 @@ func (s *State) resolveTackle(i int, distances *[18]int) {
 			continue
 		}
 		p.tackleResolved = true
+		// do_tackle plays contact (0x06) before the success roll.
+		s.event(29, i, j, q.X, q.Z, 0)
 		if s.randomByte() > tackleThreshold(p, q, j%9 == 0) {
 			return
 		}
@@ -787,6 +789,11 @@ func (s *State) resolveTackle(i int, distances *[18]int) {
 		if s.damage(i, j) {
 			if hadBall {
 				s.giveBall(i)
+				kind := 24
+				if p.Team == 1 {
+					kind = 25
+				}
+				s.event(kind, i, j, q.X, q.Z, 0)
 			}
 			q.FX, q.FZ = eightWay(p.FX, p.FZ)
 			speed := 3 * velocityUnit

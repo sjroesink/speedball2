@@ -1789,3 +1789,30 @@ Boundary tests cover both inclusive corners and one unit outside each edge at
 three scroll positions, including both ends of the court. Excluded carriers keep
 their ball. Existing tests retain shield, damage and release-motion coverage.
 All 221 JavaScript tests, Go tests, Go vet and the production build pass.
+
+### Tackle contact and possession audio
+
+The full Amiga `do_tackle` routine plays sound 0x06 at 0x10494 before
+rolling success at 0x104aa. A failed contact therefore still has audible feedback.
+After a successful possession transfer, 0x10576–0x105ae plays the same
+team-dependent 0x28/0x29 signal used for interceptions.
+
+Both simulations now emit contact event 29 before the roll, then the existing
+body-hit event on success and team possession event 24/25 only when the victim
+was carrying. A short synthesized armor contact distinguishes a resisted tackle
+from the heavier successful hit. Event IDs suppress repeated playback across
+snapshots and the resolved contact cannot replay on subsequent action ticks.
+
+Regression cases cover both teams, both success outcomes and carrying/noncarrying
+victims. All 222 JavaScript tests, Go tests, Go vet and the production build pass.
+The browser OfflineAudioContext check passed all 36 cases, including the new
+contact cue (peak 0.0166, RMS 0.00035), stress and sound cancellation. This checks
+rendered signal integrity, not subjective balance in a full live match.
+
+The ball-drop audit also identified an outstanding case: the original preserves
+an already attacking victim's action callback when knocked down, allowing a
+falling counter-contact to release possession without taking it. Our generic
+stunned state currently skips that callback. Ordinary successful tackles already
+transfer the ball directly; the generic damage helper's temporary impulse is
+superseded in that path. Falling counter-contact and its release still need
+implementation and source-based tests.
