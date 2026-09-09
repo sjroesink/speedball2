@@ -19,7 +19,7 @@ jobs:
     name: Test and deploy speedball.roesink.dev
     if: github.repository == 'sjroesink/speedball2'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: Check out the triggering revision
@@ -51,16 +51,40 @@ jobs:
       - name: Trigger authenticated Unraid deployment
         run: |
           set -euo pipefail
-          token="$(curl --fail --silent --show-error \
-            --header "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
-            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=deploy.roes.ink" | jq -r .value)"
-          test -n "$token"
-          response="$(curl --fail-with-body --silent --show-error \
-            --request POST \
-            --header "Authorization: Bearer ${token}" \
-            --header 'Content-Type: application/json' \
-            --data '{"stack":"speedball"}' \
-            https://deploy.roes.ink/hooks/deploy)"
-          printf '%s\n' "$response"
-          printf '%s\n' "$response" | grep -Fq "Commit: ${GITHUB_SHA}"
-          printf '%s\n' "$response" | grep -Fq 'Deploy voltooid: speedball'
+          for attempt in $(seq 1 120); do
+            token="$(curl --fail --silent --show-error \
+              --header "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+              "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=deploy.roes.ink" | jq -r .value)"
+            test -n "$token"
+            response_file="$(mktemp)"
+            http_code="$(curl --silent --show-error \
+              --request POST \
+              --header "Authorization: Bearer ${token}" \
+              --header 'Content-Type: application/json' \
+              --data '{"stack":"speedball"}' \
+              --output "$response_file" \
+              --write-out '%{http_code}' \
+              https://deploy.roes.ink/hooks/deploy || true)"
+            response="$(<"$response_file")"
+            rm -f "$response_file"
+
+            if [ "$http_code" = 200 ]; then
+              printf '%s\n' "$response"
+              if printf '%s\n' "$response" | grep -Fq "Commit: ${GITHUB_SHA}" && \
+                 printf '%s\n' "$response" | grep -Fq 'Deploy voltooid: speedball'; then
+                exit 0
+              fi
+              if printf '%s\n' "$response" | grep -Fq \
+                 "Deploy overgeslagen: speedball ${GITHUB_SHA} vervangen door"; then
+                echo 'Deze run is vervangen door een nieuwere push.'
+                exit 0
+              fi
+              echo 'Onverwacht antwoord van de deploywebhook.' >&2
+              exit 1
+            fi
+
+            echo "Deploywebhook nog bezet of time-out (HTTP ${http_code}, poging ${attempt}/120); opnieuw proberen..."
+            sleep 10
+          done
+          echo 'Deploywebhook bleef twintig minuten onbereikbaar.' >&2
+          exit 1
