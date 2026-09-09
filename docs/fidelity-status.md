@@ -19,9 +19,10 @@ feel, modern graphics and audio remain an active objective.
 | Higher FPS and resolution | Independent renderer, bounded turns, time-sampled ball trail, batched meshes | Current full-match interval 32.7 ms median; idle scheduling 31.2 ms. Test environment scheduling contributes; 60+ FPS target not proven |
 | Complete original feature scope | Exhibition match systems are present | Career/league, transfers and persistent team progression are absent; do not silently declare full-original completion without resolving these |
 
-## Next source-level work
+## Physical placement audit
 
-Reconcile held-ball physical placement with step_match at 0xcff4-0xd03e.
+Held-ball placement has been reconciled in several stages with step_match at
+0xcff4-0xd03e; complete per-tick equivalence remains unproven.
 It copies carrier position and velocity, then applies the signed two-byte
 player_ball_offsets entry indexed by the player's displayed sprite, adjusted
 by sprite origins and held-ball sprite size. Current game.js/server game.go
@@ -35,6 +36,24 @@ a retained run cursor, action timers and jump/catch state. A complete source
 interpreter remains open. Per-player pose ordering and the fall -5 gameplay
 terminator are now integrated; fresh falls preserve frame zero even when
 damage arrives after the victim has been processed. Pose-aware ball and opposing-player distances are integrated; collectible and bumper callers were audited as object-based. Goal-throw distance and selected-teammate avoidance are now integrated. Full source fixed-point coordinate behavior remains open.
+
+## Remaining comparison priorities
+
+1. Whole-match reference traces: current host parity and source-derived branch
+   cases do not provide an executable Amiga-versus-remake match comparison.
+2. Remaining physical-pose and fixed-point ordering, especially interactions
+   between tackles, catches, ball hardware and medical interruption.
+3. Playable feel review with the current high camera, player animation and
+   synthesized audio; rendering and signal tests cannot establish acceptance.
+4. Real network recovery and performance on target machines.
+
+Recent focused checks cover captured jump/slide timing, collected equipment
+being ignored by AI, equipment collection/drop rendering, and temporary-power
+replacement across all equipment attributes. The active-power restore fix is
+an explicit modernization of an original stale-backup hazard, documented in
+gameplay-comparison-2026-09-09.md; it is not a claim of byte-for-byte fidelity.
+The attempted keeper comparison reversal was reverted after opcode inspection.
+Do not carry its superseded explanation into later gameplay changes.
 
 ## Verification limits
 

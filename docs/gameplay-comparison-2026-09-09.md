@@ -431,3 +431,18 @@ sustain 100 becomes 50 once, charge count remains 3, and the event tail contains
 side contact 5 followed by end contact 27. JS and Go targeted tests pass.
 No production change was needed. This validates the corner state and event
 sequence, not every sound source coordinate or complete fixed-point behavior.
+
+### Integrated current-server WebTransport check
+
+Server restarted at 18:54:23 with gameplay through 1f3f68f. Room 9KDEVH ran two
+production WebTransport clients with 160 ms delay and five dropped snapshots
+per 25 on client 2. Stopped at ticks 831/825: 660 paired snapshots, zero state
+mismatches, zero missing shared events, 169 deliberately dropped snapshots.
+Both clients dispatched 11 throw cues for 11 windups/releases and observed
+jump durations 13/14 frames plus slide durations 9/10/12 frames. They shared
+credits [0,200], minimum energy 63, and coin/team-boost collections (13/4).
+Three recovery seeks, including one extension, had zero normalized phase error;
+held grip error was zero and the largest release-frame displacement was 0.628.
+No medical phase or equipped item occurred in this run, so their dedicated
+fixtures remain the evidence for those changes. This was local, not WAN.
+Full JS suite at this checkpoint: 285 passed; Go tests and go vet pass.
