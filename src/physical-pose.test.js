@@ -5,6 +5,16 @@ import { advancePhysicalPose, physicalBallOffset } from "./physical-pose.js";
 import data from "./physical-pose-data.json" with { type: "json" };
 import { readFileSync } from "node:fs";
 const unit = 22.4 / 576;
+test("physical fall terminator holds the cursor used by subsequent running", () => {
+  const p=initial().players[7];
+  Object.assign(p,{action:4,actionTime:1/25,fx:1,fz:0});
+  advancePhysicalPose(p,7,1,1/25);
+  assert.equal(p.physicalFrame,25);
+  assert.equal(p.poseCursor,25);
+  Object.assign(p,{action:0,actionTime:0,moveX:1});
+  advancePhysicalPose(p,7,1,1/25);
+  assert.equal(p.physicalFrame,1,"run retains fall cursor modulo eight");
+});
 test("runtime physical pose data is identical for browser and server", () =>
   assert.deepEqual(
     data,

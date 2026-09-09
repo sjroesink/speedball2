@@ -9,9 +9,10 @@ import (
 //go:embed physical-pose-data.json
 var physicalPoseJSON []byte
 var physicalPoseData struct {
-	Groups  map[string][][]int
-	Offsets [][2]int
-	Origins [][2]int
+	Groups   map[string][][]int
+	Controls map[string][]int
+	Offsets  [][2]int
+	Origins  [][2]int
 }
 
 // distance_to_point includes the querying player's vertical sprite origin.
@@ -95,6 +96,15 @@ func advancePhysicalPose(p *Player, i, period int, dt float64) {
 	}
 	frames := physicalPoseData.Groups[group][direction]
 	index = min(index, len(frames)-1)
+	p.poseCursor = float64(index + 1)
+	if index == len(frames)-1 {
+		switch physicalPoseData.Controls[group][direction] {
+		case -1, -4:
+			p.poseCursor = 0
+		case -2, -5:
+			p.poseCursor = float64(index)
+		}
+	}
 	p.physicalSprite = frames[index]
 	p.physicalPoseValid = true
 	p.physicalFrame = index

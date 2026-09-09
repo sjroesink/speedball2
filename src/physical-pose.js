@@ -81,6 +81,12 @@ export function advancePhysicalPose(p, i, period, dt) {
   const frames =
     data.groups[group][keeper && kind === 0 ? (up ? 0 : 4) : direction];
   index = Math.min(index, frames.length - 1);
+  p.poseCursor = index + 1;
+  if (index === frames.length - 1) {
+    const control = data.controls[group][keeper && kind === 0 ? (up ? 0 : 4) : direction];
+    if (control === -1 || control === -4) p.poseCursor = 0;
+    else if (control === -2 || control === -5) p.poseCursor = index;
+  }
   p.physicalSprite = frames[index];
   p.physicalPoseValid = true;
   p.physicalFrame = index;

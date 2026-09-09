@@ -2659,3 +2659,18 @@ The boundary regression uses sprite 73's -12 vertical origin: a target at
 at the same ground position remains outside. Steering tests, six 10,000-tick
 parity scenarios, Go tests/vet and production build pass. No claim of complete
 AI or visual movement equivalence follows from these focused cases.
+
+### Physical cursor completion controls
+
+The runtime pose generator now retains the first negative control word for
+each direction sequence, including internal terminators. Physical pose
+advancement applies the original cursor result at the last sprite: -1/-4
+reset to zero, -2/-5 hold the last index, and -3 retains the incremented index.
+Previously falling sprite 25 left cursor 26, contrary to the decrement at
+0x10d50. This mattered after steering began consuming the physical cursor.
+
+The regression verifies the fall ending at cursor 25 and subsequent running
+selecting phase one through the original modulo-eight phase retention. All
+258 JS tests, six long parity scenarios, Go tests/vet and build pass. Action
+completion side effects still use the existing simulation callbacks; this
+change implements cursor controls, not an entire original opcode interpreter.
