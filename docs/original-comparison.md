@@ -2257,3 +2257,27 @@ coverage of Zap release, falling tackles and normal possession transfer.
 All 236 JS tests, including five 10,000-tick JS/Go parity scenarios, pass; Go
 tests, vet and the production build also pass. The local server was restarted
 with this implementation. Changes remain local for the hourly push batch.
+
+
+### Throw sound begins with the action
+
+The reviewed AI high/low choices match the source branches: goal throws are low
+at equality with twice THROW (0x10686-0x10694), while teammate passes are high
+at equality (0xf71a-0xf72a). This is a bounded branch audit, not full AI proof.
+
+That review exposed an audio timing difference. do_throw_common_ai plays sound
+0x03 at 0x107b2-0x107b6, and handle_user_input does the same at 0x10c28-0x10c2c.
+throwing_action_fn releases at animation word four without another sound call.
+Previously our throw cue played only at physical release, four ticks late.
+Both JS and Go now emit audio-only event 30 at beginThrow. ArenaAudio maps it to
+the existing synthesized throw cue and consumes physical release event 3
+silently. Event 3 remains available for release visuals and diagnostics.
+
+A simulation test covers human and AI windup with possession still held, followed
+by one release four ticks later. An audio observer test checks one onset sound
+and no duplicate on release/repeated snapshots. The retained-event audio test
+now uses windup event 30. The 238 JS tests passed across the full run and the
+corrected retained-event test rerun; five long JS/Go parity scenarios passed.
+Go tests, vet and build passed. Timbre is unchanged from the previously rendered
+audio probe; subjective whole-match mix review remains pending. Local server
+restarted; commit remains local for the hourly push batch.

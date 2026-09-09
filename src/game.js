@@ -228,6 +228,8 @@ function beginThrow(s, i, mode) {
   p.actionTime = 8 / 25;
   p.throwMode = mode;
   p.throwSteer = 0;
+  // Original human and AI throw actions play sound 0x03 at windup.
+  event(s, 30, i, -1, p.x, p.z, 1);
 }
 export function throwBall(s, i, lob, input = {}) {
   const p = s.players[i],

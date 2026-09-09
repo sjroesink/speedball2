@@ -209,7 +209,9 @@ export class ArenaAudio {
         : []) {
       if (e.id <= this.lastEvent) continue;
       this.lastEvent = e.id;
-      const cue = e.kind !== 11 ? e.kind : e.target === 12 ? "zap"
+      // Event 3 marks physical release; its sound belongs to windup event 30.
+      if (e.kind === 3) continue;
+      const cue = e.kind === 30 ? 3 : e.kind !== 11 ? e.kind : e.target === 12 ? "zap"
         : e.target === 13 ? "coin" : e.target >= 14 ? "equipment" : 11;
       this.play(cue, eventPan(state, e, view));
     }

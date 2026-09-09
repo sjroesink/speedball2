@@ -44,7 +44,7 @@ test("an omitted snapshot still delivers every retained sound once, in order", (
     audio = new ArenaAudio(),
     heard = [];
   audio.play = (kind) => heard.push(kind);
-  emit(s, 3, 7, -1);
+  emit(s, 30, 7, -1);
   audio.observe(s, false);
   // These events occur while a datagram is lost or between rendered frames.
   emit(s, 4, 7, 16);

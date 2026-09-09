@@ -235,6 +235,8 @@ func (s *State) beginThrow(i, mode int) {
 	p.ActionTime = 8. / 25
 	p.throwMode = mode
 	p.throwSteer = 0
+	// Original human and AI throw actions play sound 0x03 at windup.
+	s.event(30, i, -1, p.X, p.Z, 1)
 }
 func (s *State) throw(i int, lob bool, release ...Input) {
 	p := &s.Players[i]

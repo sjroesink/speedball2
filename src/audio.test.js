@@ -237,3 +237,16 @@ test("coins and equipment play distinct collection cues once per event",()=>{
  audio.observe(state,true,{centerZ:0,halfWidth:4});
  assert.deepEqual(heard,[["coin",-.5],["equipment",.5]]);
 });
+
+
+test("throw sound starts at windup and does not repeat at release",()=>{
+ const a=new ArenaAudio(),heard=[];a.play=(...args)=>heard.push(args);
+ const start={id:1,kind:30,z:1};
+ const state={pause:1,over:false,events:[start]};
+ a.observe(state,true,{centerZ:0,halfWidth:4});
+ assert.deepEqual(heard,[[3,.25]]);
+ state.events.push({id:2,kind:3,z:2});
+ a.observe(state,true,{centerZ:0,halfWidth:4});
+ a.observe(state,true,{centerZ:0,halfWidth:4});
+ assert.deepEqual(heard,[[3,.25]]);
+});
