@@ -133,6 +133,12 @@ func TestLobCannotCancelBusyAction(t *testing.T) {
 		}
 		inputs[0].LobID = 2
 		s.simulate(simulationStep, inputs, [2]bool{true, false})
+		if s.Ball.Owner != 7 {
+			t.Fatal("shortcut skipped windup")
+		}
+		for n := 0; n < 4; n++ {
+			s.simulate(simulationStep, inputs, [2]bool{true, false})
+		}
 		if s.Ball.Owner != -1 || s.Ball.FlightKind != 2 {
 			t.Fatal("lob blocked after recovery", action)
 		}

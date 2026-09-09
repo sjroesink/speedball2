@@ -192,6 +192,13 @@ export function selectPlayers(s) {
     if (best >= 0) s.controlled[t] = best;
   }
 }
+// Modes: 1 samples human input at release, 2 forces low, 3 forces high.
+function beginThrow(s, i, mode) {
+  const p = s.players[i];
+  p.action = 3;
+  p.actionTime = 8 / 25;
+  p.throwMode = mode;
+}
 export function throwBall(s, i, lob, input = {}) {
   const p = s.players[i],
     b = s.ball,
@@ -467,7 +474,7 @@ export function step(
           const target =
             receiver >= 0 ? s.players[receiver] : { x: d * 23, z: 0 };
           [p.fx, p.fz] = norm(target.x - p.x, target.z - p.z);
-          throwBall(s, i, receiver < 0 && danger && p.x * d < 10);
+          beginThrow(s, i, receiver < 0 && danger && p.x * d < 10 ? 3 : 2);
         }
       }
     }
@@ -489,30 +496,26 @@ export function step(
           (u.fire || 0) > (prev.fire || 0) ||
           (u.tackleId || 0) > (prev.tackleId || 0)
         : u.shoot || u.tackle;
-    if (human && b.owner === i) {
-      if (
-        p.actionTime <= 0 &&
-        ((u.lob && !prev.lob) || (u.lobId || 0) > (prev.lobId || 0))
-      ) {
-        throwBall(s, i, true, u);
+    if (human && b.owner === i && p.actionTime <= 0) {
+      if ((u.lob && !prev.lob) || (u.lobId || 0) > (prev.lobId || 0))
+        beginThrow(s, i, 3);
+      else if ((u.shoot && !prev.shoot) || (u.fire || 0) > (prev.fire || 0))
+        beginThrow(s, i, 1);
+    }
+    if (p.throwMode) {
+      if (b.owner !== i || p.action !== 3) {
+        p.throwMode = 0;
         s.charge[t] = 0;
       } else {
-        const fire =
-          (u.shoot && !prev.shoot) || (u.fire || 0) > (prev.fire || 0);
-        if (fire && s.charge[t] === 0 && p.actionTime <= 0) {
-          s.charge[t] = dt;
-          p.action = 3;
-          p.actionTime = 0.32;
-        } else if (s.charge[t] > 0) s.charge[t] += dt;
-        if (s.charge[t] > 0) {
-          // Charge includes the starting tick; release follows four full ticks.
-          if (s.charge[t] - dt >= 4 / 25 - 1e-9) {
-            throwBall(s, i, !!u.shoot, u);
-            s.charge[t] = 0;
-          }
+        s.charge[t] = 8 / 25 - p.actionTime + dt;
+        if (p.actionTime <= 4 / 25 + 1e-9) {
+          const high = p.throwMode === 3 || (p.throwMode === 1 && !!u.shoot);
+          throwBall(s, i, high, human ? u : {});
+          p.throwMode = 0;
+          s.charge[t] = 0;
         }
       }
-    } else if (human) s.charge[t] = 0;
+    }
     if (pressed && b.owner !== i && p.cooldown <= 0 && p.actionTime <= 0) {
       if (canJumpAtBall(p, b, catchDistances[i], inMultiplier) && !u.tackle) {
         p.action = 2;

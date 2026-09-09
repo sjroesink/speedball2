@@ -140,6 +140,8 @@ test("lob shortcut cannot cancel a busy action after obtaining possession", () =
     assert.equal(p.action, 0);
     assert.equal(s.ball.owner, 7, "blocked pulse must not be queued");
     step(s, simulationStep, { lobId: 2 });
+    assert.equal(s.ball.owner, 7);
+    for (let n = 0; n < 4; n++) step(s, simulationStep, { lobId: 2 });
     assert.equal(s.ball.owner, -1);
     assert.equal(s.ball.flightKind, 2);
   }

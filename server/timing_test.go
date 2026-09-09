@@ -77,3 +77,62 @@ func TestThrowAnimationIndices(t *testing.T) {
 		}
 	}
 }
+
+func TestAIThrowPreparation(t *testing.T) {
+	for _, high := range []bool{false, true} {
+		s := initial()
+		for i := range s.Players {
+			s.Players[i].Stun = 100
+			s.Players[i].X = -10
+			s.Players[i].Z = 8
+		}
+		p := &s.Players[7]
+		p.Stun, p.X, p.Z, p.FX, p.FZ = 0, 14, 0, 1, 0
+		if high {
+			p.X = 4
+			s.Players[16].X = 5
+			s.Players[16].Z = 0
+		}
+		x := p.X
+		s.Ball.Owner = 7
+		s.Ball.X = x
+		s.Ball.Z = 0
+		for n := 0; n < 4; n++ {
+			s.simulate(simulationStep, [2]Input{}, [2]bool{})
+			if s.Ball.Owner != 7 || p.Action != 3 || p.X != x {
+				t.Fatal("AI skipped preparation", n)
+			}
+		}
+		s.simulate(simulationStep, [2]Input{}, [2]bool{})
+		kind := 1
+		if high {
+			kind = 2
+		}
+		if s.Ball.Owner != -1 || s.Ball.FlightKind != kind {
+			t.Fatal("AI release")
+		}
+	}
+}
+func TestPossessionLossCancelsLob(t *testing.T) {
+	s := initial()
+	for i := range s.Players {
+		s.Players[i].Stun = 100
+	}
+	p := &s.Players[7]
+	p.Stun, p.X, p.Z = 0, 4, 0
+	s.Ball.Owner = 7
+	inputs := [2]Input{{LobID: 1}, {}}
+	s.simulate(simulationStep, inputs, [2]bool{true, true})
+	s.Ball = Ball{Owner: -1, X: 10, Z: 10, H: 1}
+	for n := 0; n < 8; n++ {
+		s.simulate(simulationStep, inputs, [2]bool{true, true})
+	}
+	for _, e := range s.Events[:s.EventCount] {
+		if e.Kind == 3 {
+			t.Fatal("released lost ball")
+		}
+	}
+	if s.Charge[0] != 0 {
+		t.Fatal("stale windup")
+	}
+}

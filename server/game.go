@@ -14,6 +14,7 @@ const (
 
 // Actions are replicated, including misses: 1 slide, 2 jump, 3 throw, 4 hit.
 type Player struct {
+	throwMode                   int
 	jumping                     bool
 	aiWait, aiX, aiZ            float64
 	aiTarget                    bool
@@ -203,6 +204,14 @@ func (s *State) selectPlayers() {
 			s.Controlled[t] = best
 		}
 	}
+}
+
+// Modes: 1 samples human input at release, 2 forces low, 3 forces high.
+func (s *State) beginThrow(i, mode int) {
+	p := &s.Players[i]
+	p.Action = 3
+	p.ActionTime = 8. / 25
+	p.throwMode = mode
 }
 func (s *State) throw(i int, lob bool, release ...Input) {
 	p := &s.Players[i]
@@ -411,7 +420,11 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 						tz = s.Players[receiver].Z
 					}
 					p.FX, p.FZ = normalized(tx-p.X, tz-p.Z)
-					s.throw(i, receiver < 0 && danger && p.X*d < 10)
+					mode := 2
+					if receiver < 0 && danger && p.X*d < 10 {
+						mode = 3
+					}
+					s.beginThrow(i, mode)
 				}
 			}
 		}
@@ -426,29 +439,30 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		if !human {
 			pressed = u.Shoot || u.Tackle
 		}
-		if human && b.Owner == i {
-			if p.ActionTime <= 0 && ((u.Lob && !s.previous[t].Lob) || u.LobID > s.previous[t].LobID) {
-				s.throw(i, true, u)
+		if human && b.Owner == i && p.ActionTime <= 0 {
+			if (u.Lob && !s.previous[t].Lob) || u.LobID > s.previous[t].LobID {
+				s.beginThrow(i, 3)
+			} else if (u.Shoot && !s.previous[t].Shoot) || u.Fire > s.previous[t].Fire {
+				s.beginThrow(i, 1)
+			}
+		}
+		if p.throwMode != 0 {
+			if b.Owner != i || p.Action != 3 {
+				p.throwMode = 0
 				s.Charge[t] = 0
 			} else {
-				fire := (u.Shoot && !s.previous[t].Shoot) || u.Fire > s.previous[t].Fire
-				if fire && s.Charge[t] == 0 && p.ActionTime <= 0 {
-					s.Charge[t] = dt
-					p.Action = 3
-					p.ActionTime = .32
-				} else if s.Charge[t] > 0 {
-					s.Charge[t] += dt
-				}
-				if s.Charge[t] > 0 {
-					// Charge includes the starting tick. Release follows four full ticks.
-					if s.Charge[t]-dt >= 4./25-1e-9 {
-						s.throw(i, u.Shoot, u)
-						s.Charge[t] = 0
+				s.Charge[t] = 8./25 - p.ActionTime + dt
+				if p.ActionTime <= 4./25+1e-9 {
+					high := p.throwMode == 3 || p.throwMode == 1 && u.Shoot
+					steering := Input{}
+					if human {
+						steering = u
 					}
+					s.throw(i, high, steering)
+					p.throwMode = 0
+					s.Charge[t] = 0
 				}
 			}
-		} else if human {
-			s.Charge[t] = 0
 		}
 		if pressed && b.Owner != i && p.Cooldown <= 0 && p.ActionTime <= 0 {
 			if canJumpAtBall(p, b, catchDistances[i], inMultiplier) && !u.Tackle {

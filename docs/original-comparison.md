@@ -390,3 +390,17 @@ paired 25 Hz tests assert every ownership/recovery boundary and both button
 transitions. Direct AI and shortcut lobs still skip the original windup and
 receive the four-frame release tail; that remaining difference is not covered
 by this human-throw timing correction.
+
+
+### Shared preparation for every runtime throw
+
+AI decisions and the lob shortcut now begin the same eight-frame throwing
+action as the ordinary fire button, instead of immediately releasing the ball.
+A per-player pending mode stores either release-time human button sampling or
+the AI/shortcut's chosen flight type. Release occurs with four frames remaining,
+so all runtime throws hold possession and stop movement for the same windup.
+Possession loss or an interrupted action cancels the pending release. The low-level
+release helper remains directly callable by physics tests; runtime decisions use
+preparation. Paired tests cover AI low/high flight, shortcut preparation and
+possession-loss cancellation. AI choice of target and flight type remains heuristic;
+this change aligns execution timing, not the remaining tactical decisions.
