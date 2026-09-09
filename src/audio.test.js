@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ArenaAudio, cues } from "./audio.js";
+import { ArenaAudio, cues, eventPan } from "./audio.js";
 
 test("audio consumes repeated/out-of-order snapshots once and resets between matches", () => {
   const audio = new ArenaAudio();
@@ -10,7 +10,7 @@ test("audio consumes repeated/out-of-order snapshots once and resets between mat
   audio.observe(s, true);
   audio.observe(s, true);
   audio.observe({ ...s, event: { id: 0, kind: 4, z: 0 } }, true);
-  assert.deepEqual(heard, [["kickoff"], [12, 0.7999999999999999]]);
+  assert.deepEqual(heard, [["kickoff"], [12, 0.8]]);
   s.over = true;
   audio.observe(s, false);
   audio.observe(s, false);
@@ -103,4 +103,70 @@ test("every game event has a finite bounded cue and unavailable audio fails sile
   });
   assert.equal(await audio.enable(true), false);
   assert.equal(audio.enabled, false);
+});
+
+test("action stereo follows the camera while match announcements remain centered", () => {
+  const u = 22.4 / 576;
+  for (const viewX of [0, 160, 320]) {
+    const s = { logicalView: [viewX, 484] },
+      center = (viewX - 160) * u;
+    assert.equal(eventPan(s, { kind: 4, z: center }), 0);
+    assert.ok(
+      Math.abs(eventPan(s, { kind: 4, z: center + 80 * u }) - 0.5) < 1e-12,
+    );
+    assert.ok(
+      Math.abs(eventPan(s, { kind: 4, z: center - 80 * u }) + 0.5) < 1e-12,
+    );
+    assert.equal(eventPan(s, { kind: 4, z: center + 320 * u }), 0.8);
+    assert.equal(eventPan(s, { kind: 4, z: center - 320 * u }), -0.8);
+    for (const kind of [6, 7, 14, 15])
+      assert.equal(eventPan(s, { kind, z: 11.2 }), 0);
+  }
+});
+
+test("restart whistle waits for the goal/half pause to end and is not replayed on repeated snapshots", () => {
+  const a = new ArenaAudio(),
+    heard = [];
+  a.play = (kind) => heard.push(kind);
+  const s = { over: false, pause: 3 };
+  a.observe(s, true);
+  a.observe(s, true);
+  assert.deepEqual(heard, []);
+  s.pause = 0;
+  a.observe(s, true);
+  a.observe(s, true);
+  assert.deepEqual(heard, ["kickoff"]);
+  s.pause = 1.4;
+  a.observe(s, true);
+  s.pause = 0;
+  a.observe(s, true);
+  a.observe(s, true);
+  assert.deepEqual(heard, ["kickoff", "kickoff"]);
+  s.pause = 3;
+  a.observe(s, true);
+  s.over = true;
+  s.pause = 0;
+  a.observe(s, false);
+  a.observe(s, false);
+  assert.deepEqual(heard, ["kickoff", "kickoff", "fulltime"]);
+  a.reset();
+  s.over = false;
+  a.observe(s, false);
+  assert.equal(heard.length, 3);
+  a.observe(s, true);
+  assert.equal(heard.at(-1), "kickoff");
+});
+
+test("inactive restarts are consumed without playing a late whistle", async () => {
+  const c = context(),
+    a = new ArenaAudio(() => c);
+  await a.enable(true);
+  a.observe({ pause: 1.4, over: false }, true);
+  a.observe({ pause: 0, over: false }, true);
+  a.setActive(true);
+  a.observe({ pause: 0, over: false }, true);
+  assert.equal(c.scheduled.length, 0);
+  a.observe({ pause: 1.4, over: false }, true);
+  a.observe({ pause: 0, over: false }, true);
+  assert.ok(c.scheduled.length > 0);
 });

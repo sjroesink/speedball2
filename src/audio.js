@@ -1,4 +1,17 @@
 // Original synthesized effects: no samples from the commercial game are used.
+const terrainUnit = 22.4 / 576;
+const arenaCues = new Set([6, 7, 14, 15]);
+
+// Match announcements stay centered; action sounds follow the visible court.
+export function eventPan(state, event) {
+  if (arenaCues.has(event.kind)) return 0;
+  const centerZ = ((state.logicalView?.[0] ?? 160) - 160) * terrainUnit;
+  return Math.max(
+    -0.8,
+    Math.min(0.8, (event.z - centerZ) / (160 * terrainUnit)),
+  );
+}
+
 // Each layer is [waveform, start Hz, end Hz, seconds, gain, delay seconds].
 export const cues = {
   20: [["noise", 1800, 700, 0.1, 0.1, 0]],
@@ -88,6 +101,7 @@ export class ArenaAudio {
     this.lastEvent = 0;
     this.wasPlaying = false;
     this.wasOver = false;
+    this.wasPaused = false;
   }
 
   async enable(enabled) {
@@ -123,6 +137,7 @@ export class ArenaAudio {
     this.lastEvent = 0;
     this.wasPlaying = false;
     this.wasOver = false;
+    this.wasPaused = false;
   }
 
   setActive(active) {
@@ -131,15 +146,26 @@ export class ArenaAudio {
   }
 
   observe(state, playing) {
-    if (playing && !this.wasPlaying && !state.over) this.play("kickoff");
+    const paused = state.pause > 0;
+    if (
+      playing &&
+      !state.over &&
+      !paused &&
+      (!this.wasPlaying || this.wasPaused)
+    )
+      this.play("kickoff");
     if (state.over && !this.wasOver) this.play("fulltime");
     this.wasPlaying = playing;
     this.wasOver = state.over;
-    for (const e of state.events?.length ? state.events : [state.event]) {
+    this.wasPaused = paused;
+    for (const e of state.events?.length
+      ? state.events
+      : state.event
+        ? [state.event]
+        : []) {
       if (e.id <= this.lastEvent) continue;
       this.lastEvent = e.id;
-      // The camera faces along the court: transverse Z is screen left/right.
-      this.play(e.kind, Math.max(-0.8, Math.min(0.8, e.z / 14)));
+      this.play(e.kind, eventPan(state, e));
     }
   }
 

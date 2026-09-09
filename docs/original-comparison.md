@@ -844,3 +844,25 @@ carrier/hardware/defensive-punt tests still pass. No new browser or listening
 check in this change. Source-backed AI branches do not establish whole-game
 parity: medical timing, pickups, animation/graphics, frame-order details and
 audio comparison still need work.
+
+
+### Audio camera alignment and match restarts
+
+Corrected stereo placement for the current ball-following camera. Action
+sounds now use their transverse position relative to the synchronized
+320-unit viewport instead of the center of the whole pitch. Halftime, goals,
+injury announcements and substitutions stay centered. The existing authored
+synthesized cues remain in use; this is presentation alignment, not a claim
+that the Amiga's sample/channel mixing has been reproduced.
+
+Added an authored restart whistle on the transition out of a goal/halftime
+pause. Initial play during a pause waits for that transition. Repeated
+snapshots do not repeat it, match end does not produce a restart, and inactive
+transitions are consumed so returning to the game does not play a late cue.
+
+Validation: 163 JavaScript tests and production build pass. New tests cover
+camera extremes, left/right/center positioning, centered announcements,
+restarts, full time and inactive playback. Browser training's sound button
+successfully entered SOUND ON, then was returned to muted. This verifies
+activation only: the actual mix has not been listened to or compared against
+the original audio. No gameplay protocol or server changes in this checkpoint.
