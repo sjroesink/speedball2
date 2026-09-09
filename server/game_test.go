@@ -18,6 +18,7 @@ func TestInputPulseSurvivesShortTap(t *testing.T) {
 	}
 	s = isolated()
 	s.Players[7].X = 4
+	s.logicalView = [2]int{160, 380}
 	s.Ball.Owner = 7
 	for i := 0; i < 11; i++ {
 		s.step(dt, [2]Input{{Fire: 1}, {}})

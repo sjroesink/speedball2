@@ -91,8 +91,13 @@ func TestAIThrowPreparation(t *testing.T) {
 		p.Stun, p.X, p.Z, p.FX, p.FZ = 0, 14, 0, 1, 0
 		if high {
 			p.X = 4
-			s.Players[16].X = 5
+			s.Players[16].X = 5.6
+			s.Players[16].Stun = 0
+			s.Players[16].aiWait = 100
 			s.Players[16].Z = 0
+		}
+		for i := range s.Pickups {
+			s.Pickups[i].Wait = 100
 		}
 		x := p.X
 		s.Ball.Owner = 7
@@ -116,6 +121,7 @@ func TestAIThrowPreparation(t *testing.T) {
 }
 func TestPossessionLossCancelsLob(t *testing.T) {
 	s := initial()
+	s.logicalView = [2]int{160, 380}
 	for i := range s.Players {
 		s.Players[i].Stun = 100
 	}
@@ -124,6 +130,9 @@ func TestPossessionLossCancelsLob(t *testing.T) {
 	s.Ball.Owner = 7
 	inputs := [2]Input{{LobID: 1}, {}}
 	s.simulate(simulationStep, inputs, [2]bool{true, true})
+	if p.throwMode != 3 {
+		t.Fatal("lob did not begin")
+	}
 	s.Ball = Ball{Owner: -1, X: 10, Z: 10, H: 1}
 	for n := 0; n < 8; n++ {
 		s.simulate(simulationStep, inputs, [2]bool{true, true})

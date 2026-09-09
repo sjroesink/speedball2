@@ -389,6 +389,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 				tx, tz = p.X, p.Z
 			}
 			random := 0
+			var hardware, route *passPlan
 			if decide {
 				p.aiWait = aiReactionTime(p.Stats[7])
 				p.aiAvoid = false
@@ -449,8 +450,14 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 						p.aiAvoid = true
 					}
 				} else if b.Owner == i {
-					tx = d * 22
-					tz = clamp(p.Z*.4, -2, 2)
+					hardware = s.hardwareThrow(i, random, &catchDistances)
+					if hardware == nil {
+						route = s.carrierMove(i, random, &catchDistances)
+					}
+					tx, tz = p.X, p.Z
+					if route != nil {
+						tx, tz = route.x, route.z
+					}
 				} else if i%9 == 0 {
 					if s.Controlled[t] != i {
 						tx, tz = s.goalieTarget(i)
@@ -477,8 +484,8 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 						danger = true
 					}
 				}
-				plan := s.hardwareThrow(i, random, &catchDistances)
-				if plan != nil || p.X*d > 12 || danger || i%9 == 0 {
+				plan := hardware
+				if route == nil {
 					receiver := -1
 					if plan == nil && i%9 < 6 {
 						plan = s.defensivePass(i, &catchDistances)

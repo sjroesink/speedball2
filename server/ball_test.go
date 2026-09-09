@@ -134,6 +134,7 @@ func TestReleaseSteering(t *testing.T) {
 	}
 	s := isolated()
 	s.Players[7].X = 4
+	s.logicalView = [2]int{160, 380}
 	s.Ball.Owner = 7
 	s.step(dt, [2]Input{{X: 1, Shoot: true}, {}})
 	for n := 1; n < 11; n++ {

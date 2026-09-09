@@ -1,3 +1,4 @@
+import { carrierMove } from "./carrier-move.js";
 import { hardwareThrow } from "./hardware-ai.js";
 import { localInteraction } from "./interaction.js";
 import { pursuit } from "./pursuit.js";
@@ -453,7 +454,9 @@ function simulateStep(
       const decide = p.aiWait < 1e-9 && p.actionTime <= 0;
       let tx = p.aiX ?? p.x,
         tz = p.aiZ ?? p.z;
-      let random = 0;
+      let random = 0,
+        hardware = null,
+        route = null;
       if (decide) {
         p.aiWait = aiReactionTime(p.stats[7]);
 
@@ -514,8 +517,10 @@ function simulateStep(
             event(s, selected ? p.action : 20, i, -1, p.x, p.z, 0);
           } else p.aiAvoid = true;
         } else if (b.owner === i) {
-          tx = d * 22;
-          tz = clamp(p.z * 0.4, -2, 2);
+          hardware = hardwareThrow(s, i, random, catchDistances);
+          if (!hardware) route = carrierMove(s, i, random, catchDistances);
+          tx = route?.x ?? p.x;
+          tz = route?.z ?? p.z;
         } else if (i % 9 === 0) {
           if (s.controlled[t] !== i) [tx, tz] = goalieTarget(s, i);
           else if (!keeper) {
@@ -539,8 +544,7 @@ function simulateStep(
         const danger = s.players.some(
           (q) => q.team !== t && Math.hypot(q.x - p.x, q.z - p.z) < 3,
         );
-        const hardware = hardwareThrow(s, i, random, catchDistances);
-        if (hardware || p.x * d > 12 || danger || i % 9 === 0) {
+        if (!route) {
           const plan =
             hardware ??
             (i % 9 < 6

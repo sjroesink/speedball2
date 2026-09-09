@@ -148,6 +148,7 @@ test("release steering adds four units only on an unused axis for high and low t
 });
 test("steering is sampled at wind-up release and does not continue during flight", () => {
   const s = initial();
+  s.logicalView = [160, 380];
   s.players.forEach((p) => (p.stun = 10));
   Object.assign(s.players[7], { x: 4, z: 0, stun: 0, fx: 1, fz: 0 });
   s.ball.owner = 7;

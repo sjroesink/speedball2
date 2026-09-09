@@ -777,3 +777,38 @@ Remaining carrier gaps: collectible detours, zone-center pass decisions,
 left/right route search, and the attacking-player pass/shot decision tree.
 These still need replacing; this change does not claim the entire carrier AI
 matches the original. No new audio or browser validation in this checkpoint.
+
+
+### Carrier routes, collectibles and pass thresholds
+
+Replaced the generic carrier destination and distance/danger trigger with the
+normal carrier branch from `active_player_ai` (0xef28..0xefc2). Hardware still
+has priority. A standing selected opponent within 64 cached distance units
+forces the role's passing/shooting branch. Otherwise intelligence gates a
+visible, unblocked collectible detour; forwards use integer intelligence/2.
+The slot priority remains tokens, equipment, then coins. Next, reaching the
+role's inclusive zone center triggers passing. Before that center, the AI
+tries the original seven candidate targets: mostly forward, both lateral
+midpoints toward the front of the zone, both toward its center, then both
+toward its back. Random bit 3 sets lateral priority, without a new RNG draw.
+The straight candidate uses the original 56/584 wall-lane adjustment and
+zone constraints. Blocked directions are retained for carrying electroballs.
+
+Source checks: `try_moving_mostly_forward`, `try_moving_left/right`, and
+`find_route_left/right_first` at 0xf0fc..0xf2c2; WIP sub_D742 and sub_DA20..
+sub_DB32. Mirrored fixtures cover zone centers, lateral priority, shallower
+fallback, the 64-unit boundary, item ordering, blocked item routes and the
+strict forward intelligence threshold. Simulation tests cover walking versus
+passing and retain hardware priority. Old human throw fixtures now explicitly
+place their camera around the player: previously they accidentally exercised
+offscreen AI. Possession-loss tests now assert a lob actually began before
+removing the ball. AI preparation fixtures disable item detours and use a
+standing threat for the high-throw case.
+
+Validation: 157 JavaScript tests, Go tests/vet and production build. A browser
+training smoke check advanced from 01:30 to 01:12, rendered the arena and
+showed the opponent multiplier at x1.5. This is a runtime check, not proof of
+full original parity. The Go server was restarted with this checkpoint.
+Forward pass/shot decisions still use the previous heuristic after this
+branch chooses not to run; exact animation/medical/item spawning and audio
+comparison also remain outstanding.

@@ -122,6 +122,7 @@ test("halftime swaps ends and resets targets", () => {
 
 test("a held button launches automatically and cannot charge indefinitely", () => {
   const s = isolated();
+  s.logicalView = [160, 380];
   s.players[7].x = 4;
   s.ball.owner = 7;
   for (let i = 0; i < 12; i++) step(s, dt, { shoot: true });
