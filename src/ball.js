@@ -44,11 +44,11 @@ export function reflectBall(ball, axis) {
 export function warpBall(ball, attribute) {
   let dx = ball.dirX,
     dz = ball.dirZ;
-  if (dx === undefined || dz === undefined) {
+  if (dx === undefined || dz === undefined || (!dx && !dz)) {
     const angle =
       (Math.round(Math.atan2(ball.vz, ball.vx) / (Math.PI / 4)) * Math.PI) / 4;
-    dx = Math.round(Math.cos(angle));
-    dz = Math.round(Math.sin(angle));
+    dx = ball.vx || ball.vz ? Math.round(Math.cos(angle)) : 0;
+    dz = ball.vx || ball.vz ? Math.round(Math.sin(angle)) : 0;
   }
   ball.z = -Math.sign(ball.z) * 11.2;
   const drift = ball.vz;

@@ -92,8 +92,17 @@ func TestTackleRosterOrder(t *testing.T) {
 		s.Players[16].Action = 1
 		s.Players[16].ActionTime = .3
 		s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
-		if !s.Players[16].tackleResolved || s.Players[7].tackleResolved || s.Players[7].Stun <= 0 {
+		if !s.Players[16].tackleResolved || !s.Players[7].tackleResolved || s.Players[7].Stun <= 0 {
 			t.Fatal("roster order", tick)
+		}
+		hits := []int{}
+		for _, e := range s.Events[:s.EventCount] {
+			if e.Kind == 4 {
+				hits = append(hits, e.Actor)
+			}
+		}
+		if len(hits) != 2 || hits[0] != 16 || hits[1] != 7 || s.Players[16].Stun <= 0 {
+			t.Fatal("counter-contact order", hits)
 		}
 	}
 }

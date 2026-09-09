@@ -274,3 +274,14 @@ test("throw release preserves the carried position in every direction", () => {
   assert.equal(s.event.z,z);
  }
 });
+
+
+test("warp reconstructs a dropped ball direction when nominal direction is zero", () => {
+ for (const [vx,vz] of [[2,-3],[0,-3],[0,0]]) {
+  const b={x:0,z:-11.2,vx,vz,dirX:0,dirZ:0};
+  warpBall(b,100);
+  assert.equal(b.z,11.2);
+  assert.equal(b.vx,vx?8*velocityUnit:0);
+  assert.equal(b.vz,vz?-8*velocityUnit:0);
+ }
+});

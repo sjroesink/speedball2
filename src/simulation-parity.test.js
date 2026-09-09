@@ -28,6 +28,6 @@ test("browser and Go stay aligned through seeded AI and scripted-input matches",
  assert.equal(s.period,2);
  for(const kind of (scenario===3?[4,6,11,22,23]:[3,4,6,11,16,22,23])) assert.ok(seen.has(kind),`scenario ${scenario} missing event ${kind}`);
  if(scenario===1)for(const kind of [7,14,15])assert.ok(seen.has(kind),`scenario ${scenario} missing goal/medical event ${kind}`);
- if(scenario===0)for(const kind of [12])assert.ok(seen.has(kind),`missing warp/medical coverage ${kind}`);
+ if(scenario===3)for(const kind of [12])assert.ok(seen.has(kind),`missing warp/medical coverage ${kind}`);
  }
 });

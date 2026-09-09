@@ -88,6 +88,8 @@ export function damage(s, i, j, ignoreShield = false) {
     if (s.armourPickupsLeft === 0) spawnPickup(s, 6);
   }
   q.stun = fallDuration;
+  q.fallAttack = 0;
+  q.fallAttackTime = 0;
   q.fallX = q.fallZ = 0;
   q.action = 4;
   q.actionTime = fallDuration;
@@ -122,6 +124,9 @@ export function giveBall(s, i) {
   if (s.players[i].health <= 0 || s.players[i].stun > 0) return;
   const p = s.players[i];
   s.charge = [0, 0];
+  // Possession transfer starts a held ball, including fresh flight metadata.
+  // Keep the object identity: the current simulation tick holds a reference.
+  for (const key of Object.keys(s.ball)) delete s.ball[key];
   Object.assign(s.ball, {
     flightKind: 0,
     owner: i,
@@ -135,6 +140,7 @@ export function giveBall(s, i) {
     electric: 0,
     charged: false,
     after: 0,
+    lock: 0,
   });
   s.controlled[p.team] = i;
 }

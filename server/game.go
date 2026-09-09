@@ -19,6 +19,8 @@ type Player struct {
 	steerX, steerZ, steerTargetX, steerTargetZ float64
 	aiAvoid                                    bool
 	fallX, fallZ                               float64
+	fallAttack                                 int
+	fallAttackTime                             float64
 	slideEnding                                bool
 	throwMode                                  int
 	throwSteer                                 float64
@@ -309,6 +311,10 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			p.Stun = 0
 		}
 		p.ActionTime = math.Max(0, p.ActionTime-dt)
+		p.fallAttackTime = math.Max(0, p.fallAttackTime-dt)
+		if p.fallAttackTime < 1e-9 {
+			p.fallAttack = 0
+		}
 		p.Cooldown = math.Max(0, p.Cooldown-dt)
 		if p.Cooldown < 1e-9 {
 			p.Cooldown = 0
@@ -359,6 +365,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			s.event(19, i, -1, p.X, p.Z, 0)
 		}
 		if p.Stun > 0 {
+			s.resolveTackle(i, &contacts[i])
 			p.moveX, p.moveZ = 0, 0
 			if p.Action == 4 && p.Health > 0 {
 				p.moveX, p.moveZ = p.fallX, p.fallZ
@@ -771,7 +778,12 @@ func (s *State) catchBallAt(only int, distances *[18]int) {
 // Existing slides resolve contact during thinking, before later players act.
 func (s *State) resolveTackle(i int, distances *[18]int) {
 	p := &s.Players[i]
-	if (p.Action != 1 && p.Action != 7) || p.tackleResolved {
+	falling := p.Action == 4 && p.Stun > 0
+	attack := p.Action
+	if falling {
+		attack = p.fallAttack
+	}
+	if (attack != 1 && attack != 7) || p.tackleResolved {
 		return
 	}
 	for j := range s.Players {
@@ -782,12 +794,29 @@ func (s *State) resolveTackle(i int, distances *[18]int) {
 		p.tackleResolved = true
 		// do_tackle plays contact (0x06) before the success roll.
 		s.event(29, i, j, q.X, q.Z, 0)
-		if s.randomByte() > tackleThreshold(p, q, j%9 == 0) {
+		attacker := *p
+		attacker.Action = attack
+		if s.randomByte() > tackleThreshold(&attacker, q, j%9 == 0) {
 			return
 		}
 		hadBall := s.Ball.Owner == j
+		released := s.Ball
+		counter, counterTime := 0, fallDuration
+		if !q.tackleResolved && !(q.Action == 1 && q.slideEnding) && (q.Action == 1 || q.Action == 7) {
+			counter = q.Action
+			if counter == 1 {
+				counterTime = actionDuration(1, q.Stats[3])
+			}
+		}
 		if s.damage(i, j) {
-			if hadBall {
+			q.fallAttack = counter
+			if counter != 0 {
+				q.fallAttackTime = counterTime
+			}
+			if falling && hadBall {
+				s.Ball = released
+				s.Ball.Owner = -1
+			} else if hadBall {
 				s.giveBall(i)
 				kind := 24
 				if p.Team == 1 {
@@ -796,8 +825,11 @@ func (s *State) resolveTackle(i int, distances *[18]int) {
 				s.event(kind, i, j, q.X, q.Z, 0)
 			}
 			q.FX, q.FZ = eightWay(p.FX, p.FZ)
+			if falling {
+				q.FX, q.FZ = -q.FX, -q.FZ
+			}
 			speed := 3 * velocityUnit
-			if p.Action == 1 {
+			if attack == 1 {
 				speed = 4 * velocityUnit
 			}
 			q.fallX, q.fallZ = q.FX*speed, q.FZ*speed

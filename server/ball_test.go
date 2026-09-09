@@ -263,3 +263,20 @@ func TestThrowPreservesCarriedPosition(t *testing.T) {
 		}
 	}
 }
+
+func TestWarpDroppedBallDirection(t *testing.T) {
+	for _, v := range [][2]float64{{2, -3}, {0, -3}, {0, 0}} {
+		b := Ball{Z: -11.2, VX: v[0], VZ: v[1]}
+		warpBall(&b, 100)
+		x, z := 0., 0.
+		if v[0] != 0 {
+			x = 8 * velocityUnit
+		}
+		if v[1] != 0 {
+			z = -8 * velocityUnit
+		}
+		if b.Z != 11.2 || b.VX != x || b.VZ != z {
+			t.Fatal(v, b)
+		}
+	}
+}

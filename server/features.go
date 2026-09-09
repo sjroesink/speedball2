@@ -82,6 +82,7 @@ func (s *State) damageWithProtection(i, j int, ignoreShield bool) bool {
 		}
 	}
 	q.Stun = fallDuration
+	q.fallAttack, q.fallAttackTime = 0, 0
 	q.fallX, q.fallZ = 0, 0
 	q.Action = 4
 	q.ActionTime = fallDuration

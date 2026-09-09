@@ -1816,3 +1816,33 @@ stunned state currently skips that callback. Ordinary successful tackles already
 transfer the ball directly; the generic damage helper's temporary impulse is
 superseded in that path. Falling counter-contact and its release still need
 implementation and source-based tests.
+
+### Falling counter-contact
+
+Amiga `do_tackle` (0x104ea–0x1050e) retains an unresolved slide, keeper slide
+or punch callback on a victim instead of always installing `noop`. A falling
+attacker reverses the impact direction (0x1051a–0x1052a). When the next victim
+has the ball, 0x10554–0x10562 clears possession without taking ownership or
+applying a new throw impulse.
+
+The browser and Go simulations now retain that pending contact separately from
+the visible Hit action. Resolved attacks, completed slides and non-attacking
+victims do not receive a counter. A counter uses the original attack kind for
+tackle probability and fall speed, releases an existing carried ball without a
+new impulse, and emits no possession-acquisition sound for the falling player.
+Zap and electroball falls do not preserve the attack callback.
+
+Tests cover simultaneous attacks in roster order, slide/punch counters, reversed
+fall velocity, released-ball motion, single contact, and exclusion of ordinary
+falls or already resolved attacks. Long parity matches exposed a zero nominal
+ball-direction mismatch at warp entry after a dropped ball; JavaScript now uses
+the same velocity fallback as Go. Possession transfer also clears stale flight
+metadata in both implementations. The tackle-only parity scenario now supplies
+warp coverage; goal, injury and replacement coverage remains in scenario one.
+All 225 JavaScript tests, Go tests, Go vet and the production build pass.
+
+Remaining timing detail: the original retained completion callback can jump the
+fall animation to word 15, shortening its recovery tail. This change restores
+counter-contact and possession behavior but still uses the existing 35-frame
+fall recovery. Exact callback-to-animation-tail timing remains to be implemented
+and verified; this does not establish full original tackle fidelity.

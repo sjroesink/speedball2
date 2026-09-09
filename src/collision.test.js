@@ -79,7 +79,9 @@ test("simultaneous tackles use roster order independently of tick parity", () =>
     Object.assign(s.players[16], { action: 1, actionTime: 0.3 });
     step(s, simulationStep, {}, [true, true]);
     assert.equal(s.players[16].tackleResolved, true);
-    assert.equal(!!s.players[7].tackleResolved, false);
+    assert.equal(s.players[7].tackleResolved, true);
+    assert.deepEqual(s.events.filter(e => e.kind === 4).map(e => e.actor), [16, 7]);
+    assert.ok(s.players[16].stun > 0);
     assert.ok(s.players[7].stun > 0);
   }
 });

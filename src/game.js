@@ -23,6 +23,7 @@ import {
 } from "./ball.js";
 import {
   actionDuration,
+  fallDuration,
   canJumpAtBall,
   defaultStats,
   tackleThreshold,
@@ -377,6 +378,8 @@ function simulateStep(
     p.stun = Math.max(0, p.stun - dt);
     if (p.stun < 1e-9) p.stun = 0;
     p.actionTime = Math.max(0, p.actionTime - dt);
+    p.fallAttackTime = Math.max(0, (p.fallAttackTime || 0) - dt);
+    if (p.fallAttackTime < 1e-9) p.fallAttack = 0;
     p.cooldown = Math.max(0, p.cooldown - dt);
     if (p.cooldown < 1e-9) p.cooldown = 0;
     p.aiWait = Math.max(0, (p.aiWait || 0) - dt);
@@ -424,6 +427,7 @@ function simulateStep(
       event(s, 19, i, -1, p.x, p.z, 0);
     }
     if (p.stun > 0) {
+      resolveTackle(s, i, contacts[i]);
       p.moveX = p.moveZ = 0;
       if (p.action === 4 && p.health > 0) {
         p.moveX = p.fallX || 0;
@@ -844,7 +848,9 @@ export function catchBall(s, only = -1, distances = null) {
 // Invoked during the existing slide's thinking, before later players act.
 function resolveTackle(s, i, distances) {
   const p = s.players[i];
-  if ((p.action !== 1 && p.action !== 7) || p.tackleResolved) return;
+  const falling = p.action === 4 && p.stun > 0;
+  const attack = falling ? p.fallAttack : p.action;
+  if ((attack !== 1 && attack !== 7) || p.tackleResolved) return;
   for (let j = 0; j < s.players.length; j++) {
     const q = s.players[j];
     if (
@@ -858,15 +864,23 @@ function resolveTackle(s, i, distances) {
     p.tackleResolved = true;
     // do_tackle plays contact (0x06) before the success roll.
     event(s, 29, i, j, q.x, q.z, 0);
-    if (randomByte(s) > tackleThreshold(p, q, j % 9 === 0)) return;
+    if (randomByte(s) > tackleThreshold({ ...p, action: attack }, q, j % 9 === 0)) return;
     const hadBall = s.ball.owner === j;
+    const released = falling && hadBall ? { ...s.ball } : null;
+    // do_tackle retains only an unresolved slide/punch callback on the victim.
+    const counter = !q.tackleResolved && !(q.action === 1 && q.slideEnding) &&
+      (q.action === 1 || q.action === 7) ? q.action : 0;
+    const counterTime = counter === 1 ? actionDuration(1, q.stats[3]) : fallDuration;
     if (damage(s, i, j)) {
-      if (hadBall) {
+      q.fallAttack = counter;
+      q.fallAttackTime = counter ? counterTime : 0;
+      if (released) Object.assign(s.ball, released, { owner: -1 });
+      else if (hadBall) {
         giveBall(s, i);
         event(s, p.team === 0 ? 24 : 25, i, j, q.x, q.z, 0);
       }
-      [q.fx, q.fz] = eightWay(p.fx, p.fz);
-      const speed = (p.action === 1 ? 4 : 3) * velocityUnit;
+      [q.fx, q.fz] = eightWay(p.fx * (falling ? -1 : 1), p.fz * (falling ? -1 : 1));
+      const speed = (attack === 1 ? 4 : 3) * velocityUnit;
       q.fallX = q.fx * speed;
       q.fallZ = q.fz * speed;
     }
