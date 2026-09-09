@@ -12,6 +12,7 @@ import {
   flightStep,
 } from "./ball.js";
 import {
+  actionDuration,
   canJumpAtBall,
   defaultStats,
   tackleThreshold,
@@ -161,7 +162,14 @@ export function resetPitch(s) {
 }
 export const jumpHeight = (p) =>
   p.action === 2 && p.actionTime > 0
-    ? Math.sin(((0.7 - p.actionTime) / 0.7) * Math.PI) * 1.8
+    ? Math.sin(
+        clamp(
+          (actionDuration(2, p.stats[3]) - p.actionTime) /
+            (actionDuration(2, p.stats[3]) - 2 / 25),
+          0,
+          1,
+        ) * Math.PI,
+      ) * 1.8
     : 0;
 export function selectPlayers(s) {
   for (let t = 0; t < 2; t++) {
@@ -355,8 +363,9 @@ export function step(
     p.stun = Math.max(0, p.stun - dt);
     p.actionTime = Math.max(0, p.actionTime - dt);
     p.cooldown = Math.max(0, p.cooldown - dt);
+    if (p.cooldown < 1e-9) p.cooldown = 0;
     p.aiWait = Math.max(0, (p.aiWait || 0) - dt);
-    if (p.actionTime === 0) p.action = 0;
+    if (p.actionTime < 1e-9) p.action = p.actionTime = 0;
   }
   slowBall(b, dt);
   const inMultiplier =
@@ -462,7 +471,12 @@ export function step(
       p.aiWait = 1 / 25;
       [dx, dz] = eightWay(dx, dz);
     }
-    if (p.action !== 1 && p.action !== 3 && Math.hypot(dx, dz) > 0.01)
+    if (
+      p.action !== 1 &&
+      p.action !== 2 &&
+      p.action !== 3 &&
+      Math.hypot(dx, dz) > 0.01
+    )
       [p.fx, p.fz] = norm(dx, dz);
     const prev = s.previous[t],
       pressed = human
@@ -496,8 +510,8 @@ export function step(
     if (pressed && b.owner !== i && p.cooldown <= 0 && p.actionTime <= 0) {
       if (canJumpAtBall(p, b, catchDistances[i], inMultiplier) && !u.tackle) {
         p.action = 2;
-        p.actionTime = 0.7;
-        p.cooldown = 0.85;
+        p.actionTime = actionDuration(2, p.stats[3]);
+        p.cooldown = p.actionTime;
         event(s, 2, i, -1, p.x, p.z, 0);
       } else {
         p.action = 1;
@@ -507,12 +521,12 @@ export function step(
           b.owner < 0 &&
           (b.vx !== 0 || b.vz !== 0) &&
           Math.abs(p.fz) > 0.1;
-        p.actionTime = 0.38;
-        p.cooldown = 0.85;
+        p.actionTime = actionDuration(1, p.stats[3]);
+        p.cooldown = p.actionTime;
         event(s, 1, i, -1, p.x, p.z, 0);
       }
     }
-    if (p.action === 1) {
+    if (p.action === 1 || p.action === 2) {
       dx = p.fx;
       dz = p.fz;
     }

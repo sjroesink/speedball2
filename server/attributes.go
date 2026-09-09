@@ -176,3 +176,12 @@ func actionSustain(speed int) int {
 func canJumpAtBall(p *Player, b *Ball, distance int, inMultiplier bool) bool {
 	return b.Owner < 0 && !inMultiplier && (b.FlightKind != 0 && b.FlightStage > 2 || b.FlightKind == 0 && b.H > 1.25) && distance <= 6*actionSustain(p.Stats[3])
 }
+
+// Includes the animation tail executed before opcode 0xfffd clears busy.
+func actionDuration(action, speed int) float64 {
+	frames := actionSustain(speed)
+	if action == 2 {
+		frames += 4
+	}
+	return float64(frames) / 25
+}

@@ -321,3 +321,26 @@ Paired JavaScript/Go checks cover both reach boundaries, possession, multiplier
 exclusion and low flight stages. Jump/slide durations and landing recovery
 remain approximations: original thinking selects animation tails at indices
 18/15 before the animation interpreter clears busy flags.
+
+
+### Slide and jump control duration
+
+The Amiga dump confirms 16 slide sprite entries followed by 0xfffd at
+0x6e86, and 20 jump entries followed by 0xfffd at 0x7106. Thinking runs
+before animation execution. `complete_action_fn` jumps to slide index 15
+when the current index reaches sustain minus one. `jumping_action_fn`
+jumps to index 18 at sustain plus two, leaving two landing frames.
+Consequently the next input opportunity is sustain frames after starting
+a slide and sustain plus four frames after starting a jump: 0.32–0.48 s
+and 0.48–0.64 s at 25 Hz. Both simulations now use these durations, with
+no additional 0.85-second cooldown. Tiny floating-point remainders are
+cleared so an action can restart on the intended tick. Busy jumps retain
+their direction. The visual height returns to ground for the final two
+frames; its smooth curve remains an adaptation of the original sprites.
+
+Paired tests exercise slide completion across all five sustain values,
+jump duration at both speed extremes, landing height and attempted steering
+while jumping. Remaining action differences include standing punches,
+separate jumping/busy flags and their ordering around catches and tackles,
+original collision response, and exact Blender clip timing. These tests
+establish the timing change, not complete action-system equivalence.

@@ -134,3 +134,9 @@ export function canJumpAtBall(p, b, distance, inMultiplier) {
     distance <= 6 * actionSustain(p.stats[3])
   );
 }
+
+// Action thinking jumps to the animation tail before 0xfffd clears busy.
+// Slides execute sustain frames; jumps add two launch and two landing frames.
+export function actionDuration(action, speed) {
+  return (actionSustain(speed) + (action === 2 ? 4 : 0)) / 25;
+}

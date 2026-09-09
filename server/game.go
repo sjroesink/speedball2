@@ -177,7 +177,7 @@ func (s *State) event(kind, actor, target int, x, z, h float64) {
 }
 func jumpHeight(p Player) float64 {
 	if p.Action == 2 && p.ActionTime > 0 {
-		return math.Sin((.7-p.ActionTime)/.7*math.Pi) * 1.8
+		return math.Sin(clamp((actionDuration(2, p.Stats[3])-p.ActionTime)/(actionDuration(2, p.Stats[3])-2./25), 0, 1)*math.Pi) * 1.8
 	}
 	return 0
 }
@@ -295,8 +295,12 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		p.Stun = math.Max(0, p.Stun-dt)
 		p.ActionTime = math.Max(0, p.ActionTime-dt)
 		p.Cooldown = math.Max(0, p.Cooldown-dt)
+		if p.Cooldown < 1e-9 {
+			p.Cooldown = 0
+		}
 		p.aiWait = math.Max(0, p.aiWait-dt)
-		if p.ActionTime == 0 {
+		if p.ActionTime < 1e-9 {
+			p.ActionTime = 0
 			p.Action = 0
 		}
 	}
@@ -408,7 +412,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			p.aiWait = 1. / 25
 			dx, dz = eightWay(dx, dz)
 		}
-		if p.Action != 1 && p.Action != 3 && math.Hypot(dx, dz) > .01 {
+		if p.Action != 1 && p.Action != 2 && p.Action != 3 && math.Hypot(dx, dz) > .01 {
 			p.FX, p.FZ = normalized(dx, dz)
 		}
 		pressed := (u.Shoot && !s.previous[t].Shoot) || (u.Tackle && !s.previous[t].Tackle) || u.Fire > s.previous[t].Fire || u.TackleID > s.previous[t].TackleID
@@ -443,19 +447,19 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 		if pressed && b.Owner != i && p.Cooldown <= 0 && p.ActionTime <= 0 {
 			if canJumpAtBall(p, b, catchDistances[i], inMultiplier) && !u.Tackle {
 				p.Action = 2
-				p.ActionTime = .7
-				p.Cooldown = .85
+				p.ActionTime = actionDuration(2, p.Stats[3])
+				p.Cooldown = p.ActionTime
 				s.event(2, i, -1, p.X, p.Z, 0)
 			} else {
 				p.Action = 1
 				p.tackleResolved = false
 				p.keeperBlock = i%9 == 0 && b.Owner < 0 && (b.VX != 0 || b.VZ != 0) && math.Abs(p.FZ) > .1
-				p.ActionTime = .38
-				p.Cooldown = .85
+				p.ActionTime = actionDuration(1, p.Stats[3])
+				p.Cooldown = p.ActionTime
 				s.event(1, i, -1, p.X, p.Z, 0)
 			}
 		}
-		if p.Action == 1 {
+		if p.Action == 1 || p.Action == 2 {
 			dx, dz = p.FX, p.FZ
 		}
 		dx, dz = eightWay(dx, dz)
