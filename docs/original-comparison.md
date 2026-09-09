@@ -1587,3 +1587,22 @@ buttons for those poses; the tackle midpoint rendered successfully. These
 checks establish playback timing and pose availability, not full equivalence
 of every pose to the original sprites. Mid-action speed changes and missed
 complete actions remain presentation cases to investigate.
+
+
+### Browser audio lifecycle verification (2026-09-09)
+
+`tools/audio-playtest.html` renders all 25 numbered cues plus kickoff/fulltime
+through the browser's real OfflineAudioContext and offers WAV playback controls.
+A dense collision mix checks the voice limit with announcements present. Three
+additional cases suspend at 0.1 seconds into fulltime, invoke pause, mute or
+reset, and resume rendering. Later whistle notes at 0.3 and 0.6 seconds must
+be canceled. Each case requires zero remaining voices and silent output from
+0.2 seconds onward, allowing the audio graph to settle after the stop.
+
+The browser reported PASS for all 31 cases. Interception cues 24/25 peaked at
+0.0305/0.0321; the stress mix peaked at 0.2073. All output was finite and below
+full scale, with no remaining voices. Pause/mute/reset each had tail RMS zero.
+This validates scheduled-source cancellation, not the perceptual mix or the
+speaker/headphone output. The sound engine required no lifecycle code change.
+The in-game rule text was also corrected to state the keeper block-dive
+exception to Shield protection established in the source audit.

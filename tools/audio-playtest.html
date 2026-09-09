@@ -1,0 +1,25 @@
+<!doctype html><html><head><style>body{background:#111b25;color:#fff;font:16px sans-serif;padding:24px}td,th{padding:8px;text-align:left}button{padding:12px}audio{height:30px}</style></head><body><h1>Arena sound check</h1><button id="render">Render all effects</button><p id="status">Ready</p><table><thead><tr><th>Effect</th><th>Peak</th><th>RMS</th><th>Remaining voices</th><th>Tail RMS after stop</th><th>Listen</th></tr></thead><tbody></tbody></table><script type="module">
+import {ArenaAudio,cues} from '/src/audio.js';
+function wav(buffer){const n=buffer.length,a=new ArrayBuffer(44+n*4),d=new DataView(a);const str=(o,t)=>[...t].forEach((v,i)=>d.setUint8(o+i,v.charCodeAt(0)));str(0,'RIFF');d.setUint32(4,a.byteLength-8,true);str(8,'WAVE');str(12,'fmt ');d.setUint32(16,16,true);d.setUint16(20,1,true);d.setUint16(22,2,true);d.setUint32(24,buffer.sampleRate,true);d.setUint32(28,buffer.sampleRate*4,true);d.setUint16(32,4,true);d.setUint16(34,16,true);str(36,'data');d.setUint32(40,n*4,true);for(let i=0;i<n;i++)for(let ch=0;ch<2;ch++)d.setInt16(44+(i*2+ch)*2,Math.max(-1,Math.min(1,buffer.getChannelData(ch)[i]))*32767,true);return new Blob([a],{type:'audio/wav'});}
+document.querySelector('#render').onclick=async()=>{
+const button=document.querySelector('#render');button.disabled=true;const status=document.querySelector('#status');status.textContent='Rendering';for(const element of document.querySelectorAll('audio'))URL.revokeObjectURL(element.src);document.querySelector('tbody').replaceChildren();let passed=true;
+for(const kind of [...Object.keys(cues),'stress','pause','mute','reset']){
+ const c=new OfflineAudioContext(2,44100*3,44100);
+ const adapter=new Proxy(c,{get(target,key){if(key==='state')return 'running';if(key==='resume')return async()=>{};const v=Reflect.get(target,key,target);return typeof v==='function'?v.bind(target):v}});
+ const a=new ArenaAudio(()=>adapter);await a.enable(true);a.setActive(true);
+ const lifecycle=['pause','mute','reset'].includes(kind);
+ if(lifecycle)a.play('fulltime');else if(kind==='stress'){a.play('fulltime');a.play(14);for(let i=0;i<50;i++)a.play(i%2?4:5)}else a.play(Number(kind)||kind);
+ let paused;if(lifecycle)paused=c.suspend(.1);
+ const rendering=c.startRendering();
+ if(lifecycle){await paused;if(kind==='pause')a.setActive(false);if(kind==='mute')await a.enable(false);if(kind==='reset')a.reset();await c.resume()}
+ const rendered=await rendering;let peak=0,sum=0,finite=true,tail=0,tailCount=0;
+ if(lifecycle)for(let ch=0;ch<2;ch++)for(let i=Math.ceil(.2*rendered.sampleRate);i<rendered.length;i++){const value=rendered.getChannelData(ch)[i];tail+=value*value;tailCount++}
+ const tailRms=tailCount?Math.sqrt(tail/tailCount):0;
+ for(let ch=0;ch<2;ch++)for(const v of rendered.getChannelData(ch)){finite&&=Number.isFinite(v);peak=Math.max(peak,Math.abs(v));sum+=v*v}
+ const rms=Math.sqrt(sum/(rendered.length*2));passed&&=finite&&peak>0&&peak<1&&a.voices.size===0&&(!lifecycle||tailRms<1e-8);
+ const row=document.createElement('tr');for(const value of [kind,peak.toFixed(4),rms.toFixed(5),a.voices.size,lifecycle?tailRms.toExponential(2):"—"]){const td=document.createElement('td');td.textContent=value;row.append(td)}const td=document.createElement('td'),audio=document.createElement('audio');audio.controls=true;audio.src=URL.createObjectURL(wav(rendered));td.append(audio);row.append(td);document.querySelector('tbody').append(row);
+}
+status.textContent=passed?'PASS: all effects are finite, non-silent in the rendered buffer and unclipped; pause, mute and reset cancel scheduled sound and release all voices.':'FAIL: inspect effects';
+button.disabled=false;
+};
+</script></body></html>
