@@ -2474,3 +2474,21 @@ negative words must be interpreted as animation control, not sprite indices.
 This is why integration requires the opcode/phase semantics as well as data.
 The existing offset conversion test still passes with the memory-verified data.
 Simulation placement remains unchanged until that integration is completed.
+
+
+### Reference animation stepping and held-catch synchronization
+
+Added stepReferenceAnimation to represent the exact current-word/next-word
+ordering in step_sprite_animations. It returns a sprite and the next cursor or
+control transition for all five negative opcodes. It rejects cursors pointing
+at opcodes, including the internal -2 in the caught-ball table, instead of
+clamping through them as if they were sprite frames.
+
+Tests cover the eight-word running loop, standing loop, throw release before
+frame-four advancement, action completion, caught-ball phase inheritance and
+landing seek, hold, hide and fall completion. get_ball at 0xecda copies the
+player animation cursor to the ball. jumping_action_fn at 0x109e6 and 0x10a08
+seeks the player and held ball to index 18 on landing. A mid-jump catch therefore
+does not restart its ball animation from zero. The four stepping tests plus the
+existing offset test pass. These primitives remain separate from production
+simulation until the player cursor/callback lifecycle is integrated in JS/Go.
