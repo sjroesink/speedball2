@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { initial, step, simulationStep } from "./game.js";
+import { pickup } from "./features.js";
 import { carrierMove } from "./carrier-move.js";
 const u = 22.4 / 576;
 const world = (x, y) => ({ x: (576 - y) * u, z: (x - 320) * u });
@@ -77,4 +78,13 @@ test("simulation routes a defender behind the zone center and throws at the cent
       target({ x: s.players[1].aiX, z: s.players[1].aiZ }, 200, 884);
     } else assert.equal(s.players[1].throwMode, 3);
   }
+});
+
+test("carrier skips collected armour and routes to the next live item", () => {
+ const [s,d] = fixture();
+ Object.assign(s.pickups[6],world(280,1000),{kind:14,wait:0});
+ Object.assign(s.pickups[2],world(240,1000),{kind:13,wait:0});
+ target(carrierMove(s,1,0,d),280,1000);
+ pickup(s,16,14);
+ target(carrierMove(s,1,0,d),240,1000);
 });

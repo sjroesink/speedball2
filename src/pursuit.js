@@ -22,7 +22,7 @@ export function pursuit(s, i, random, distances, inMultiplier) {
     for (const slot of [0, 1, 6, 2, 3, 4, 5]) {
       const candidate = s.pickups?.[slot];
       if (
-        !candidate ||
+        !candidate || !candidate.kind ||
         candidate.wait > 0 ||
         !worldInViewport(s, candidate) ||
         referenceDistance(candidate.x - p.x, candidate.z - p.z) === 0

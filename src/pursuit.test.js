@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { initial } from "./game.js";
+import { pickup } from "./features.js";
 import { pursuit } from "./pursuit.js";
 const u = 22.4 / 576;
 
@@ -46,4 +47,17 @@ test("selected pursuit chooses opponent or ball using strict aggression and dist
   assert.equal(pursuit(s, 7, 255, d, true).tx, 128 * u);
   s.ball.owner = 16;
   assert.equal(pursuit(s, 7, 255, d, false).tx, 128 * u);
+});
+
+test("pursuit skips collected armour and continues to an available coin", () => {
+  const s = initial(), d = Array(18).fill(32);
+  Object.assign(s.players[7], {x: -32*u, z: 0});
+  Object.assign(s.ball, {owner: -1, x: 0, z: 0, vx: 0, vz: 0});
+  for (const item of s.pickups) item.wait = 100;
+  Object.assign(s.pickups[6], {kind: 14, wait: 0, x: 24*u, z: 0});
+  Object.assign(s.pickups[2], {kind: 13, wait: 0, x: 8*u, z: 0});
+  assert.equal(pursuit(s,7,255,d,false).tx,24*u);
+  pickup(s,16,14);
+  assert.equal(s.pickups[6].kind,0);
+  assert.equal(pursuit(s,7,255,d,false).tx,8*u);
 });

@@ -19,7 +19,7 @@ func (s *State) pursuit(i, random int, distances *[18]int, inMultiplier bool) (i
 	if visible {
 		for _, slot := range []int{0, 1, 6, 2, 3, 4, 5} {
 			item := s.Pickups[slot]
-			if item.Wait > 0 || !s.worldInViewport(item.X, item.Z, 0) || referenceDistance(item.X-p.X, item.Z-p.Z) == 0 {
+			if item.Kind == 0 || item.Wait > 0 || !s.worldInViewport(item.X, item.Z, 0) || referenceDistance(item.X-p.X, item.Z-p.Z) == 0 {
 				continue
 			}
 			if referenceDistance(item.X-b.X, item.Z-b.Z) <= distances[i] {

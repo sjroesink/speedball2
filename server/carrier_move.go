@@ -21,7 +21,7 @@ func (s *State) carrierMove(i, random int, distances *[18]int) *passPlan {
 	if intelligence > random {
 		for _, slot := range []int{0, 1, 6, 2, 3, 4, 5} {
 			item := s.Pickups[slot]
-			if item.Wait <= 0 && s.worldInViewport(item.X, item.Z, 0) && clear(item.X, item.Z) {
+			if item.Kind != 0 && item.Wait <= 0 && s.worldInViewport(item.X, item.Z, 0) && clear(item.X, item.Z) {
 				return &passPlan{x: item.X, z: item.Z}
 			}
 		}

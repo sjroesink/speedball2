@@ -109,3 +109,20 @@ func TestCarrierSimulation(t *testing.T) {
 		}
 	}
 }
+
+func TestCarrierCollectedArmour(t *testing.T) {
+	s, d := carrierFixture(200, 1000, 1)
+	s.Pickups[6].X, s.Pickups[6].Z = carrierWorld(280, 1000)
+	s.Pickups[6].Kind, s.Pickups[6].Wait = 14, 0
+	s.Pickups[2].X, s.Pickups[2].Z = carrierWorld(240, 1000)
+	s.Pickups[2].Kind, s.Pickups[2].Wait = 13, 0
+	a := s.carrierMove(1, 0, &d)
+	if a == nil || a.z != s.Pickups[6].Z {
+		t.Fatal("live armour priority", a)
+	}
+	s.pickup(16, 14)
+	a = s.carrierMove(1, 0, &d)
+	if a == nil || a.z != s.Pickups[2].Z {
+		t.Fatal("collected armour hides next coin", a)
+	}
+}

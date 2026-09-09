@@ -78,3 +78,28 @@ func TestSelectedPursuitTarget(t *testing.T) {
 		t.Fatal("carrier target")
 	}
 }
+
+func TestPursuitCollectedArmour(t *testing.T) {
+	const u = 22.4 / 576
+	s := initial()
+	var d [18]int
+	for i := range d {
+		d[i] = 32
+	}
+	s.Players[7].X, s.Players[7].Z = -32*u, 0
+	s.Ball.X, s.Ball.Z, s.Ball.VX, s.Ball.VZ, s.Ball.Owner = 0, 0, 0, 0, -1
+	for i := range s.Pickups {
+		s.Pickups[i].Wait = 100
+	}
+	s.Pickups[6].Kind, s.Pickups[6].Wait, s.Pickups[6].X, s.Pickups[6].Z = 14, 0, 24*u, 0
+	s.Pickups[2].Kind, s.Pickups[2].Wait, s.Pickups[2].X, s.Pickups[2].Z = 13, 0, 8*u, 0
+	_, x, _ := s.pursuit(7, 255, &d, false)
+	if x != 24*u {
+		t.Fatal("live armour priority", x)
+	}
+	s.pickup(16, 14)
+	_, x, _ = s.pursuit(7, 255, &d, false)
+	if x != 8*u {
+		t.Fatal("collected armour hides next coin", x)
+	}
+}

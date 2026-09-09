@@ -18,7 +18,7 @@ export function carrierMove(s, i, random, distances) {
   if (intelligence > random) {
     for (const slot of [0, 1, 6, 2, 3, 4, 5]) {
       const item = s.pickups?.[slot];
-      if (item && item.wait <= 0 && worldInViewport(s, item) && clear(item))
+      if (item && item.kind && item.wait <= 0 && worldInViewport(s, item) && clear(item))
         return { x: item.x, z: item.z };
     }
   }

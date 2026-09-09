@@ -317,3 +317,20 @@ The neighboring field-player comparisons at 0xeed0 and 0xeeec use the same
 operand order; their existing strict half-aggression > random tests agree.
 
 Validation after restoring the correct branch: 278 JS tests, Go tests, go vet and production build pass.
+
+### AI stops targeting collected equipment
+
+Both pursuit and carrierMove considered equipment slot 6 eligible after it was
+collected. pickup clears its kind to zero, but leaves wait at zero; featureStep
+correctly skips that absent item. The two AI item scans checked wait/visibility
+only, so the empty equipment location could still override available coins.
+The original check_collectible (0xf0b8..0xf0fa) rejects disabled sprites before
+choosing a target. In the remake, kind zero represents absent floor equipment.
+Both JS and Go item scans now reject that state as well as waiting items.
+
+Lifecycle regressions invoke the actual pickup handler: live armour wins slot
+priority, then after collection an available coin becomes the target. They
+cover players with and without the ball. Both new JS cases failed on the old
+code, and pass after the fix; matching Go regressions also pass. Validation:
+280 JS tests, Go tests, go vet and production build pass. This fixes targeting
+of removed items; it does not establish complete AI fidelity.
