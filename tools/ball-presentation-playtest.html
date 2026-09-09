@@ -1,18 +1,19 @@
-<!doctype html><html lang="en"><meta charset="utf-8"><title>Speedball ball presentation</title>
-<style>body{margin:0;background:#101820;color:white;font:14px system-ui}nav{padding:10px;display:flex;gap:15px;align-items:center}button{padding:10px}#stage{height:85vh}</style>
-<nav><strong>Ball presentation</strong><button id="warp" disabled>Check warp transition</button><output>Loading</output></nav><div id="stage"></div>
-<script type="module">
-import {ArenaRenderer} from '/src/renderer.js';import {createMatch} from '/src/game.js';import {sideFeature} from '/src/features.js';
-const s=createMatch({training:true}),view=new ArenaRenderer(document.querySelector('#stage')),status=document.querySelector('output');
-await view.load();view.setFollow(true);view.resize();let frozen=false;
-Object.assign(s.ball,{owner:-1,lastTouch:7,x:206*22.4/576,z:10,h:.25,vx:0,vz:6,flightKind:0});
-view.draw(s,.04,0);for(let n=0;n<10;n++){s.ball.z+=.1;view.draw(s,1/60,0)}
-document.querySelector('button').disabled=false;status.textContent='Approaching the low-ball warp gate';
-document.querySelector('button').onclick=()=>{
- s.ball.z=11.3;const warped=sideFeature(s);view.draw(s,1/60,0);
- const error=Math.hypot(view.ball.position.x-s.ball.x,view.ball.position.y-s.ball.h,view.ball.position.z-s.ball.z);
- status.textContent=`Warp ${warped?'PASS':'FAIL'} | Rendered position error ${error.toFixed(6)} | Trail points after warp ${view.trailPositions.length} | Expected one fresh point`;
- frozen=true;document.querySelector('button').disabled=true;
-};
-let last=performance.now();function draw(now){view.draw(s,frozen?0:Math.min(.05,(now-last)/1000),0);last=now;requestAnimationFrame(draw)}requestAnimationFrame(draw);
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Speedball ball presentation</title>
+<style>body{margin:0;background:#101820;color:white;font:14px system-ui}nav{padding:10px;display:flex;gap:12px;align-items:center}button{padding:10px}#stage{height:85vh}</style>
+<nav><strong>Ball presentation</strong><button id="warp" disabled>Check warp transition</button><button id="exit" disabled>Advance past warp exit</button><button id="high" disabled>Play high throw</button><button id="apex" disabled>Inspect high throw apex</button><output>Loading</output></nav><div id="stage"></div>
+<script type="module">
+import {ArenaRenderer} from '/src/renderer.js';import {createMatch,step,throwBall} from '/src/game.js';import {sideFeature} from '/src/features.js';import {Vector3} from 'three';
+let s=createMatch({training:true});const view=new ArenaRenderer(document.querySelector('#stage')),status=document.querySelector('output');
+await view.load();view.setFollow(true);view.resize();let playing=false,elapsed=0,maxHeight=0,outside=0,last=performance.now();
+function reset(){document.querySelector("#exit").disabled=true;s=createMatch({training:true});s.restartPhase=0;s.pause=0;for(const p of s.players)p.stun=100;for(const item of s.pickups)item.wait=100;view.lastEvent=0;playing=false;elapsed=0;maxHeight=0;outside=0;}
+function measure(){maxHeight=Math.max(maxHeight,s.ball.h);const screen=new Vector3().copy(view.ball.position).project(view.camera);if(Math.abs(screen.x)>1||Math.abs(screen.y)>1)outside++;}
+function advance(dt){step(s,dt,{},[false,false]);view.draw(s,dt,0);measure();}
+function prepareHigh(){reset();Object.assign(s.players[7],{x:0,z:0,fx:1,fz:0});Object.assign(s.ball,{owner:7,x:0,z:0,h:1});throwBall(s,7,true);view.draw(s,.04,0);}
+document.querySelector('#warp').onclick=()=>{reset();Object.assign(s.ball,{owner:-1,lastTouch:7,x:206*22.4/576,z:10,h:.25,vx:0,vz:6,flightKind:0});view.draw(s,.04,0);for(let n=0;n<10;n++){s.ball.z+=.1;view.draw(s,1/60,0)}s.ball.z=11.3;const warped=sideFeature(s);view.draw(s,1/60,0);const error=view.ball.position.distanceTo(new Vector3(s.ball.x,s.ball.h,s.ball.z));status.textContent=`Warp ${warped?'PASS':'FAIL'} | position error ${error.toFixed(6)} | trail points ${view.trailPositions.length}`;document.querySelector('#exit').disabled=false;};
+document.querySelector('#exit').onclick=()=>{for(let n=0;n<5;n++)advance(.04);status.textContent=`200 ms after warp | ball (${s.ball.x.toFixed(2)}, ${s.ball.z.toFixed(2)}) | trail ${view.trailPositions.length} | offscreen frames ${outside}`;};
+document.querySelector('#high').onclick=()=>{prepareHigh();playing=true;};
+document.querySelector('#apex').onclick=()=>{prepareHigh();for(let n=0;n<24;n++)advance(.04);status.textContent=`High throw at 960 ms | height ${s.ball.h.toFixed(2)} | maximum ${maxHeight.toFixed(2)} | offscreen frames ${outside}`;};
+for(const id of ['warp','high','apex'])document.querySelector('#'+id).disabled=false;
+status.textContent='Ready: real simulation, Blender assets and production renderer';
+function draw(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(playing){advance(dt);elapsed+=dt;status.textContent=`High throw ${elapsed.toFixed(2)} s | maximum height ${maxHeight.toFixed(2)} | offscreen frames ${outside}`;if(elapsed>=2.5)playing=false;}else view.draw(s,0,0);requestAnimationFrame(draw)}requestAnimationFrame(draw);
 </script></html>

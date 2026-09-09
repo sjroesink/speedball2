@@ -2349,3 +2349,21 @@ reset cooperate without interpolating a visible trail across the court.
 The fixture freezes on the exit transition itself, where wall geometry can
 occlude the ball; this is position/trail verification, not a complete moving
 warp visibility review. High-throw presentation still needs separate review.
+
+
+### Moving high throw and warp exit review
+
+Extended the ball presentation fixture with production simulation stepping,
+a full high throw, a frozen high-stage inspection and 200 ms of play after
+warp exit. Players are held out of interception in this fixture to isolate
+ball presentation. Projection checks count ball centers outside the camera
+viewport; they do not detect occlusion by geometry.
+
+The browser high-throw run lasted 2.52 s, reached height 3.25 and recorded zero
+offscreen frames. An inspected frame at 800 ms showed a distinct elevated ball
+and ground shadow. The inspection button was subsequently moved to 960 ms to
+sample the actual stage-six plateau rather than the earlier rising stage.
+The warp exit review at 200 ms placed the ball at (8.01,-9.64), with ten trail
+points and zero offscreen frames; the screenshot showed the ball visibly back
+inside the court by the left gate. This resolves the earlier exit-only fixture's
+occlusion ambiguity for that sampled time, not every possible warp/camera state.
