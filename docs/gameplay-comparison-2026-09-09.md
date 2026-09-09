@@ -351,3 +351,20 @@ and one collection cue, while notificationEvent still selects the injury.
 The Go regression verifies both events survive in order. This is an event
 routing test, not a subjective audio mix or live medical sequence assessment.
 Validation: 281 JS tests, Go tests, go vet and production build pass.
+
+### Browser equipment collection/drop lifecycle
+
+Extended tools/pickup-playtest.html with a real damage-handler action and
+visible diagnostics comparing the production mesh's visibility with floor
+item state. The browser run collected speed equipment (250, floor hidden,
+one collection left), hit its carrier (kind 17 visible on the floor), collected
+it again (floor hidden, zero collections left), and hit again (new spawn cycle,
+two collections left, 8.56-second wait, mesh hidden). All four visibility
+checks passed. A screenshot also showed the orange dropped mesh beside the
+carrier after the first hit. No production code changed in this check.
+
+The fixture advances item processing explicitly and leaves match time frozen;
+it does not prove full-match animation timing or waiting-time progression.
+Existing lifecycle unit coverage and source helper review support the stat
+and drop behavior. Power/equipment interaction across every ordering remains
+part of the broader fidelity audit.
