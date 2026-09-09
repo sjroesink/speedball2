@@ -146,26 +146,35 @@ func TestElectroChargesAndShieldCatch(t *testing.T) {
 }
 func TestInjuryMedicalAndReserveRotation(t *testing.T) {
 	s := initial()
-	s.Players[16].Health = 1
-	s.damage(7, 16)
-	if s.Score[0] != 10 || s.Players[16].Injury != 6 {
-		t.Fatal("injury")
+	for i := range s.Players {
+		s.Players[i].Stun = 100
 	}
-	clock := s.Time
-	for i := 0; i < 361; i++ {
-		s.step(dt, [2]Input{})
+	for i := range s.Pickups {
+		s.Pickups[i].Wait = 100
 	}
-	if s.Time != clock || s.Reserves[1] != 3 || s.Players[16].Health != 100 {
-		t.Fatal("medical replacement")
-	}
-	s.Players[16].Health = 1
-	s.Players[16].Stun = 0
-	s.damage(7, 16)
-	for i := 0; i < 361; i++ {
-		s.step(dt, [2]Input{})
-	}
-	if s.Players[16].Health != 100 || s.Score[0] != 20 || s.Reserves[1] != 3 {
-		t.Fatal("reserve rotation")
+	for _, points := range []int{10, 20} {
+		s.Players[16].Health, s.Players[16].Stun = 1, 0
+		s.damage(7, 16)
+		if s.Score[0] != points-10 || s.Players[16].Injury != 0 {
+			t.Fatal("medical starts on impact")
+		}
+		for frame := 0; frame < 34; frame++ {
+			s.simulate(simulationStep, [2]Input{}, [2]bool{})
+		}
+		if s.Players[16].Injury != 0 {
+			t.Fatal("fall not finished")
+		}
+		s.simulate(simulationStep, [2]Input{}, [2]bool{})
+		if s.Score[0] != points || s.Players[16].Injury != 6 {
+			t.Fatal("medical start")
+		}
+		clock := s.Time
+		for frame := 0; frame < 151; frame++ {
+			s.simulate(simulationStep, [2]Input{}, [2]bool{})
+		}
+		if s.Time != clock || s.Reserves[1] != 3 || s.Players[16].Health != 100 {
+			t.Fatal("medical replacement")
+		}
 	}
 }
 func TestPickupRespawnAndEquipment(t *testing.T) {

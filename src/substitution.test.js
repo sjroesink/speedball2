@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { initial } from "./game.js";
-import { medicalStep } from "./features.js";
+import { initial, step, simulationStep } from "./game.js";
+import { medicalStep, startInjury } from "./features.js";
 test("three bench slots rotate and the outgoing attributes return on the fourth substitution", () => {
   const s = initial(),
     p = s.players[7];
@@ -46,4 +46,48 @@ test("substitutes enter at original side positions and start toward center", () 
         assert.equal(p.gear, 0);
         assert.equal(p.gearBackup, 0);
       }
+});
+
+test("medical start aligns the injured player, awards the current multiplier once and serializes injuries", () => {
+  const s = initial(),
+    u = 22.4 / 576;
+  Object.assign(s.players[7], {
+    health: 0,
+    actionTime: 0,
+    x: (576 - 1107) * u,
+    z: (595 - 320) * u,
+  });
+  Object.assign(s.players[16], { health: 0, actionTime: 0 });
+  s.multiplier = -2;
+  assert.equal(startInjury(s, 7), true);
+  assert.ok(Math.abs(s.players[7].x - (576 - 1104) * u) < 1e-12);
+  assert.ok(Math.abs(s.players[7].z - (592 - 320) * u) < 1e-12);
+  assert.equal(s.score[1], 20);
+  assert.equal(startInjury(s, 7), false);
+  assert.equal(startInjury(s, 16), false);
+  assert.equal(s.score[0], 0);
+});
+
+test("simultaneous fatal falls enter medical care in player processing order", () => {
+  const s = initial();
+  for (const p of s.players) p.stun = 100;
+  for (const item of s.pickups) item.wait = 100;
+  for (const i of [7, 16])
+    Object.assign(s.players[i], {
+      health: 0,
+      action: 4,
+      actionTime: 35 / 25,
+      stun: 35 / 25,
+    });
+  for (let frame = 0; frame < 35; frame++)
+    step(s, simulationStep, {}, [false, false]);
+  assert.equal(s.players[16].injury, 6);
+  assert.equal(s.players[7].injury, 0);
+  assert.deepEqual(s.score, [10, 0]);
+  for (let frame = 0; s.players[16].injury > 0 && frame < 160; frame++)
+    step(s, simulationStep, {}, [false, false]);
+  step(s, simulationStep, {}, [false, false]);
+  assert.equal(s.players[16].injury, 0);
+  assert.equal(s.players[7].injury, 6);
+  assert.deepEqual(s.score, [10, 10]);
 });

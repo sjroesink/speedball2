@@ -164,24 +164,28 @@ test("electro-bounce gains multiplier charges and knocks an enemy down instead o
   assert.equal(s.ball.electric, 2);
   assert.equal(s.ball.charged, true);
 });
-test("injury awards points once, pauses clock, rotates reserves without a substitution limit", () => {
+test("fatal falls finish before medical scoring, clock pause and reserve rotation", () => {
   const s = initial();
-  s.players[16].health = 1;
-  damage(s, 7, 16);
-  assert.equal(s.score[0], 10);
-  assert.equal(s.players[16].injury, 6);
-  const time = s.time;
-  for (let i = 0; i < 361; i++) step(s, dt, {});
-  assert.equal(s.time, time);
-  assert.equal(s.players[16].health, 100);
-  assert.equal(s.reserves[1], 3);
-  s.players[16].health = 1;
-  s.players[16].stun = 0;
-  damage(s, 7, 16);
-  for (let i = 0; i < 361; i++) step(s, dt, {});
-  assert.equal(s.players[16].health, 100);
-  assert.equal(s.reserves[1], 3);
-  assert.equal(s.score[0], 20);
+  for (const p of s.players) p.stun = 100;
+  for (const item of s.pickups) item.wait = 100;
+  for (const points of [10, 20]) {
+    Object.assign(s.players[16], { health: 1, stun: 0 });
+    damage(s, 7, 16);
+    assert.equal(s.score[0], points - 10);
+    assert.equal(s.players[16].injury, 0);
+    for (let frame = 0; frame < 34; frame++)
+      step(s, 1 / 25, {}, [false, false]);
+    assert.equal(s.players[16].injury, 0);
+    step(s, 1 / 25, {}, [false, false]);
+    assert.equal(s.players[16].injury, 6);
+    assert.equal(s.score[0], points);
+    const time = s.time;
+    for (let frame = 0; frame < 151; frame++)
+      step(s, 1 / 25, {}, [false, false]);
+    assert.equal(s.time, time);
+    assert.equal(s.players[16].health, 100);
+    assert.equal(s.reserves[1], 3);
+  }
 });
 test("pickups are collected once, respawn, cycle all powers and expose equipment", () => {
   const s = isolated(),

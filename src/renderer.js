@@ -248,7 +248,7 @@ export class ArenaRenderer {
         }
       }
       actor.mixer.update(dt);
-      o.visible = p.health > 0 || p.injury > 1;
+      o.visible = p.health > 0 || p.action === 4 || p.injury > 1;
       actor.model.rotation.x = p.health <= 0 ? Math.PI / 2 : 0;
       const medic = this.medics[i];
       medic.visible = p.injury > 0;

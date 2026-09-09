@@ -92,18 +92,6 @@ export function damage(s, i, j) {
       charged: false,
     });
   emit(s, 4, i, j, q.x, q.z);
-  if (q.health <= 0) {
-    q.injury = 6;
-    q.stun = 6;
-    q.actionTime = 6;
-    const t = 1 - q.team;
-    const mult =
-      (t === 0 && s.multiplier > 0) || (t === 1 && s.multiplier < 0)
-        ? 1 + Math.abs(s.multiplier) / 2
-        : 1;
-    s.score[t] += 10 * mult;
-    emit(s, 14, j, t, q.x, q.z);
-  }
   return true;
 }
 export function giveBall(s, i) {
@@ -159,6 +147,33 @@ export function pickup(s, i, k) {
   // Injury notifications take precedence over the pickup toast.
   if (s.event.kind !== 14) emit(s, 11, i, k, p.x, p.z);
 }
+// start_injury runs when the fatal fall animation finishes, not on impact.
+export function startInjury(s, i) {
+  const p = s.players[i];
+  if (
+    p.health > 0 ||
+    p.actionTime > 1e-9 ||
+    s.players.some((q) => q.injury > 0)
+  )
+    return false;
+  const unit = 22.4 / 576;
+  const x = Math.max(48, Math.min(592, Math.round(320 + p.z / unit) & ~1));
+  const y = Math.max(48, Math.min(1104, Math.round(576 - p.x / unit) & ~1));
+  p.x = (576 - y) * unit;
+  p.z = (x - 320) * unit;
+  p.injury = p.stun = p.actionTime = 6;
+  p.action = 4;
+  p.moveX = p.moveZ = p.fallX = p.fallZ = 0;
+  s.controlled[p.team] = i;
+  const t = 1 - p.team;
+  const mult =
+    (t === 0 && s.multiplier > 0) || (t === 1 && s.multiplier < 0)
+      ? 1 + Math.abs(s.multiplier) / 2
+      : 1;
+  s.score[t] += 10 * mult;
+  emit(s, 14, i, t, p.x, p.z);
+  return true;
+}
 export function medicalStep(s, dt) {
   let stopped = false;
   s.players.forEach((p, i) => {
@@ -190,7 +205,7 @@ export function medicalStep(s, dt) {
         s.ball.electric = 0;
         s.ball.charged = false;
       }
-    } else if (p.health <= 0) p.stun = 10;
+    }
   });
   return stopped;
 }

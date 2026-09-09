@@ -63,14 +63,6 @@ func (s *State) damage(i, j int) bool {
 		s.Ball = Ball{X: q.X, Z: q.Z, H: .5, VX: p.FX * 5, VZ: p.FZ * 5, VH: 3, Owner: -1, LastTouch: i, Lock: .12}
 	}
 	s.event(4, i, j, q.X, q.Z, .5)
-	if q.Health <= 0 {
-		q.Injury = 6
-		q.Stun = 6
-		q.ActionTime = 6
-		t := 1 - q.Team
-		s.Score[t] += s.points(t, 10)
-		s.event(14, j, t, q.X, q.Z, .5)
-	}
 	return true
 }
 func (s *State) giveBall(i int) {
@@ -124,6 +116,31 @@ func (s *State) pickup(i, k int) {
 		s.event(11, i, k, p.X, p.Z, .5)
 	}
 }
+
+// start_injury runs when the fatal fall animation finishes, not on impact.
+func (s *State) startInjury(i int) bool {
+	p := &s.Players[i]
+	if p.Health > 0 || p.ActionTime > 1e-9 {
+		return false
+	}
+	for _, q := range s.Players {
+		if q.Injury > 0 {
+			return false
+		}
+	}
+	const unit = 22.4 / 576
+	x := max(48, min(592, int(math.Round(320+p.Z/unit))&^1))
+	y := max(48, min(1104, int(math.Round(576-p.X/unit))&^1))
+	p.X, p.Z = float64(576-y)*unit, float64(x-320)*unit
+	p.Injury, p.Stun, p.ActionTime = 6, 6, 6
+	p.Action = 4
+	p.moveX, p.moveZ, p.fallX, p.fallZ = 0, 0, 0, 0
+	s.Controlled[p.Team] = i
+	t := 1 - p.Team
+	s.Score[t] += s.points(t, 10)
+	s.event(14, i, t, p.X, p.Z, .5)
+	return true
+}
 func (s *State) medicalStep(dt float64) bool {
 	stopped := false
 	for i := range s.Players {
@@ -163,8 +180,6 @@ func (s *State) medicalStep(dt float64) bool {
 				s.Ball.Electric = 0
 				s.Ball.Charged = false
 			}
-		} else if p.Health <= 0 {
-			p.Stun = 10
 		}
 	}
 	return stopped

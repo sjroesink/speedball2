@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { initial, throwBall } from "./game.js";
-import { damage } from "./features.js";
+import { damage, startInjury } from "./features.js";
 import { emit, recentEvents, notificationEvent } from "./events.js";
 import { ArenaAudio } from "./audio.js";
 
@@ -62,11 +62,14 @@ test("an omitted snapshot still delivers every retained sound once, in order", (
   audio.observe(s, false);
   assert.equal(heard.length, 20);
 });
-test("same-step injury retains both impact and injury cues; match reset drops history", () => {
+test("fatal impact and later medical cue retain event order; match reset drops history", () => {
   const s = initial();
   throwBall(s, 7, false);
   s.players[16].health = 1;
   damage(s, 7, 16);
+  assert.equal(s.event.kind, 4);
+  s.players[16].actionTime = 0;
+  startInjury(s, 16);
   assert.deepEqual(
     s.events.map((e) => e.kind),
     [3, 4, 14],

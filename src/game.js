@@ -40,6 +40,7 @@ import {
   damage,
   giveBall,
   medicalStep,
+  startInjury,
   featureStep,
   sideFeature,
 } from "./features.js";
@@ -386,6 +387,10 @@ function simulateStep(
   for (let order = 0; order < s.players.length; order++) {
     const i = Math.floor(order / 2) + (order % 2 === 0 ? 9 : 0);
     const p = s.players[i];
+    if (p.health <= 0 && p.actionTime <= 0 && startInjury(s, i)) {
+      s.previous = inputs.map((u) => ({ ...u }));
+      return;
+    }
     catchBall(s, i, catchDistances);
     // Catching precedes jumping_action_fn, which clears jumping on landing.
     if (p.action === 2 && p.jumping && p.actionTime <= 2 / 25 + 1e-9) {

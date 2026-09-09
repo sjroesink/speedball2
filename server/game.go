@@ -325,6 +325,10 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 	for order := range s.Players {
 		i := order/2 + (1-order%2)*9
 		p := &s.Players[i]
+		if p.Health <= 0 && p.ActionTime <= 0 && s.startInjury(i) {
+			s.previous = inputs
+			return
+		}
 		s.catchBallAt(i, &catchDistances)
 		// Catching precedes jumping_action_fn clearing the airborne flag.
 		if p.Action == 2 && p.jumping && p.ActionTime <= 2./25+1e-9 {

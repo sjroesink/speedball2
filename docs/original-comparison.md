@@ -866,3 +866,39 @@ restarts, full time and inactive playback. Browser training's sound button
 successfully entered SOUND ON, then was returned to muted. This verifies
 activation only: the actual mix has not been listened to or compared against
 the original audio. No gameplay protocol or server changes in this checkpoint.
+
+
+### Fatal fall before medical care
+
+Moved medical activation and its ten-point multiplier-adjusted award out of
+`damage`. A fatal hit now keeps the normal fall action and the match continues
+until that action completes. The original Entity opcode handler invokes
+`start_injury` only at recovery with zero health (Amiga 0x10e16 onward; WIP
+Entity.cs recovery and Player.sub_F6DC). The simulation starts one medical
+case in its existing team-interleaved player processing order, so simultaneous
+fatal falls are treated sequentially. Injury positions are made even and
+clamped to terrain X 48..592 and Y 48..1104 before medical activation. The
+fatal fall remains visible, and impact versus medical audio events occur at
+their respective phases rather than together on the hit.
+
+Validation: 165 JavaScript tests, Go tests/vet and production build pass.
+Updated tests assert no immediate award, no medical activation before fall
+completion, clock pause during care and repeat reserve rotation. Additional
+fixtures cover coordinate alignment, multiplier scoring once, and two fatal
+falls entering care in order. No new browser check in this change.
+
+Remaining medical work: replace the six-second placeholder with the source's
+approach/first-pickup/second-pickup/exit phases, position the two medics and
+injured player accordingly, center the camera on the injury anchor, and resume
+from the actual exit side. The full sequence is not yet ported.
+
+### Modernization requirement (updated objective)
+
+The original supplies gameplay rules and the timing needed for comparable
+play. Its hardware constraints are not product requirements. Rendering,
+resolution, aspect ratio and animation smoothness should suit modern browsers;
+reference tick counts should describe real-time durations rather than cap the
+render frame rate. In particular the current strict viewport letterboxing and
+visibility-dependent human-control handoff need reconsidering for the updated
+objective. This checkpoint changes injury semantics, not those presentation
+constraints, and does not claim they are already resolved.
