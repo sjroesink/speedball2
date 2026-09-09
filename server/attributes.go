@@ -168,3 +168,11 @@ func referenceDistance(dx, dz float64) int {
 	}
 	return distance - quarter
 }
+
+// get_sustain (Amiga 0xf564), table 0x022a.
+func actionSustain(speed int) int {
+	return [16]int{8, 8, 9, 9, 9, 9, 10, 10, 10, 10, 11, 11, 11, 11, 12, 12}[max(0, min(15, (speed-100)/10))]
+}
+func canJumpAtBall(p *Player, b *Ball, distance int, inMultiplier bool) bool {
+	return b.Owner < 0 && !inMultiplier && (b.FlightKind != 0 && b.FlightStage > 2 || b.FlightKind == 0 && b.H > 1.25) && distance <= 6*actionSustain(p.Stats[3])
+}

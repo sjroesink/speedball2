@@ -441,7 +441,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			s.Charge[t] = 0
 		}
 		if pressed && b.Owner != i && p.Cooldown <= 0 && p.ActionTime <= 0 {
-			if b.H > 1.5 && math.Hypot(b.X-p.X, b.Z-p.Z) < 4 && !u.Tackle {
+			if canJumpAtBall(p, b, catchDistances[i], inMultiplier) && !u.Tackle {
 				p.Action = 2
 				p.ActionTime = .7
 				p.Cooldown = .85

@@ -12,6 +12,7 @@ import {
   flightStep,
 } from "./ball.js";
 import {
+  canJumpAtBall,
   defaultStats,
   tackleThreshold,
   randomByte,
@@ -493,7 +494,7 @@ export function step(
       }
     } else if (human) s.charge[t] = 0;
     if (pressed && b.owner !== i && p.cooldown <= 0 && p.actionTime <= 0) {
-      if (b.h > 1.5 && Math.hypot(b.x - p.x, b.z - p.z) < 4 && !u.tackle) {
+      if (canJumpAtBall(p, b, catchDistances[i], inMultiplier) && !u.tackle) {
         p.action = 2;
         p.actionTime = 0.7;
         p.cooldown = 0.85;

@@ -119,3 +119,18 @@ export function referenceDistance(dx, dz) {
   } else quarter >>= 1;
   return distance - quarter;
 }
+
+// get_sustain (Amiga 0xf564), table 0x022a.
+export function actionSustain(speed) {
+  return [8, 8, 9, 9, 9, 9, 10, 10, 10, 10, 11, 11, 11, 11, 12, 12][
+    Math.max(0, Math.min(15, Math.floor((speed - 100) / 10)))
+  ];
+}
+export function canJumpAtBall(p, b, distance, inMultiplier) {
+  return (
+    b.owner < 0 &&
+    !inMultiplier &&
+    (b.flightKind ? b.flightStage > 2 : b.h > 1.25) &&
+    distance <= 6 * actionSustain(p.stats[3])
+  );
+}

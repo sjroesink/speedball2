@@ -306,3 +306,18 @@ Match.SubstitutePlayer and Person.CopySubstituteTo rotate bench slots 9,10,11 an
 Medical completion now enters at terrain X 48/592, Y 576 +/-32 according to starting direction, targets center (320,576) and sets the original 25-tick AI timer. Reset gear and stale action state. Replaced the keeper's unconditional positional clamp with directional zone checks from Player.FB6C, allowing an entering keeper outside the zone to travel back instead of teleporting into it. The six-second evacuation is still an adaptation: original medic travel, pickup and return animation states remain unfinished.
 
 All 99 JavaScript tests, Go tests/vet and the production build pass. Paired tests cover four substitutions, bench order, attribute rounding, all side/half entry combinations and cleared gear backups. Restarted the backend and opened the training demo. Full original AI/action/medical sequencing and listening-based audio verification remain incomplete.
+
+
+### Jump selection: speed-dependent reach
+
+The automatic jump decision now follows `handle_user_input` at Amiga
+0x10c36–0x10c68: the ball must be free, outside a multiplier loop, above
+flight stage 2, and within six times the speed-dependent sustain value.
+The 0x022a table ranges from 8 to 12, giving an inclusive reach of 48–72
+original terrain units. Both simulations use the cached pre-movement distance.
+The explicit tackle control remains an override. The launch drop still uses
+its existing height fallback because it does not yet use original ball sprites.
+Paired JavaScript/Go checks cover both reach boundaries, possession, multiplier
+exclusion and low flight stages. Jump/slide durations and landing recovery
+remain approximations: original thinking selects animation tails at indices
+18/15 before the animation interpreter clears busy flags.
