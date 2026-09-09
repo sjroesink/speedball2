@@ -77,8 +77,7 @@ func (h *Hub) connect(session *webtransport.Session, code, name string) {
 				break
 			}
 		}
-		room = &Room{Code: code, State: initial(), Created: time.Now()}
-		room.State.beginRestart(0)
+		room = &Room{Code: code, State: newMatch(), Created: time.Now()}
 		h.Rooms[code] = room
 	} else {
 		room = h.Rooms[code]

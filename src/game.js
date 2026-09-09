@@ -128,6 +128,19 @@ export function initial({ training = false } = {}) {
   initFeatures(s);
   return s;
 }
+// Amiga game_two_player initializes all twelve roster members at 170.
+// Training is a modern AI warm-up for that same head-to-head ruleset.
+export function createMatch(options = {}) {
+  const s = initial(options);
+  for (const p of s.players) {
+    p.stats.fill(170);
+    p.baseStats.fill(170);
+  }
+  for (const bench of s.bench) for (const stats of bench) stats.fill(170);
+  beginRestart(s);
+  return s;
+}
+
 export function resetPitch(s) {
   s.medical = null;
   s.restartPhase = 0;

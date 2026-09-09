@@ -1336,3 +1336,24 @@ including the return of the rounded outgoing player, then damage attributes
 and use Full Energy to verify the correct baseline each time. Go tests/vet and
 production build pass. Current exhibition rosters still start with uniform
 attributes; original mode-specific roster initialization remains to compare.
+
+
+## Original two-player roster initialization (2026-09-09)
+
+Amiga game_two_player loads 170 into D1 at 0x8c16 and calls init_player_stats
+for both twelve-player attribute tables. The helper at 0xa4e6 writes all eight
+attributes, including reserves. Actual online room creation and the browser's
+AI warm-up now use explicit match constructors with these values and the central
+restart sequence. Bare initial() remains a low-attribute fixture/lobby factory.
+
+With the existing source movement thresholds this changes running from five to
+six terrain velocity units without the ball, and four to five while carrying.
+Throw, combat and intelligence calculations also receive the correct starting
+attributes. Full Energy and incoming reserves retain the 170 baselines.
+195 JS tests, Go tests/vet and production build pass; match-constructor tests
+cover all active/reserve attributes, running rates and recovery baselines.
+
+Training remains a modern AI exhibition, deliberately using the online roster
+pace. It is not a recreation of Amiga game_practice, which hides the second
+team. Existing solo pickup/cash behavior remains in this warm-up. League/team
+management and other original mode-specific initialization are still absent.

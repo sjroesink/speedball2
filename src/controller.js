@@ -1,8 +1,7 @@
-import { beginRestart } from "./restart.js";
 import { ArenaAudio } from "./audio.js";
 import { notificationEvent, notificationPriority } from "./events.js";
 import { powerNames } from "./features.js";
-import { initial, step, direction, clamp, simulationStep } from "./game.js";
+import { initial, createMatch, step, direction, clamp, simulationStep } from "./game.js";
 import { decodeSnapshot } from "./wire.js";
 import { ArenaRenderer } from "./renderer.js";
 
@@ -145,8 +144,7 @@ export async function start() {
   }
   function practice() {
     disconnect();
-    state = initial({ training: true });
-    beginRestart(state);
+    state = createMatch({ training: true });
     team = 0;
     playing = true;
     lastEvent = 0;

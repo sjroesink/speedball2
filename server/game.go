@@ -776,3 +776,23 @@ func (s *State) resolveTackle(i int, distances *[18]int) {
 		return
 	}
 }
+
+// Amiga game_two_player initializes both complete rosters at 170.
+func newMatch() State {
+	s := initial()
+	for i := range s.Players {
+		for j := range s.Players[i].Stats {
+			s.Players[i].Stats[j] = 170
+			s.Players[i].BaseStats[j] = 170
+		}
+	}
+	for team := range s.Bench {
+		for i := range s.Bench[team] {
+			for j := range s.Bench[team][i] {
+				s.Bench[team][i][j] = 170
+			}
+		}
+	}
+	s.beginRestart(0)
+	return s
+}
