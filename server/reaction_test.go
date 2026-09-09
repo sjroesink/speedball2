@@ -2,6 +2,8 @@ package main
 
 import "testing"
 
+const reactionTarget = 128 * (22.4 / 576)
+
 func TestAIReactionAndTargetPersistence(t *testing.T) {
 	expected := [16]int{16, 16, 15, 15, 14, 14, 13, 13, 12, 12, 11, 11, 10, 10, 9, 8}
 	for i, n := range expected {
@@ -17,12 +19,12 @@ func TestAIReactionAndTargetPersistence(t *testing.T) {
 		p := &s.Players[7]
 		p.X, p.Z, p.Stun = 0, 0, 0
 		p.Stats[7] = intelligence
-		s.Ball.X, s.Ball.H = 5, 4
+		s.Ball.X, s.Ball.H = reactionTarget, 4
 		s.simulate(.04, [2]Input{}, [2]bool{})
-		if p.aiX != 5 {
+		if p.aiX != reactionTarget {
 			t.Fatal("first target")
 		}
-		s.Ball.X = -5
+		s.Ball.X = -reactionTarget
 		ticks := 16
 		if intelligence == 250 {
 			ticks = 8
@@ -30,11 +32,11 @@ func TestAIReactionAndTargetPersistence(t *testing.T) {
 		for n := 1; n < ticks; n++ {
 			s.simulate(.04, [2]Input{}, [2]bool{})
 		}
-		if p.aiX != 5 {
+		if p.aiX != reactionTarget {
 			t.Fatal("retargeted before timer")
 		}
 		s.simulate(.04, [2]Input{}, [2]bool{})
-		if p.aiX != -5 {
+		if p.aiX != -reactionTarget {
 			t.Fatal("did not retarget")
 		}
 	}
@@ -50,7 +52,7 @@ func TestBusyAIWaitsForAction(t *testing.T) {
 	p.ActionTime = .2
 	p.aiX = 2
 	p.aiTarget = true
-	s.Ball.X, s.Ball.H = 5, 4
+	s.Ball.X, s.Ball.H = reactionTarget, 4
 	s.simulate(.04, [2]Input{}, [2]bool{})
 	if p.aiX != 2 {
 		t.Fatal("busy decision")
@@ -58,7 +60,7 @@ func TestBusyAIWaitsForAction(t *testing.T) {
 	for n := 0; n < 5; n++ {
 		s.simulate(.04, [2]Input{}, [2]bool{})
 	}
-	if p.aiX != 5 {
+	if p.aiX != reactionTarget {
 		t.Fatal("missing decision after action")
 	}
 }

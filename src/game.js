@@ -1,6 +1,6 @@
 import { localInteraction } from "./interaction.js";
 import { contactDistances, blockPlayerMovement } from "./collision.js";
-import { steerToTarget } from "./steering.js";
+import { steerToTarget, predictedTarget } from "./steering.js";
 import { goalieTarget, deflectBall } from "./goalie.js";
 import { supportTarget } from "./support.js";
 import { emit as event } from "./events.js";
@@ -471,8 +471,7 @@ export function step(
             tz = clamp(b.z, -1.55, 1.55);
           }
         } else if (s.controlled[t] === i) {
-          tx = b.x + b.vx * (p.gear === 21 ? 0.3 : 0.15);
-          tz = b.z + b.vz * (p.gear === 21 ? 0.3 : 0.15);
+          [tx, tz] = predictedTarget(b.x, b.z, b.vx, b.vz, p.stats[7]);
         } else {
           [tx, tz] = supportTarget(s, i);
         }

@@ -411,12 +411,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 						tz = clamp(b.Z, -1.55, 1.55)
 					}
 				} else if s.Controlled[t] == i {
-					lead := .15
-					if p.Gear == 21 {
-						lead = .3
-					}
-					tx = b.X + b.VX*lead
-					tz = b.Z + b.VZ*lead
+					tx, tz = predictedTarget(b.X, b.Z, b.VX, b.VZ, p.Stats[7])
 				} else {
 					tx, tz = s.supportTarget(i)
 				}

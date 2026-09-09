@@ -1,7 +1,43 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { steerToTarget } from "./steering.js";
+import { steerToTarget, predictedTarget } from "./steering.js";
 const u = 22.4 / 576;
+test("prediction uses the original intelligence bands in 25 Hz steps", () => {
+  for (const [intelligence, expected] of [
+    [100, 8],
+    [149, 8],
+    [150, 16],
+    [199, 16],
+    [200, 32],
+    [255, 32],
+  ]) {
+    const [x, z] = predictedTarget(0, 0, 8 * u * 25, -3 * u * 25, intelligence);
+    assert.ok(Math.abs(x / u - expected) < 1e-9);
+    assert.ok(Math.abs(z / u + (expected * 3) / 8) < 1e-9);
+  }
+});
+test("prediction reflects side, end and simultaneous corner bounces", () => {
+  for (const sign of [-1, 1]) {
+    const [x, z] = predictedTarget(
+      sign * 540 * u,
+      sign * 284 * u,
+      sign * 8 * u * 25,
+      sign * 8 * u * 25,
+      200,
+    );
+    assert.ok(Math.abs(x / u - sign * 516) < 1e-9);
+    assert.ok(Math.abs(z / u - sign * 260) < 1e-9);
+    const [wallX, wallZ] = predictedTarget(
+      sign * 544 * u,
+      sign * 288 * u,
+      0,
+      0,
+      100,
+    );
+    assert.ok(Math.abs(wallX / u - sign * 544) < 1e-9);
+    assert.ok(Math.abs(wallZ / u - sign * 288) < 1e-9);
+  }
+});
 test("far direction uses strict integer half-axis thresholds", () => {
   for (const sign of [-1, 1]) {
     assert.deepEqual(

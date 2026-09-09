@@ -595,3 +595,10 @@ priority, keeper/carrier rules and falling exclusions. The single-contact tackle
 fixture now delays its bystander's AI so a legitimate counter-punch does not
 obscure its one-attacker assertion. Offscreen checks and the original avoidance
 of the selected teammate remain unported.
+
+
+### Selected AI ball prediction
+
+The selected field player now uses `target_predicted_position` (Amiga 0x10aaa) when pursuing the ball. Table 0x020a specifies one tick of velocity for intelligence 100–149, two for 150–199, and four for 200–255. Coordinates and velocities are converted to original integer terrain units before prediction. The target reflects once at each axis boundary (terrain X 32/608 and Y 32/1120), including simultaneous corner reflections. This replaces the fixed 0.15-second lead and separate gear-21 override in both simulations. Tests cover intelligence boundaries, corner reflections and stationary wall targets; reaction fixtures now use integer terrain coordinates.
+
+This ports the prediction used by the current ball-pursuit branch. Original selected-player target selection between opponents, items and the ball, along with slide/jump decisions and screen visibility rules, still needs porting. It does not establish full AI parity.
