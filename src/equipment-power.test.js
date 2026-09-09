@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {initial} from "./game.js";
+import {initial,matchClock} from "./game.js";
 import {pickup,damage} from "./features.js";
 import {restorePower} from "./attributes.js";
 
@@ -35,5 +35,25 @@ test("power applied after equipment remains active when equipment is knocked off
   assert.equal(damage(s,16,7),true);
   assert.equal(p.stats[a],affected?(kind===3||kind===6?100:250):173,`${kind}/${gear}`);
   restorePower(s);assert.equal(p.stats[a],173);
+ }
+});
+
+test("replacement powers expire through the match clock without stale equipment values",()=>{
+ const powers=[3,4,5,6];
+ for(const first of powers) for(const second of powers) for(let gear=14;gear<=21;gear++) {
+  const s=initial(),p=s.players[7],a=gear-14;
+  p.stats.fill(173);pickup(s,7,gear);
+  const collect=kind=>pickup(s,kind===3||kind===6?16:7,kind);
+  collect(first);matchClock(s,2);collect(second);
+  assert.equal(s.effect.time,6);
+  assert.equal(damage(s,16,7),true);
+  const powered=second!==6||a===3;
+  const value=powered?(second===3||second===6?100:250):173;
+  assert.equal(p.stats[a],value,`${first}->${second}/${gear}`);
+  for(let n=0;n<149;n++)matchClock(s,1/25);
+  assert.equal(s.effect.kind,second);assert.equal(p.stats[a],value);
+  matchClock(s,1/25);
+  assert.equal(s.effect.kind,0);assert.equal(p.stats[a],173);
+  assert.equal(p.statBackup[a],0);
  }
 });

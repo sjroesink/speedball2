@@ -86,3 +86,56 @@ func TestPowerAppliedAfterEquipment(t *testing.T) {
 		}
 	}
 }
+
+func TestReplacementPowersExpireWithEquipment(t *testing.T) {
+	powers := []int{3, 4, 5, 6}
+	for _, first := range powers {
+		for _, second := range powers {
+			for gear := 14; gear <= 21; gear++ {
+				s := initial()
+				p := &s.Players[7]
+				a := gear - 14
+				for i := range p.Stats {
+					p.Stats[i] = 173
+				}
+				s.pickup(7, gear)
+				collect := func(kind int) {
+					who := 7
+					if kind == 3 || kind == 6 {
+						who = 16
+					}
+					s.pickup(who, kind)
+				}
+				collect(first)
+				s.matchClock(2)
+				collect(second)
+				if s.Effect.Time != 6 {
+					t.Fatal("replacement timer not reset")
+				}
+				if !s.damage(16, 7) {
+					t.Fatal("missing impact")
+				}
+				want := 173
+				if second != 6 || a == 3 {
+					want = 250
+					if second == 3 || second == 6 {
+						want = 100
+					}
+				}
+				if p.Stats[a] != want {
+					t.Fatalf("%d->%d/%d: got %d want %d", first, second, gear, p.Stats[a], want)
+				}
+				for n := 0; n < 149; n++ {
+					s.matchClock(1. / 25)
+				}
+				if s.Effect.Kind != second || p.Stats[a] != want {
+					t.Fatal("early expiry")
+				}
+				s.matchClock(1. / 25)
+				if s.Effect.Kind != 0 || p.Stats[a] != 173 || p.StatBackup[a] != 0 {
+					t.Fatal("stale value at expiry")
+				}
+			}
+		}
+	}
+}

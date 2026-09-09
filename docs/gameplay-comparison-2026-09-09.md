@@ -405,3 +405,16 @@ cases per host), alongside the earlier 64-case reverse-order matrix. The JS
 regression failed before the fix at boost 4/equipment 14 (100 versus 250).
 Validation: 283 JS tests, Go tests, go vet and production build pass. Repeated
 replacement sequences still require explicit lifecycle coverage.
+
+### Replacement powers use the latest restore value and clock
+
+Added all 16 ordered pairs of attribute powers (3/4/5/6), including same-power
+refresh, for all eight equipped attributes: 128 cases per simulation. The
+first power runs for two seconds, the second is acquired, and equipment is
+lost through damage. Tests check the current effect, its six-second reset,
+149 clock frames without premature expiry, and restoration on frame 150.
+The production matchClock runs at 1/25-second increments in this test; full
+movement/AI is intentionally not advanced, isolating the lifecycle timer.
+Both JS and Go matrices pass. No further production change was needed.
+These checks close the explicitly listed replacement-order coverage gap for
+attribute powers, not the entire power-up or original-match fidelity scope.
