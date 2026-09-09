@@ -490,7 +490,10 @@ export function step(
           (u.tackleId || 0) > (prev.tackleId || 0)
         : u.shoot || u.tackle;
     if (human && b.owner === i) {
-      if ((u.lob && !prev.lob) || (u.lobId || 0) > (prev.lobId || 0)) {
+      if (
+        p.actionTime <= 0 &&
+        ((u.lob && !prev.lob) || (u.lobId || 0) > (prev.lobId || 0))
+      ) {
         throwBall(s, i, true, u);
         s.charge[t] = 0;
       } else {

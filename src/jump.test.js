@@ -114,3 +114,33 @@ test("landing clears airborne privileges after that tick's catch check", () => {
     }
   }
 });
+
+test("lob shortcut cannot cancel a busy action after obtaining possession", () => {
+  for (const action of [1, 2, 3]) {
+    const s = initial();
+    for (const q of s.players) q.stun = 10;
+    const p = s.players[7];
+    Object.assign(p, {
+      x: 4,
+      z: 0,
+      fx: 1,
+      fz: 0,
+      stun: 0,
+      action,
+      jumping: action === 2,
+      actionTime: 3 / 25,
+    });
+    Object.assign(s.ball, { owner: 7, x: 4, z: 0, h: 1 });
+    step(s, simulationStep, { lobId: 1 });
+    assert.equal(s.ball.owner, 7);
+    assert.equal(p.action, action);
+    assert.equal(s.charge[0], 0);
+    step(s, simulationStep, { lobId: 1 });
+    step(s, simulationStep, { lobId: 1 });
+    assert.equal(p.action, 0);
+    assert.equal(s.ball.owner, 7, "blocked pulse must not be queued");
+    step(s, simulationStep, { lobId: 2 });
+    assert.equal(s.ball.owner, -1);
+    assert.equal(s.ball.flightKind, 2);
+  }
+});

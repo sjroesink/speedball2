@@ -428,7 +428,7 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			pressed = u.Shoot || u.Tackle
 		}
 		if human && b.Owner == i {
-			if (u.Lob && !s.previous[t].Lob) || u.LobID > s.previous[t].LobID {
+			if p.ActionTime <= 0 && ((u.Lob && !s.previous[t].Lob) || u.LobID > s.previous[t].LobID) {
 				s.throw(i, true, u)
 				s.Charge[t] = 0
 			} else {

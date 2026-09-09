@@ -108,3 +108,33 @@ func TestLandingCatchOrder(t *testing.T) {
 		}
 	}
 }
+
+func TestLobCannotCancelBusyAction(t *testing.T) {
+	for _, action := range []int{1, 2, 3} {
+		s := initial()
+		for i := range s.Players {
+			s.Players[i].Stun = 10
+		}
+		p := &s.Players[7]
+		p.X, p.Z, p.FX, p.FZ, p.Stun = 4, 0, 1, 0, 0
+		p.Action = action
+		p.jumping = action == 2
+		p.ActionTime = 3. / 25
+		s.Ball = Ball{Owner: 7, X: 4, H: 1, LastTouch: 7}
+		inputs := [2]Input{{LobID: 1}, {}}
+		s.simulate(simulationStep, inputs, [2]bool{true, false})
+		if s.Ball.Owner != 7 || p.Action != action || s.Charge[0] != 0 {
+			t.Fatal("lob interrupted busy action", action)
+		}
+		s.simulate(simulationStep, inputs, [2]bool{true, false})
+		s.simulate(simulationStep, inputs, [2]bool{true, false})
+		if p.Action != 0 || s.Ball.Owner != 7 {
+			t.Fatal("blocked input was queued", action)
+		}
+		inputs[0].LobID = 2
+		s.simulate(simulationStep, inputs, [2]bool{true, false})
+		if s.Ball.Owner != -1 || s.Ball.FlightKind != 2 {
+			t.Fatal("lob blocked after recovery", action)
+		}
+	}
+}

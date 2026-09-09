@@ -360,3 +360,16 @@ restored landing defense. The flag is simulation-only; the existing action and
 remaining time still drive the browser's visual pose, so wire format 6 is
 unchanged. Non-sprite launch-drop height handling and collision-pass ordering
 remain approximations.
+
+
+### Busy possession and the lob shortcut
+
+`sub_D724` only processes new human actions while the original busy flag is
+clear. The dedicated browser lob shortcut previously bypassed that restriction,
+letting a player cancel a jump, slide or throw recovery immediately after
+obtaining possession. Both simulations now require recovery to finish before
+accepting a new lob. Already running throw windup still advances normally.
+Paired integration tests cover all three busy actions, ensure blocked pulses
+are not deferred, and verify that a fresh lob works after recovery. The shortcut
+itself remains an additional browser control; original one-button release
+handling and standing-catch animations still need further comparison.
