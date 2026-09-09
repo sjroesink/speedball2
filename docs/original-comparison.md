@@ -1969,3 +1969,15 @@ the nested hierarchy. Grip distance and floor clearance remain checked through
 wind-up/release for both teams. Inspected running and the release pose in the
 browser; production build passes. Full-body weight transfer and foot planting
 still require animation work.
+
+### Running ankle articulation
+
+Blender ankle pivots now carry each boot and toe plate. Run keys counter the
+hip, knee and torso pitch to keep soles near horizontal. Other clips explicitly
+reset ankle rotation. This changes orientation only: world-space foot planting
+and ground-contact timing remain incomplete.
+
+Inspected running in the browser. Ten exported-model tests pass, including
+49 samples per team checking sole tilt stays below 12 degrees throughout the
+cycle, plus prior knee phase, grip and action timing tests. Production build
+passes.

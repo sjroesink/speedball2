@@ -123,6 +123,7 @@ def build_players():
   cube('Chin strap',(0,-.237,1.53),(.16,.018,.035),rubber,.006)
   limbs=[]
   knees=[]
+  ankles=[]
   elbows=[]
   for side in [-1,1]:
    before=set(bpy.context.scene.objects)
@@ -152,11 +153,17 @@ def build_players():
    lower_start=set(bpy.context.scene.objects)
    cube('Knee guard',(side*.22,-.15,.36),(.24,.15,.19),steel,.055)
    contoured_shell('Shin',(side*.22,-.015,.23),[(-.14,.18,.22),(-.07,.20,.25),(.07,.27,.30),(.13,.23,.25)],athlete_steel)
+   foot_start=set(bpy.context.scene.objects)
    cube('Boot',(side*.22,-.12,.10),(.30,.49,.18),rubber,.035)
    cube('Steel toe',(side*.22,-.32,.14),(.28,.15,.13),athlete_steel,.025)
+   foot_parts=set(bpy.context.scene.objects)-foot_start
+   bpy.ops.object.empty_add(location=(side*.22,0,.10));ankle=bpy.context.object;ankle.name='Ankle_'+str(side)
+   for part in foot_parts: part.parent=ankle;part.matrix_parent_inverse=ankle.matrix_world.inverted()
+   ankles.append((ankle,side))
    lower_parts=set(bpy.context.scene.objects)-lower_start
    bpy.ops.object.empty_add(location=(side*.22,0,.38));knee=bpy.context.object;knee.name='Knee_'+str(side)
-   for part in lower_parts: part.parent=knee;part.matrix_parent_inverse=knee.matrix_world.inverted()
+   for part in lower_parts:
+    if part.parent is None: part.parent=knee;part.matrix_parent_inverse=knee.matrix_world.inverted()
    knees.append((knee,side))
    parts=set(bpy.context.scene.objects)-before
    bpy.ops.object.empty_add(location=(side*.22,0,.75));joint=bpy.context.object;joint.name='Leg_'+str(side)
@@ -226,6 +233,23 @@ def build_players():
     knee.animation_data.action=None
     track=knee.animation_data.nla_tracks.new();track.name=clip;track.strips.new(clip,1,action)
    knee.rotation_euler=(0,0,0)
+  for ankle,side in ankles:
+   ankle.animation_data_create()
+   for clip in poses:
+    action=bpy.data.actions.new(ankle.name+'_'+clip);ankle.animation_data.action=action
+    frames=range(1,26,3) if clip=='Run' else [1,poses[clip][-1][0]]
+    for frame in frames:
+     angle=0
+     if clip=='Run':
+      phase=(frame-1)/24*math.tau
+      # Counter the authored hip, knee and torso pitch at each gait key.
+      hip=math.sin(phase)*.65*side
+      knee=.08+.95*max(0,math.sin(phase)*side)
+      angle=-hip-knee-.06
+     ankle.rotation_euler.x=angle;ankle.keyframe_insert(data_path='rotation_euler',frame=frame)
+    ankle.animation_data.action=None
+    track=ankle.animation_data.nla_tracks.new();track.name=clip;track.strips.new(clip,1,action)
+   ankle.rotation_euler=(0,0,0)
   root.rotation_euler=(0,0,0);root.location=(0,0,0);bpy.context.scene.render.fps=60
   export(name,apply_modifiers=True)
 if '--players-only' in sys.argv:

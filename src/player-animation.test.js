@@ -144,3 +144,19 @@ test("exported knees articulate independently and the running cycle closes", asy
     assert.ok(knees.every((knee, i) => knee.quaternion.angleTo(initial[i]) < .001), "no seam at loop boundary");
   }
 });
+
+test("running boot soles remain near level throughout the exported cycle", async () => {
+  for (const team of ["cyan", "orange"]) {
+    const model=await player(team), mixer=new AnimationMixer(model.scene);
+    const clip=model.animations.find(c=>c.name==='Run');mixer.clipAction(clip).play();
+    const ankles=[-1,1].map(side=>model.scene.getObjectByName(`Ankle_${side}`));
+    assert.ok(ankles.every(ankle=>ankle?.parent.name.startsWith('Knee_')));
+    for(let step=0;step<=48;step++) {
+      mixer.setTime(clip.duration*step/48);model.scene.updateMatrixWorld(true);
+      for(const ankle of ankles) {
+        const soleUp=new Vector3(0,1,0).transformDirection(ankle.matrixWorld);
+        assert.ok(soleUp.y>.98,`sole pitch remains under 12 degrees: ${soleUp.y}`);
+      }
+    }
+  }
+});
