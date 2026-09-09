@@ -226,11 +226,14 @@ export class ArenaAudio {
       if (e.kind === 3) continue;
       const cue = e.kind === 30 ? 3 : e.kind !== 11 ? e.kind : e.target === 12 ? "zap"
         : e.target === 13 ? "coin" : e.target >= 14 ? "equipment" : 11;
-      this.play(cue, eventPan(state, e, view));
+      // Stable presentation variation: clients hearing the same hit choose the
+      // same timbre without consuming any simulation random numbers.
+      if (cue === 4) this.play(cue, eventPan(state, e, view), e.id & 3);
+      else this.play(cue, eventPan(state, e, view));
     }
   }
 
-  play(kind, pan = 0) {
+  play(kind, pan = 0, variant = 0) {
     const c = this.context;
     if (!this.enabled || !this.active || this.volume === 0 || !c || c.state !== "running") return;
     const priority =
@@ -244,7 +247,11 @@ export class ArenaAudio {
         if (victim.priority > priority) continue;
         victim.stop();
       }
-      const [wave, from, to, duration, volume, delay] = layer;
+      const [wave, baseFrom, baseTo, baseDuration, volume, delay] = layer;
+      // Four newly synthesized impact colors echo the original alternating hits.
+      const pitch = kind === 4 ? [0.82, 0.94, 1.06, 1.18][variant & 3] : 1;
+      const from = baseFrom * pitch, to = baseTo * pitch;
+      const duration = baseDuration * (kind === 4 ? [1.05, 1, .92, .86][variant & 3] : 1);
       const start = c.currentTime + delay;
       const source =
         wave === "noise" ? c.createBufferSource() : c.createOscillator();

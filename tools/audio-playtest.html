@@ -3,12 +3,12 @@ import {ArenaAudio,cues} from '/src/audio.js';
 function wav(buffer){const n=buffer.length,a=new ArrayBuffer(44+n*4),d=new DataView(a);const str=(o,t)=>[...t].forEach((v,i)=>d.setUint8(o+i,v.charCodeAt(0)));str(0,'RIFF');d.setUint32(4,a.byteLength-8,true);str(8,'WAVE');str(12,'fmt ');d.setUint32(16,16,true);d.setUint16(20,1,true);d.setUint16(22,2,true);d.setUint32(24,buffer.sampleRate,true);d.setUint32(28,buffer.sampleRate*4,true);d.setUint16(32,4,true);d.setUint16(34,16,true);str(36,'data');d.setUint32(40,n*4,true);for(let i=0;i<n;i++)for(let ch=0;ch<2;ch++)d.setInt16(44+(i*2+ch)*2,Math.max(-1,Math.min(1,buffer.getChannelData(ch)[i]))*32767,true);return new Blob([a],{type:'audio/wav'});}
 document.querySelector('#render').onclick=async()=>{
 const button=document.querySelector('#render');button.disabled=true;const status=document.querySelector('#status');status.textContent='Rendering';for(const element of document.querySelectorAll('audio'))URL.revokeObjectURL(element.src);document.querySelector('tbody').replaceChildren();let passed=true;
-for(const kind of [...Object.keys(cues),'stress','pause','mute','reset','volume-zero','volume-resume']){
+for(const kind of [...Object.keys(cues),'impact-0','impact-1','impact-2','impact-3','stress','pause','mute','reset','volume-zero','volume-resume']){
  const c=new OfflineAudioContext(2,44100*3,44100);
  const adapter=new Proxy(c,{get(target,key){if(key==='state')return 'running';if(key==='resume')return async()=>{};const v=Reflect.get(target,key,target);return typeof v==='function'?v.bind(target):v}});
  const a=new ArenaAudio(()=>adapter);await a.enable(true);a.setActive(true);
  const lifecycle=['pause','mute','reset','volume-zero','volume-resume'].includes(kind);
- if(lifecycle)a.play('fulltime');else if(kind==='stress'){a.play('fulltime');a.play(14);for(let i=0;i<50;i++)a.play(i%2?4:5)}else a.play(Number(kind)||kind);
+ if(lifecycle)a.play('fulltime');else if(kind==='stress'){a.play('fulltime');a.play(14);for(let i=0;i<50;i++)a.play(i%2?4:5)}else if(kind.startsWith('impact-')) a.play(4,0,Number(kind.slice(-1)));else a.play(Number(kind)||kind);
  let paused,restoring,newCue;if(lifecycle)paused=c.suspend(.1);
  if(kind==='volume-resume'){restoring=c.suspend(.4);newCue=c.suspend(.7)}
  const rendering=c.startRendering();

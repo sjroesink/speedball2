@@ -267,3 +267,13 @@ test("throw sound starts at windup and does not repeat at release",()=>{
  a.observe(state,true,{centerZ:0,halfWidth:4});
  assert.deepEqual(heard,[[3,.25]]);
 });
+
+test('clients choose identical hit variation and retained snapshots do not repeat it',()=>{
+ const heard=[[],[]], clients=heard.map(list=>{const a=new ArenaAudio();a.play=(...args)=>list.push(args);return a});
+ const state={pause:1,events:[1,2,3,4].map(id=>({id,kind:4,z:0}))};
+ clients[0].observe(state,true);clients[0].observe(state,true);
+ clients[1].observe(state,true);
+ assert.deepEqual(heard[0],heard[1]);
+ assert.deepEqual(heard[0].map(call=>call[2]),[1,2,3,0]);
+ assert.equal(heard[0].length,4);
+});

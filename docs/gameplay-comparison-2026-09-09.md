@@ -214,3 +214,19 @@ of every 25). Both clients observed seven throws and seven throw cue dispatches,
 minimum energy 75, coins and a boost pickup. No medical sequence or charged
 rethrow was observed in this live run; deterministic lifecycle tests supply that
 coverage. This is a local network check, not WAN or subjective audio validation.
+
+### Modern impact sound variation
+
+Successful hit cue 4 now has four synthesized pitch/duration variants, inspired
+by the original tackle_noises lookup used at 0x104b8..0x104ca and 0xec2e..0xec40.
+This is modern presentation, not original sample reproduction: the stable event
+ID chooses the variant instead of serializing the victim's cached random byte.
+Both clients choose the same variant; no gameplay RNG is consumed. Failed tackle
+contact retains its distinct cue 29. Retained snapshots still dispatch each hit
+only once.
+
+Fifteen targeted audio/contact tests pass. The browser offline renderer passes
+44 cases (34 cues, four impact variants and six stress/lifecycle cases). Impact
+peaks were 0.0450..0.0464, stress peak 0.1998, all voices released, and mute/pause/
+reset/zero-volume tails were silent. Build passes. These measurements do not
+prove subjective mix quality; the sound-check page provides playable previews.
