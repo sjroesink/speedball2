@@ -218,3 +218,23 @@ test("fall recovery jumps seek the exported clip and resume a clamped pose", asy
  assert.ok(action.isRunning());
  assert.ok(Math.abs(action.time/clip.duration-(.6+.04)/1.04)<1e-6);
 });
+
+
+test("Blender knockout stays prone through completion for both teams", async () => {
+  for (const team of ["cyan", "orange"]) {
+    const model = await player(team), mixer = new AnimationMixer(model.scene);
+    const root = model.scene.getObjectByName("AthletePose");
+    const clip = model.animations.find(c => c.name === "Knockout");
+    assert.ok(clip, "fatal injury has its own Blender-authored clip");
+    const standing = root.quaternion.clone(), action = mixer.clipAction(clip);
+    action.clampWhenFinished = true;
+    playPlayerAction(action, 4, 26 / 25);
+    mixer.update(13 / 25);
+    const prone = root.quaternion.clone(), center = root.position.clone();
+    assert.ok(prone.angleTo(standing) > 1.4, "body has fallen flat");
+    mixer.update(13 / 25 + 1e-6);
+    assert.ok(root.quaternion.angleTo(prone) < .001, "fatal player must not get up");
+    assert.ok(root.position.distanceTo(center) < .001, "prone center stays fixed for stretcher transfer");
+    assert.equal(action.isRunning(), false);
+  }
+});

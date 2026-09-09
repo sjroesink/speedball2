@@ -244,17 +244,17 @@ def build_players():
    knee=math.acos(max(-1,min(1,(reach*reach-upper*upper-lower*lower)/(2*upper*lower))))
    hip=math.atan2(local_y,down)-math.acos(max(-1,min(1,(upper*upper+reach*reach-lower*lower)/(2*upper*reach))))
    return hip,knee,-pitch-hip-knee
-  poses={'Punch':[(1,0,0),(4,.22,0),(11,0,0)],'Catch':[(1,-.12,0),(4,-.08,0),(8,0,0)],'Run':[(f,.06+.01*math.sin((f-1)/24*math.tau)**2,-.10+.01*math.sin((f-1)/24*math.tau)**2) for f in range(1,26)],'Slide':[(1,0,0),(4,1.3,.12),(19,1.3,.12),(24,0,0)],'Jump':[(1,0,0),(10,-.25,0),(28,.2,0),(42,0,0)],'Throw':[(1,-.1,0),(8,-.2,0),(16.5,.12,0),(24,.04,0),(32,0,0)],'Hit':[(1,0,0),(8,-1.5,.18),(65,-1.5,.18),(81,0,0)]}
+  poses={'Punch':[(1,0,0),(4,.22,0),(11,0,0)],'Catch':[(1,-.12,0),(4,-.08,0),(8,0,0)],'Run':[(f,.06+.01*math.sin((f-1)/24*math.tau)**2,-.10+.01*math.sin((f-1)/24*math.tau)**2) for f in range(1,26)],'Slide':[(1,0,0),(4,1.3,.12),(19,1.3,.12),(24,0,0)],'Jump':[(1,0,0),(10,-.25,0),(28,.2,0),(42,0,0)],'Throw':[(1,-.1,0),(8,-.2,0),(16.5,.12,0),(24,.04,0),(32,0,0)],'Hit':[(1,0,0),(8,-1.5,.18),(65,-1.5,.18),(81,0,0)],'Knockout':[(1,0,0),(8,-1.5,.18),(81,-1.5,.18)]}
   for clip,frames in poses.items():
    action=bpy.data.actions.new(clip);root.animation_data.action=action
    for frame,angle,height in frames:
-    root.rotation_euler=(angle,0,0);root.location=(0,0,height)
+    root.rotation_euler=(angle,0,0);root.location=(0,angle*.6 if clip=='Knockout' else 0,height)
     root.keyframe_insert(data_path='rotation_euler',frame=frame);root.keyframe_insert(data_path='location',frame=frame)
    root.animation_data.action=None
    track=root.animation_data.nla_tracks.new();track.name=clip;strip=track.strips.new(clip,1,action)
   for joint,side,isarm in limbs:
    joint.animation_data_create()
-   for clip in ['Run','Throw','Jump','Slide','Hit','Catch','Punch']:
+   for clip in poses:
     action=bpy.data.actions.new(joint.name+'_'+clip);joint.animation_data.action=action
     frames=range(1,26) if clip=='Run' else [1,6,12,20,32]
     if clip=='Throw': frames=[1,8,16.5,24,32]
@@ -266,7 +266,7 @@ def build_players():
      elif clip=='Throw' and isarm: angle=([.5,.9,-1.5,-.6,0][k] if side==1 else -.2)
      elif clip=='Jump': angle=-2.5 if isarm else .4
      elif clip=='Slide': angle=-1.2 if isarm else side*.2
-     elif clip=='Hit': angle=side*.55
+     elif clip in ['Hit','Knockout']: angle=side*.55
      elif clip=='Catch' and isarm: angle=[-.9,-.65,0][k]
      elif clip=='Punch' and isarm: angle=[-.4,-1.7,0][k] if side==1 else -.3
      joint.rotation_euler.x=angle;joint.keyframe_insert(data_path='rotation_euler',frame=frame)

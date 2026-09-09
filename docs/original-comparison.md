@@ -2853,3 +2853,29 @@ and six 10,000-tick parity scenarios passed again, as did all Go tests. Build
 and vet passed before that final cursor-only correction. This supersedes the
 previous entry's open fall-first-frame issue. Throw/jump/catch opcode completion
 and the full original callback interpreter remain separate unresolved work.
+
+
+## Blender knockout and stretcher transition (2026-09-09)
+
+Browser review exposed a presentation mismatch: fatal players ran the ordinary
+Hit clip, which gets back up, while the renderer also rotated the whole model
+by 90 degrees. Added a native Blender Knockout clip to both athletes. It falls
+once, remains prone and centers the body for carrying. The renderer selects
+that clip for zero-energy players, removes the extra rotation/offset, and holds
+the final pose once the medical sequence begins. A medical timer no longer
+seeks backward within the fall. Mesh topology is unchanged.
+
+The new `tools/medical-presentation-playtest.html` runs the production simulation
+and renderer with visible fatal-fall, stretcher and continuous-sequence controls.
+Browser screenshots reviewed the prone player at tick 14 and stretcher carry
+at tick 149 (phase 2); both showed zero extra body rotation. The exported-asset
+regression verifies that both teams stay prone and keep their center through
+clip completion. All 15 player-animation tests and the production build pass.
+
+A separate real WebTransport run, room MFGB27, used 160 ms client-two delay
+and dropped five of each 25 received snapshots. At ticks 423/419 it had 334
+paired snapshots, no state mismatches, no missing shared events and 84 dropped
+snapshots. Three releases/windups/cue dispatches matched. Four recovery seeks
+had zero normalized phase error; held-grip error was zero. Minimum energy was
+93, so this network sample did not exercise fatal injury or medical transport.
+The medical presentation evidence above is local simulation, not network proof.

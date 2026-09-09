@@ -1,0 +1,18 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Medical animation review</title>
+<style>body{margin:0;background:#101820;color:white;font:14px system-ui}nav{padding:10px;display:flex;gap:12px;align-items:center}button{padding:10px}#stage{height:85vh}</style>
+<nav><button id="fall" disabled>Inspect fatal fall</button><button id="carry" disabled>Inspect stretcher carry</button><button id="play" disabled>Play medical sequence</button><output>Loading Blender assets</output></nav><div id="stage"></div>
+<script type="module">
+import { ArenaRenderer } from '/src/renderer.js';
+import { initial, step, simulationStep } from '/src/game.js';
+import { damage } from '/src/features.js';
+const view=new ArenaRenderer(document.querySelector('#stage')), status=document.querySelector('output');
+await view.load();view.setFollow(true);view.resize();let s,playing=false,last=performance.now();
+function reset(){s=initial();for(const p of s.players)p.stun=100;for(const item of s.pickups)item.wait=100;Object.assign(s.players[7],{x:0,z:0,stun:0,health:1});Object.assign(s.ball,{owner:-1,x:0,z:0,h:.25});view.draw(s,0,0);damage(s,16,7);playing=false;}
+function advance(dt){step(s,dt,{},[true,true]);view.draw(s,dt,0);const actor=view.players[7],clip=Object.entries(actor.clips).find(([name])=>name.includes('Knockout'))?.[1];status.textContent=`Tick ${s.tick}; medical phase ${s.medical?.phase??0}; action ${s.players[7].action}; clip ${clip?.time.toFixed(3)}; extra body rotation ${actor.model.rotation.x.toFixed(3)}`;}
+document.querySelector('#fall').onclick=()=>{reset();for(let n=0;n<14;n++)advance(simulationStep);};
+document.querySelector('#carry').onclick=()=>{reset();for(let n=0;n<500&&s.medical?.phase!==2;n++)advance(simulationStep);};
+document.querySelector('#play').onclick=()=>{reset();playing=true;};
+for(const button of document.querySelectorAll('button'))button.disabled=false;
+reset();status.textContent='Ready';
+function draw(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(playing){advance(dt);if(s.tick>650)playing=false}else view.draw(s,0,0);requestAnimationFrame(draw)}requestAnimationFrame(draw);
+</script></html>

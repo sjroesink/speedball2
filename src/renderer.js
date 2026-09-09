@@ -239,7 +239,7 @@ export class ArenaRenderer {
           "Slide",
           "Jump",
           "Throw",
-          "Hit",
+          p.health <= 0 ? "Knockout" : "Hit",
           "Run",
           "Catch",
           "Punch",
@@ -253,8 +253,11 @@ export class ArenaRenderer {
         }
       }
       if (visualAction === 4) {
-        const hit = Object.entries(actor.clips).find(([key]) => key.includes("Hit"))?.[1];
-        syncFallRecovery(hit, actor.remaining, p.actionTime);
+        const hit = Object.entries(actor.clips).find(([key]) => key.includes(p.health <= 0 ? "Knockout" : "Hit"))?.[1];
+        if (p.health <= 0 && s.medical?.player === i && hit) {
+          hit.time = hit.getClip().duration;
+          hit.paused = true;
+        } else syncFallRecovery(hit, actor.remaining, p.actionTime);
       }
       actor.remaining = p.actionTime;
       const run = visualAction === 5
@@ -265,9 +268,10 @@ export class ArenaRenderer {
       // Keep mixer time in seconds so pose blending is independent of travel speed.
       actor.mixer.update(dt);
       o.visible = p.health > 0 || p.action === 4 || p.injury > 1;
-      actor.model.rotation.x = p.health <= 0 ? Math.PI / 2 : 0;
-      // Standing meshes originate at the feet; center the prone body on the stretcher.
-      actor.model.position.z = carried ? -0.9 : 0;
+      // Knockout is authored prone and centered in Blender; rotating the entire
+      // model here would apply a second fall and fold the body into the floor.
+      actor.model.rotation.x = 0;
+      actor.model.position.z = 0;
       const medic = this.medics[i],
         medical = s.medical,
         wasVisible = medic.visible;
