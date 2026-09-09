@@ -1,3 +1,4 @@
+import { forwardDecision } from "./forward-ai.js";
 import { carrierMove } from "./carrier-move.js";
 import { hardwareThrow } from "./hardware-ai.js";
 import { localInteraction } from "./interaction.js";
@@ -241,37 +242,6 @@ export function throwBall(s, i, lob, input = {}) {
   p.action = 3;
   p.actionTime = 4 / 25;
   event(s, 3, i, -1, b.x, b.z, b.h);
-}
-// Advance the ball to a free teammate when a carrier is pressed in its own half.
-export function passTarget(s, i) {
-  const p = s.players[i],
-    d = direction(s, p.team);
-  let best = -1,
-    value = -Infinity;
-  s.players.forEach((q, j) => {
-    const advance = (q.x - p.x) * d,
-      distance = Math.hypot(q.x - p.x, q.z - p.z);
-    if (
-      j === i ||
-      q.team !== p.team ||
-      q.stun > 0 ||
-      advance < 2 ||
-      distance > 15
-    )
-      return;
-    const space = Math.min(
-      ...s.players
-        .filter((r) => r.team !== p.team && r.stun <= 0)
-        .map((r) => Math.hypot(r.x - q.x, r.z - q.z)),
-      10,
-    );
-    const score = space * 2 + advance - distance * 0.4;
-    if (space > 2.5 && score > value) {
-      value = score;
-      best = j;
-    }
-  });
-  return best;
 }
 export function points(s, t, base) {
   return (t === 0 && s.multiplier > 0) || (t === 1 && s.multiplier < 0)
@@ -519,6 +489,11 @@ function simulateStep(
         } else if (b.owner === i) {
           hardware = hardwareThrow(s, i, random, catchDistances);
           if (!hardware) route = carrierMove(s, i, random, catchDistances);
+          if (!hardware && !route && i % 9 >= 6) {
+            const decision = forwardDecision(s, i, random, catchDistances);
+            if (decision.move) route = decision;
+            else hardware = decision;
+          }
           tx = route?.x ?? p.x;
           tz = route?.z ?? p.z;
         } else if (i % 9 === 0) {
@@ -541,43 +516,19 @@ function simulateStep(
           : steerToTarget(p, tx, tz, decide);
       u = {};
       if (decide && b.owner === i) {
-        const danger = s.players.some(
-          (q) => q.team !== t && Math.hypot(q.x - p.x, q.z - p.z) < 3,
-        );
         if (!route) {
           const plan =
             hardware ??
-            (i % 9 < 6
-              ? (defensivePass(s, i, catchDistances) ??
-                defensivePunt(s, i, random))
-              : null);
-          const receiver = plan
-            ? plan.receiver
-            : p.x * d < 10
-              ? passTarget(s, i)
-              : -1;
-          const target =
-            receiver >= 0 ? s.players[receiver] : { x: d * 23, z: 0 };
-          [p.fx, p.fz] = norm(target.x - p.x, target.z - p.z);
-          if (plan) {
-            p.fx = plan.key > 1 ? 1 : plan.key < -1 ? -1 : 0;
-            p.fz = plan.key - 3 * p.fx;
-          }
-          beginThrow(
-            s,
-            i,
-            plan
-              ? plan.high
-                ? 3
-                : 2
-              : receiver < 0 && danger && p.x * d < 10
-                ? 3
-                : 2,
-          );
-          p.throwSteer = plan?.steer || 0;
+            defensivePass(s, i, catchDistances) ??
+            defensivePunt(s, i, random);
+          p.fx = plan.key > 1 ? 1 : plan.key < -1 ? -1 : 0;
+          p.fz = plan.key - 3 * p.fx;
+          beginThrow(s, i, plan.high ? 3 : 2);
+          p.throwSteer = plan.steer || 0;
         }
       }
     }
+
     if (human) {
       p.aiWait = 1 / 25;
       [dx, dz] = eightWay(dx, dz);

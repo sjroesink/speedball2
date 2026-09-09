@@ -1,0 +1,80 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { initial, step, simulationStep } from "./game.js";
+import { forwardDecision } from "./forward-ai.js";
+import { goalThrow } from "./defensive-pass.js";
+const u = 22.4 / 576;
+const world = (x, y) => ({ x: (576 - y) * u, z: (x - 320) * u });
+function fixture() {
+  const s = initial(),
+    d = Array(18).fill(1000);
+  for (const p of s.players) p.stun = 100;
+  for (const item of s.pickups) item.wait = 100;
+  Object.assign(s.players[8], world(320, 150), { stun: 0 });
+  Object.assign(s.ball, world(320, 150), { owner: 8 });
+  return [s, d];
+}
+test("goal shots use inclusive throw range, mirrored targets, and ignore blockers for electroballs", () => {
+  const [s, d] = fixture();
+  Object.assign(s.players[8], world(336, 196));
+  assert.equal(goalThrow(s, 8, 0).high, false);
+  Object.assign(s.players[8], world(336, 197));
+  assert.equal(goalThrow(s, 8, 0).high, true);
+  s.period = 2;
+  Object.assign(s.players[8], world(336, 956));
+  assert.equal(goalThrow(s, 8, 0).high, false);
+  s.period = 1;
+  Object.assign(s.players[8], world(320, 150));
+  Object.assign(s.players[16], world(320, 100), { stun: 0 });
+  d[16] = 50;
+  Object.assign(s.players[6], world(240, 150), { stun: 0 });
+  d[6] = 80;
+  s.ball.charged = true;
+  assert.equal(forwardDecision(s, 8, 0, d).receiver, -1);
+});
+test("blocked forward shot seeks attackers before midfield, uses later ties, and strict pass height", () => {
+  const [s, d] = fixture();
+  Object.assign(s.players[16], world(320, 100), { stun: 0 });
+  d[16] = 50;
+  Object.assign(s.players[6], world(240, 150), { stun: 0 });
+  d[6] = 80;
+  Object.assign(s.players[3], world(300, 150), { stun: 0 });
+  d[3] = 20;
+  assert.equal(forwardDecision(s, 8, 0, d).receiver, 6);
+  Object.assign(s.players[7], world(400, 150), { stun: 0 });
+  d[7] = 80;
+  assert.equal(forwardDecision(s, 8, 0, d).receiver, 7);
+  s.players[6].stun = 1;
+  s.players[7].stun = 1;
+  assert.equal(forwardDecision(s, 8, 0, d).receiver, 3);
+  d[3] = 200;
+  assert.equal(forwardDecision(s, 8, 0, d).high, true);
+  d[3] = 199;
+  assert.equal(forwardDecision(s, 8, 0, d).high, false);
+  d[3] = 201;
+  assert.equal(forwardDecision(s, 8, 0, d).receiver, -1);
+});
+test("free goal direction takes priority over receivers; distant blocker allows lookup-table repositioning", () => {
+  const [s, d] = fixture();
+  Object.assign(s.players[6], world(240, 150), { stun: 0 });
+  d[6] = 80;
+  assert.equal(forwardDecision(s, 8, 0, d).receiver, -1);
+  Object.assign(s.players[16], world(320, 50), { stun: 0 });
+  d[16] = 100;
+  const p = forwardDecision(s, 8, 0, d);
+  assert.equal(p.move, true);
+  assert.equal(p.key, 2);
+  assert.ok(Math.abs(p.x - world(255, 64).x) < 1e-12);
+  assert.ok(Math.abs(p.z - world(255, 64).z) < 1e-12);
+  d[16] = 64;
+  assert.equal(forwardDecision(s, 8, 0, d).receiver, 6);
+});
+test("simulation replaces the old fixed goal shot with a source-selected teammate pass", () => {
+  const [s] = fixture();
+  Object.assign(s.players[16], world(320, 100), { stun: 0, aiWait: 100 });
+  Object.assign(s.players[6], world(240, 150), { stun: 0, aiWait: 100 });
+  step(s, simulationStep, {}, [false, false]);
+  assert.equal(s.players[8].throwMode, 2);
+  assert.equal(s.players[8].fx, 0);
+  assert.equal(s.players[8].fz, -1);
+});

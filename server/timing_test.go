@@ -88,7 +88,7 @@ func TestAIThrowPreparation(t *testing.T) {
 			s.Players[i].Z = 8
 		}
 		p := &s.Players[7]
-		p.Stun, p.X, p.Z, p.FX, p.FZ = 0, 14, 0, 1, 0
+		p.Stun, p.X, p.Z, p.FX, p.FZ = 0, 16, 0, 1, 0
 		if high {
 			p.X = 4
 			s.Players[16].X = 5.6

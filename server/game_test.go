@@ -210,23 +210,6 @@ func TestEightWayMovement(t *testing.T) {
 	}
 }
 
-func TestAIOutlet(t *testing.T) {
-	s := isolated()
-	s.Players[6] = Player{Health: 100, X: 6, Z: 3, Team: 0}
-	if s.passTarget(7) != 6 {
-		t.Fatal("free teammate ignored")
-	}
-	s.Players[16] = Player{Health: 100, X: 6, Z: 3, Team: 1}
-	if s.passTarget(7) != -1 {
-		t.Fatal("marked teammate selected")
-	}
-	s.Players[16].Stun = 10
-	s.Players[6].Stun = 1
-	if s.passTarget(7) != -1 {
-		t.Fatal("stunned teammate selected")
-	}
-}
-
 func TestOriginalGoalWidth(t *testing.T) {
 	s := isolated()
 	s.Ball = Ball{X: 20.9, Z: 2.2, H: 1, VX: 24, Owner: -1, LastTouch: -1}

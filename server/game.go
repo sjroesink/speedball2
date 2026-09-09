@@ -244,31 +244,6 @@ func (s *State) throw(i int, lob bool, release ...Input) {
 	p.ActionTime = 4. / 25
 	s.event(3, i, -1, b.X, b.Z, b.H)
 }
-func (s *State) passTarget(i int) int {
-	p := s.Players[i]
-	d := s.direction(p.Team)
-	best := -1
-	value := math.Inf(-1)
-	for j, q := range s.Players {
-		advance := (q.X - p.X) * d
-		distance := math.Hypot(q.X-p.X, q.Z-p.Z)
-		if j == i || q.Team != p.Team || q.Stun > 0 || advance < 2 || distance > 15 {
-			continue
-		}
-		space := 10.
-		for _, r := range s.Players {
-			if r.Team != p.Team && r.Stun <= 0 {
-				space = math.Min(space, math.Hypot(r.X-q.X, r.Z-q.Z))
-			}
-		}
-		score := space*2 + advance - distance*.4
-		if space > 2.5 && score > value {
-			value = score
-			best = j
-		}
-	}
-	return best
-}
 func (s *State) step(dt float64, inputs [2]Input) { s.simulate(dt, inputs, [2]bool{true, true}) }
 func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 	defer s.advanceViewport()
@@ -382,7 +357,6 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			continue
 		}
 		if !human {
-			d := s.direction(t)
 			decide := p.aiWait < 1e-9 && p.ActionTime <= 0
 			tx, tz := p.aiX, p.aiZ
 			if !p.aiTarget {
@@ -454,6 +428,14 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 					if hardware == nil {
 						route = s.carrierMove(i, random, &catchDistances)
 					}
+					if hardware == nil && route == nil && i%9 >= 6 {
+						decision := s.forwardDecision(i, random, &catchDistances)
+						if decision.move {
+							route = decision
+						} else {
+							hardware = decision
+						}
+					}
 					tx, tz = p.X, p.Z
 					if route != nil {
 						tx, tz = route.x, route.z
@@ -478,56 +460,31 @@ func (s *State) simulate(dt float64, inputs [2]Input, humans [2]bool) {
 			}
 			u = Input{}
 			if decide && b.Owner == i {
-				danger := false
-				for _, q := range s.Players {
-					if q.Team != t && math.Hypot(q.X-p.X, q.Z-p.Z) < 3 {
-						danger = true
-					}
-				}
-				plan := hardware
 				if route == nil {
-					receiver := -1
-					if plan == nil && i%9 < 6 {
+					plan := hardware
+					if plan == nil {
 						plan = s.defensivePass(i, &catchDistances)
-						if plan == nil {
-							plan = s.defensivePunt(i, random)
-						}
-						if plan != nil {
-							receiver = plan.receiver
-						}
-					} else if plan == nil && p.X*d < 10 {
-						receiver = s.passTarget(i)
 					}
-					tx, tz := d*23, 0.
-					if receiver >= 0 {
-						tx = s.Players[receiver].X
-						tz = s.Players[receiver].Z
+					if plan == nil {
+						plan = s.defensivePunt(i, random)
 					}
-					p.FX, p.FZ = normalized(tx-p.X, tz-p.Z)
+					p.FX = 0
+					if plan.key > 1 {
+						p.FX = 1
+					} else if plan.key < -1 {
+						p.FX = -1
+					}
+					p.FZ = float64(plan.key) - 3*p.FX
 					mode := 2
-					if receiver < 0 && danger && p.X*d < 10 {
+					if plan.high {
 						mode = 3
 					}
-					if plan != nil {
-						p.FX = 0
-						if plan.key > 1 {
-							p.FX = 1
-						} else if plan.key < -1 {
-							p.FX = -1
-						}
-						p.FZ = float64(plan.key) - 3*p.FX
-						mode = 2
-						if plan.high {
-							mode = 3
-						}
-					}
 					s.beginThrow(i, mode)
-					if plan != nil {
-						p.throwSteer = plan.steer
-					}
+					p.throwSteer = plan.steer
 				}
 			}
 		}
+
 		if human {
 			p.aiWait = 1. / 25
 			dx, dz = eightWay(dx, dz)

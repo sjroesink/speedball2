@@ -1,3 +1,4 @@
+import { referenceDistance } from "./attributes.js";
 import { predictedTarget } from "./steering.js";
 const unit = 22.4 / 576;
 const role = (i) => [0, 1, 1, 2, 2, 2, 4, 4, 3][i % 9];
@@ -14,11 +15,7 @@ export function directionKey(p, x, z) {
 export function defensivePunt(s, i, random) {
   const p = s.players[i];
   const d = (p.team === 0 ? 1 : -1) * (s.period === 2 ? -1 : 1);
-  const lateral = Math.round(p.z / unit);
-  let z =
-    (lateral > 0 ? -16 : lateral < 0 ? 16 : random & 64 ? 48 : -48) * unit;
-  let x = d * 576 * unit;
-  const steer = Math.floor(p.stats[7] / 2) > random ? Math.sign(z - p.z) : 0;
+  let { x, z, steer } = goalThrow(s, i, random);
   const q = s.players[s.controlled[1 - p.team]];
   const blocked =
     q && q.stun <= 0 && q.health > 0
@@ -110,4 +107,23 @@ export function opponentDirections(s, i, distances) {
   const eligible = (j) =>
     j >= 0 && s.players[j].stun <= 0 && s.players[j].health > 0;
   return [eligible(selected) ? aim(selected) : 0, other >= 0 ? aim(other) : 0];
+}
+
+// do_goal_throw_ai: equality is low, unlike the strict teammate-pass threshold.
+export function goalThrow(s, i, random) {
+  const p = s.players[i];
+  const d = (p.team === 0 ? 1 : -1) * (s.period === 2 ? -1 : 1);
+  const lateral = Math.round(p.z / unit);
+  let z =
+    (lateral > 0 ? -16 : lateral < 0 ? 16 : random & 64 ? 48 : -48) * unit;
+  let x = d * 576 * unit;
+  const steer = Math.floor(p.stats[7] / 2) > random ? Math.sign(z - p.z) : 0;
+  return {
+    receiver: -1,
+    x,
+    z,
+    key: directionKey(p, x, z),
+    high: referenceDistance(x - p.x, z - p.z) > p.stats[4] * 2,
+    steer,
+  };
 }

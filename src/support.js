@@ -17,18 +17,18 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 // Positional branch of base_player_ai: E218..E438 in the C# reference,
 // adjust_support_target / attackers_targeting in the Amiga disassembly.
-export function supportTarget(s, i) {
+export function supportTarget(s, i, self = false) {
   const team = Math.floor(i / 9),
     side = team ^ (s.period === 2 ? 1 : 0);
   const [xmin, xmax, ymin, ymax] = zones[side][i % 9];
   const cx = Math.floor((xmin + xmax) / 2) & ~1;
   const cy = Math.floor((ymin + ymax) / 2) & ~1;
   const r = role(i);
-  let selected = s.controlled[team];
+  let selected = self ? i : s.controlled[team];
   if (r === 1 && role(selected) >= 2) selected = team * 9;
   const q = s.players[selected],
     qr = Math.min(3, role(selected));
-  let [x, y] = predicted(q);
+  let [x, y] = self ? terrain(q) : predicted(q);
   const [qx] = terrain(q);
   const adjust = () => {
     x = clamp(Math.floor((x + cx) / 2), xmin, xmax);
@@ -59,7 +59,10 @@ export function supportTarget(s, i) {
       if (qx >= 320) x = 639 - x;
       if (side !== 0) y = 1151 - y;
       x = clamp(x, xmin, xmax);
-    } else adjust();
+    } else {
+      [x, y] = predicted(q);
+      adjust();
+    }
   } else if (r !== 1 && x > xmin && x < xmax) {
     let anchor;
     if (qr > r)

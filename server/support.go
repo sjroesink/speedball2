@@ -12,7 +12,8 @@ func supportPredicted(p Player) (int, int) {
 }
 
 // Positional branch of base_player_ai, including forward support lookup tables.
-func (s *State) supportTarget(i int) (float64, float64) {
+func (s *State) supportTarget(i int) (float64, float64) { return s.supportPosition(i, false) }
+func (s *State) supportPosition(i int, self bool) (float64, float64) {
 	team := i / 9
 	side := team
 	if s.Period == 2 {
@@ -23,12 +24,18 @@ func (s *State) supportTarget(i int) (float64, float64) {
 	cx, cy := ((xmin+xmax)/2)&^1, ((ymin+ymax)/2)&^1
 	r := supportRole(i)
 	selected := s.Controlled[team]
+	if self {
+		selected = i
+	}
 	if r == 1 && supportRole(selected) >= 2 {
 		selected = team * 9
 	}
 	q := s.Players[selected]
 	qr := min(3, supportRole(selected))
 	x, y := supportPredicted(q)
+	if self {
+		x, y = supportTerrain(q)
+	}
 	qx, _ := supportTerrain(q)
 	bound := func(v, a, b int) int { return max(a, min(b, v)) }
 	abs := func(v int) int {
@@ -100,6 +107,7 @@ func (s *State) supportTarget(i int) (float64, float64) {
 			}
 			x = bound(x, xmin, xmax)
 		} else {
+			x, y = supportPredicted(q)
 			adjust()
 		}
 	} else if r != 1 && x > xmin && x < xmax {

@@ -54,7 +54,7 @@ test("AI low and high throws hold possession through the same preparation", () =
     const s = initial();
     for (const p of s.players) Object.assign(p, { stun: 100, x: -10, z: 8 });
     const p = s.players[7];
-    Object.assign(p, { stun: 0, x: high ? 4 : 14, z: 0, fx: 1, fz: 0 });
+    Object.assign(p, { stun: 0, x: high ? 4 : 16, z: 0, fx: 1, fz: 0 });
     for (const item of s.pickups) item.wait = 100;
     if (high)
       Object.assign(s.players[16], { x: 5.6, z: 0, stun: 0, aiWait: 100 });
@@ -63,7 +63,7 @@ test("AI low and high throws hold possession through the same preparation", () =
       step(s, simulationStep, {}, [false, false]);
       assert.equal(s.ball.owner, 7);
       assert.equal(p.action, 3);
-      assert.equal(p.x, high ? 4 : 14);
+      assert.equal(p.x, high ? 4 : 16);
     }
     step(s, simulationStep, {}, [false, false]);
     assert.equal(s.ball.owner, -1);

@@ -812,3 +812,35 @@ full original parity. The Go server was restarted with this checkpoint.
 Forward pass/shot decisions still use the previous heuristic after this
 branch chooses not to run; exact animation/medical/item spawning and audio
 comparison also remain outstanding.
+
+
+### Forward shot, reposition and receiver decisions
+
+Ported `active_forward_player_with_ball_ai` (Amiga 0xf60a..0xf736) and
+`do_goal_throw_ai` (0x1066e..0x10698). After hardware and normal carrier
+routes, forwards shoot if the goal direction has a longitudinal component
+and is not the selected opponent's predicted direction. Electroballs take
+the goal-shot branch directly. Otherwise, when the selected opponent is
+fallen or farther than 64 units, they try the original attacker positioning
+table (or its positional fallback) using their own coordinates. An open,
+nonzero target starts movement. If that fails they search attackers first,
+then midfielders, rejecting both predicted blocked directions and players
+outside twice intelligence. Equal-distance ties retain the later roster
+entry. A failed search falls back to the goal shot.
+
+Goal shots now use the original center/offset target, integer reference
+distance, and inclusive twice-throw-strength low-shot threshold. Teammate
+passes use the strict threshold instead. The goal target's AI release bias
+is preserved when the branch elects to pass. Goal target construction is
+shared with defensive punts. The generic space/distance-scored `passTarget`
+implementation and its obsolete tests have been removed. Forward timing
+fixtures now place the low-shot carrier inside the actual low-shot range.
+
+Validation: 160 JavaScript tests, Go tests/vet and production build. Fixtures
+cover inclusive goal range versus strict pass range, mirrored goal targets,
+electroball priority, attacker/midfielder search, ties, observation cutoff,
+lookup-table repositioning and an integrated sideways teammate pass. Existing
+carrier/hardware/defensive-punt tests still pass. No new browser or listening
+check in this change. Source-backed AI branches do not establish whole-game
+parity: medical timing, pickups, animation/graphics, frame-order details and
+audio comparison still need work.

@@ -7,7 +7,6 @@ import {
   wallBonus,
   matchClock,
   domeBounce,
-  passTarget,
   selectPlayers,
 } from "./game.js";
 const dt = 1 / 60;
@@ -139,17 +138,6 @@ test("movement uses eight directions and uses full speed on each diagonal axis",
   step(b, dt, { x: 1, z: 0.7 });
   assert.ok(Math.abs(b.players[7].x - a.players[7].x) < 1e-8);
   assert.ok(Math.abs(b.players[7].x - b.players[7].z) < 1e-8);
-});
-
-test("AI outlet chooses an unmarked forward teammate, never a stunned one", () => {
-  const s = isolated();
-  Object.assign(s.players[6], { x: 6, z: 3, stun: 0 });
-  assert.equal(passTarget(s, 7), 6);
-  Object.assign(s.players[16], { x: 6, z: 3, stun: 0 });
-  assert.equal(passTarget(s, 7), -1);
-  s.players[16].stun = 10;
-  s.players[6].stun = 1;
-  assert.equal(passTarget(s, 7), -1);
 });
 
 test("shots outside the original-width goal rebound off the end wall", () => {

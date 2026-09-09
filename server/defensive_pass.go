@@ -8,6 +8,7 @@ type passPlan struct {
 	high     bool
 	key      int
 	steer    float64
+	move     bool
 }
 
 func (s *State) defensivePass(i int, distances *[18]int) *passPlan {
@@ -85,23 +86,8 @@ func (s *State) defensivePunt(i, random int) *passPlan {
 		}
 		return fx*3 + fz
 	}
-	lateral := int(math.Round(p.Z / unit))
-	z := -48. * unit
-	if lateral > 0 {
-		z = -16 * unit
-	} else if lateral < 0 {
-		z = 16 * unit
-	} else if random&64 != 0 {
-		z = 48 * unit
-	}
-	x := s.direction(p.Team) * 576 * unit
-	steer := 0.
-	if p.Stats[7]/2 > random {
-		steer = 1
-		if z < p.Z {
-			steer = -1
-		}
-	}
+	goal := s.goalThrow(i, random)
+	x, z, steer := goal.x, goal.z, goal.steer
 	blocked := 0
 	if j := s.Controlled[1-p.Team]; j >= 0 && s.Players[j].Stun <= 0 && s.Players[j].Health > 0 {
 		q := &s.Players[j]
@@ -160,4 +146,28 @@ func (s *State) opponentDirections(i int, distances *[18]int) [2]int {
 		blocked[1] = aim(other)
 	}
 	return blocked
+}
+
+// do_goal_throw_ai: equality is low, unlike the strict teammate-pass threshold.
+func (s *State) goalThrow(i, random int) *passPlan {
+	const unit = 22.4 / 576
+	p := &s.Players[i]
+	lateral := int(math.Round(p.Z / unit))
+	z := -48. * unit
+	if lateral > 0 {
+		z = -16 * unit
+	} else if lateral < 0 {
+		z = 16 * unit
+	} else if random&64 != 0 {
+		z = 48 * unit
+	}
+	x := s.direction(p.Team) * 576 * unit
+	steer := 0.
+	if p.Stats[7]/2 > random {
+		steer = 1
+		if z < p.Z {
+			steer = -1
+		}
+	}
+	return &passPlan{receiver: -1, x: x, z: z, key: passDirection(p, x, z), high: referenceDistance(x-p.X, z-p.Z) > p.Stats[4]*2, steer: steer}
 }
