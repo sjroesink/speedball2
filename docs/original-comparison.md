@@ -1,4 +1,6 @@
-# Original-game comparison — 8 September 2026
+# Original-game comparison â€” 8 September 2026
+
+**Current status:** See [fidelity-status.md](fidelity-status.md) for current implementation and unresolved requirements. This file is a chronological research log; early implementation claims below are superseded by later entries.
 
 **Timing correction:** the earlier audit entries that assume 50 simulation ticks/second are superseded by the final match-clock audit below. Default Amiga gameplay runs at 25 ticks/second, with each tick waiting for two PAL video frames.
 
@@ -11,7 +13,7 @@ Reference material inspected:
 
 The throw routine waits for animation index 4 and then checks the held fire bit. Both low and high throws use velocity table 8. This remake now starts a visible wind-up on press, keeps the player planted, and launches automatically after 160 ms. Releasing during that interval produces a low throw; holding produces a lob. Both start at 24 world units/second. These world-unit values and the 160 ms duration are tuning choices, not a claim of cycle-exact emulation. A short input pulse between network ticks still produces a low throw. Eight-way human movement has equal axial and diagonal speed.
 
-The supplied goal check accepts transverse coordinates 272–368 on a court bounded by 32–608. That is one sixth of the court width. The goal half-width is now 1.85 world units instead of 3.8; geometry and keeper positioning match it.
+The supplied goal check accepts transverse coordinates 272â€“368 on a court bounded by 32â€“608. That is one sixth of the court width. The goal half-width is now 1.85 world units instead of 3.8; geometry and keeper positioning match it.
 
 AI outlet passing and low-shot keeper slides reduce the previous tendency to simply carry the ball toward goal and throw into pressure. Outlet selection is a new heuristic; it is not a port of the original AI.
 
@@ -61,7 +63,7 @@ Binary snapshot version 4 now includes all eight current attributes per player. 
 
 ## Fidelity audit: movement tables
 
-The Amiga `direction_to_velocity` tables at 0x7812–0x7912 use full integer velocity on both diagonal axes. The previous equal-magnitude diagonal normalization was incorrect and has been removed for players. Human and AI movement now select one of eight table directions. `preconfigure_player_move` at 0x103f4 starts at level 4, increments above speed 140 and again above 200, then adds one level when not holding the ball. Sliding starts at 5 and jumping at 4, with strict thresholds 140/170/200; the qualifying goalkeeper block uses level 8. Current timing still integrates at 60 Hz, with velocity conversion from the reference 50 Hz match clock and court width: 50 * 22.4 / 576 world units per table step per second. This preserves distance-per-second but does not yet reproduce the original frame quantization. Court length/projection reconciliation remains outstanding.
+The Amiga `direction_to_velocity` tables at 0x7812â€“0x7912 use full integer velocity on both diagonal axes. The previous equal-magnitude diagonal normalization was incorrect and has been removed for players. Human and AI movement now select one of eight table directions. `preconfigure_player_move` at 0x103f4 starts at level 4, increments above speed 140 and again above 200, then adds one level when not holding the ball. Sliding starts at 5 and jumping at 4, with strict thresholds 140/170/200; the qualifying goalkeeper block uses level 8. Current timing still integrates at 60 Hz, with velocity conversion from the reference 50 Hz match clock and court width: 50 * 22.4 / 576 world units per table step per second. This preserves distance-per-second but does not yet reproduce the original frame quantization. Court length/projection reconciliation remains outstanding.
 
 Movement now reads the actual speed attribute, without health-percentage scaling or extra percentage equipment/power factors. Thus Slow/Weaken set a fast athlete back to baseline; they do not halve the movement of an athlete who already has speed 100. Boundary tests cover every transition, carrying, sliding, jumping, goalkeeper block and power expiry. Previous tests asserting equal diagonal speed or fixed percentage slowdowns were corrected to match the disassembly.
 
@@ -81,13 +83,13 @@ Go and JavaScript regression tests cover the exact slowdown frame sequence, both
 
 `Entity.MoveAndHandleWallsAndBounce` reverses a ball's relevant velocity component without reducing its magnitude; longitudinal rebounds also subtract floor(timer/2) from the sustain timer. Removed the invented 0.92 rebound multiplier and implemented that timer adjustment. Collision positioning still uses continuous mirrored overshoot rather than the reference frame's clamp-then-move sequence, so exact corner/contact timing remains outstanding.
 
-The Amiga `step_warp` at 0xe072–0xe116 places the ball on the opposite boundary (discarding overshoot), reloads direction-to-velocity table 8, and resets sustain from the last thrower's current throw attribute. Added internal direction state so aftertouch drift is distinguishable from nominal throw direction. The Amiga-only code at 0xe0fc preserves transverse drift when nominal direction is straight up/downfield; this differs from the supplied C# port, which always reloads both components. Both simulations now implement the Amiga exception. Current warp entrance dimensions and the world-height approximation still require the wider field/vertical-animation audit.
+The Amiga `step_warp` at 0xe072â€“0xe116 places the ball on the opposite boundary (discarding overshoot), reloads direction-to-velocity table 8, and resets sustain from the last thrower's current throw attribute. Added internal direction state so aftertouch drift is distinguishable from nominal throw direction. The Amiga-only code at 0xe0fc preserves transverse drift when nominal direction is straight up/downfield; this differs from the supplied C# port, which always reloads both components. Both simulations now implement the Amiga exception. Current warp entrance dimensions and the world-height approximation still require the wider field/vertical-animation audit.
 
 Tests cover velocity magnitude, reflected nominal direction, odd sustain timer rounding, both warp exit walls, fresh sustain and retained transverse drift. All 38 JavaScript tests pass. These corrections do not establish full trajectory parity: vertical flight, exact collision positioning, special domes/electro-bounces, aftertouch and multiplier traversal still need work.
 
 ## Fidelity audit: release steering
 
-Amiga `throwing_action_fn` at 0x10882–0x108d0 applies a one-time controller adjustment at release. If the transverse velocity is zero, left/right input sets it to -4/+4; otherwise, if longitudinal velocity is zero, up/down input sets it to -4/+4. No adjustment applies to diagonal throws. Both low and high throws use this branch. The ball's nominal direction remains unchanged, which matters for warp drift preservation.
+Amiga `throwing_action_fn` at 0x10882â€“0x108d0 applies a one-time controller adjustment at release. If the transverse velocity is zero, left/right input sets it to -4/+4; otherwise, if longitudinal velocity is zero, up/down input sets it to -4/+4. No adjustment applies to diagonal throws. Both low and high throws use this branch. The ball's nominal direction remains unchanged, which matters for warp drift preservation.
 
 Both simulations now sample release input at the end of wind-up and apply the four-unit perpendicular component, converted with the reference velocity scale. Removed the invented 0.45-second continuous steering window. Immediate lob input uses the same adjustment. AI currently supplies no release adjustment, consistent with the current AI's lack of a original input sequence; that AI remains to be ported. README controls now describe the implemented release timing accurately.
 
@@ -111,7 +113,7 @@ Regression tests cover both halves, repeatable banks, no early/double payout, a 
 
 ## Fidelity audit: frame synchronization and shared match clock
 
-`match_tick` at 0xd064–0xd06e waits until `frame_timer` reaches `frames_per_tick` (default 2), then resets that video-frame counter. This proves a default simulation rate of 25 ticks/second on 50 Hz PAL output. My earlier conversion treated each simulation iteration as one video frame and was wrong. Corrected movement/throw velocity scaling to 25 * 22.4 / 576, and changed flight/slowdown accumulators to 25 Hz. The frame-index sequences remain unchanged: the lob now lands at 48/25=1.92 seconds, and throw=100 first slows at 9/25=0.36 seconds. The independent C# remake's UI timer is 1000/31 ms, so it should not override the Amiga timing evidence.
+`match_tick` at 0xd064â€“0xd06e waits until `frame_timer` reaches `frames_per_tick` (default 2), then resets that video-frame counter. This proves a default simulation rate of 25 ticks/second on 50 Hz PAL output. My earlier conversion treated each simulation iteration as one video frame and was wrong. Corrected movement/throw velocity scaling to 25 * 22.4 / 576, and changed flight/slowdown accumulators to 25 Hz. The frame-index sequences remain unchanged: the lob now lands at 48/25=1.92 seconds, and throw=100 first slows at 9/25=0.36 seconds. The independent C# remake's UI timer is 1000/31 ms, so it should not override the Amiga timing evidence.
 
 `update_match_time` subtracts two from its 50-count clock each simulation tick. Therefore its pulse occurs once per real second, not every half second. Replaced the star-only pulse with a shared match clock: completed banks pay first, remaining match time decreases only while play is not stopped, and temporary powers decrement even during medical/goal stoppages. Attribute backups restore on the expiry pulse. Removed continuous match-time/power decrements; power lifetimes are quantized to the global second phase as in the original. A complete bank at the final second is paid before halftime clears the field. Updated tests that previously encoded the incorrect cadence.
 
@@ -311,9 +313,9 @@ All 99 JavaScript tests, Go tests/vet and the production build pass. Paired test
 ### Jump selection: speed-dependent reach
 
 The automatic jump decision now follows `handle_user_input` at Amiga
-0x10c36–0x10c68: the ball must be free, outside a multiplier loop, above
+0x10c36â€“0x10c68: the ball must be free, outside a multiplier loop, above
 flight stage 2, and within six times the speed-dependent sustain value.
-The 0x022a table ranges from 8 to 12, giving an inclusive reach of 48–72
+The 0x022a table ranges from 8 to 12, giving an inclusive reach of 48â€“72
 original terrain units. Both simulations use the cached pre-movement distance.
 The explicit tackle control remains an override. The launch drop still uses
 its existing height fallback because it does not yet use original ball sprites.
@@ -331,8 +333,8 @@ before animation execution. `complete_action_fn` jumps to slide index 15
 when the current index reaches sustain minus one. `jumping_action_fn`
 jumps to index 18 at sustain plus two, leaving two landing frames.
 Consequently the next input opportunity is sustain frames after starting
-a slide and sustain plus four frames after starting a jump: 0.32–0.48 s
-and 0.48–0.64 s at 25 Hz. Both simulations now use these durations, with
+a slide and sustain plus four frames after starting a jump: 0.32â€“0.48 s
+and 0.48â€“0.64 s at 25 Hz. Both simulations now use these durations, with
 no additional 0.85-second cooldown. Tiny floating-point remainders are
 cleared so an action can restart on the intended tick. Busy jumps retain
 their direction. The visual height returns to ground for the final two
@@ -380,7 +382,7 @@ handling and standing-catch animations still need further comparison.
 The original throw animation at Amiga 0x7076 has eight sprite entries followed
 by 0xfffd. `sub_F078` releases at opcode index four and samples the current
 button value for low/high flight, without remembering earlier releases.
-The regular human throw now stays held through indices 0–3, releases at
+The regular human throw now stays held through indices 0â€“3, releases at
 index 4, and permits another action at index 8. Previously it released one
 25 Hz tick early and restarted a full eight-frame recovery at release.
 Release now leaves only four recovery frames. Releasing and repressing the
@@ -599,28 +601,28 @@ of the selected teammate remain unported.
 
 ### Selected AI ball prediction
 
-The selected field player now uses `target_predicted_position` (Amiga 0x10aaa) when pursuing the ball. Table 0x020a specifies one tick of velocity for intelligence 100–149, two for 150–199, and four for 200–255. Coordinates and velocities are converted to original integer terrain units before prediction. The target reflects once at each axis boundary (terrain X 32/608 and Y 32/1120), including simultaneous corner reflections. This replaces the fixed 0.15-second lead and separate gear-21 override in both simulations. Tests cover intelligence boundaries, corner reflections and stationary wall targets; reaction fixtures now use integer terrain coordinates.
+The selected field player now uses `target_predicted_position` (Amiga 0x10aaa) when pursuing the ball. Table 0x020a specifies one tick of velocity for intelligence 100â€“149, two for 150â€“199, and four for 200â€“255. Coordinates and velocities are converted to original integer terrain units before prediction. The target reflects once at each axis boundary (terrain X 32/608 and Y 32/1120), including simultaneous corner reflections. This replaces the fixed 0.15-second lead and separate gear-21 override in both simulations. Tests cover intelligence boundaries, corner reflections and stationary wall targets; reaction fixtures now use integer terrain coordinates.
 
 This ports the prediction used by the current ball-pursuit branch. Original selected-player target selection between opponents, items and the ball, along with slide/jump decisions and screen visibility rules, still needs porting. It does not establish full AI parity.
 
 
 ### Selected AI close-contact actions
 
-`handle_local_interaction_ai` (Amiga 0xff3a region, dispatch at 0xffa2–0xffba; WIP `sub_E854`) distinguishes the selected player from supporting players: selected attackers call `active_player_slide_or_jump`, while supporting attackers punch. Both simulations now run this close-contact decision for selected non-carriers too. Selected attackers aim at the opponent position predicted from its velocity and the attacker intelligence, then choose slide or jump using the existing original ball-stage, possession, multiplier and speed-dependent range checks. Avoidance retains priority over the remaining generic ball-action heuristic. Supporting punches continue to aim at the current position. Coincident avoidance now uses the initial team direction, matching `sub_EB38`.
+`handle_local_interaction_ai` (Amiga 0xff3a region, dispatch at 0xffa2â€“0xffba; WIP `sub_E854`) distinguishes the selected player from supporting players: selected attackers call `active_player_slide_or_jump`, while supporting attackers punch. Both simulations now run this close-contact decision for selected non-carriers too. Selected attackers aim at the opponent position predicted from its velocity and the attacker intelligence, then choose slide or jump using the existing original ball-stage, possession, multiplier and speed-dependent range checks. Avoidance retains priority over the remaining generic ball-action heuristic. Supporting punches continue to aim at the current position. Coincident avoidance now uses the initial team direction, matching `sub_EB38`.
 
 Tests exercise moving-opponent prediction, supporting punch direction, coincident avoidance and simulation-level selected slide/high-ball jump initiation. Remaining gaps include offscreen eligibility, selected teammate avoidance, exact zero-direction jump motion, and the non-contact selected-player decision tree. Existing procedural slide/jump cues are emitted for these actions; this change adds no audio assets.
 
 
 ### Zero-direction jumps
 
-Amiga `slide_or_jump_at_target` at 0x100c4–0x1010a selects the zero-velocity table when the predicted target has no direction, retaining facing. Both simulations now preserve this distinction through an internal stationary-jump flag. A coincident slide still falls back to the team initial direction. Human jumps without directional input also retain zero velocity, as in WIP `sub_F47E`, which keeps the movement velocity when selecting the jump animation. The flag is set anew for each jump and affects only action 2, so walking resumes normally afterward. Tests verify a full stationary human jump despite midair movement input, facing preservation, movement after recovery, and coincident selected-AI target direction. Audio continues to use the existing launch and landing events.
+Amiga `slide_or_jump_at_target` at 0x100c4â€“0x1010a selects the zero-velocity table when the predicted target has no direction, retaining facing. Both simulations now preserve this distinction through an internal stationary-jump flag. A coincident slide still falls back to the team initial direction. Human jumps without directional input also retain zero velocity, as in WIP `sub_F47E`, which keeps the movement velocity when selecting the jump animation. The flag is set anew for each jump and affects only action 2, so walking resumes normally afterward. Tests verify a full stationary human jump despite midair movement input, facing preservation, movement after recovery, and coincident selected-AI target direction. Audio continues to use the existing launch and landing events.
 
 The original human moving-jump velocity selection and the full selected-player AI decision tree still need further comparison; this change does not prove full gameplay equivalence.
 
 
 ### Human and AI jump launch velocities
 
-Amiga `handle_user_input` configures standing or running velocity at 0x10bc8/0x10bea. The jump branch (0x10c6c–0x10c92) replaces the animation without changing the velocity-table pointer. Human moving jumps therefore launch at running levels 5/6/7, with strict speed thresholds 140 and 200. AI jumps continue using levels 4/5/6/7 with thresholds 140, 170 and 200. Both simulations now capture horizontal speed at launch rather than recalculating it from current stats and possession every airborne tick. Stationary jumps remain zero-speed.
+Amiga `handle_user_input` configures standing or running velocity at 0x10bc8/0x10bea. The jump branch (0x10c6câ€“0x10c92) replaces the animation without changing the velocity-table pointer. Human moving jumps therefore launch at running levels 5/6/7, with strict speed thresholds 140 and 200. AI jumps continue using levels 4/5/6/7 with thresholds 140, 170 and 200. Both simulations now capture horizontal speed at launch rather than recalculating it from current stats and possession every airborne tick. Stationary jumps remain zero-speed.
 
 Simulation tests cover both sides of the human speed thresholds, continued direction despite opposite input, and retained launch velocity after a stat change. Existing AI action tests and movement-table tests remain green. Exact action timing and visuals under midair stat changes still need comparison; this entry establishes launch velocity only.
 
@@ -634,7 +636,7 @@ Regression tests cover bonus-plus-landing, injury-plus-impact/punch, cursor dedu
 
 ### Carried ball follows jumping carrier
 
-WIP `Match` lines 485–497 copy the carrier terrain position and velocity to the held ball, then apply offsets from the current player sprite. Both simulations now give the held ball the carrier movement velocity instead of zero, so the existing AI position prediction can account for a moving carrier. The 3D ball height follows the player jump height and returns to its normal carry height on landing. This height is an adaptation to the current Blender player and smooth jump curve; it does not claim a direct port of the original per-sprite hand-offset tables.
+WIP `Match` lines 485â€“497 copy the carrier terrain position and velocity to the held ball, then apply offsets from the current player sprite. Both simulations now give the held ball the carrier movement velocity instead of zero, so the existing AI position prediction can account for a moving carrier. The 3D ball height follows the player jump height and returns to its normal carry height on landing. This height is an adaptation to the current Blender player and smooth jump curve; it does not claim a direct port of the original per-sprite hand-offset tables.
 
 Simulation tests verify elevated carry height during ascent and apex, normal height on landing, preserved ownership, shared horizontal velocity and zero velocity after stopping. All 132 JavaScript tests, Go tests, Go vet and the production build pass. Original per-frame carry offsets and exact visual jump timing remain pending.
 
@@ -659,7 +661,7 @@ This implements the no-item visible-player branch. Pickup target selection, offs
 
 Both simulations now retain the original logical viewport, initialized at terrain (160,484). After each simulation step it follows the carrier or free ball with the WIP `CenterScreenOnEntity` integer rules: abs(delta)/8 + 1 capped at 16, horizontal movement suppressed below speed 2 during play, vertical movement allowed at speed 1, and scroll limits (320,968). Visibility uses inclusive 320 by 184 bounds; selected field-player pursuit uses the original 16-unit inset. This logical viewport controls the new AI branch and is independent of the wider 3D browser camera. Other AI/collision visibility checks have not yet been migrated. Presentation and medical camera targets still need separate porting.
 
-Selected pursuit now checks visible, active pickups in original order: token 1, token 2, equipment, coins 1–4 (current slots 0,1,6,2,3,4,5). Coincident candidates are excluded because the original empty blocked-direction masks reject zero direction. The first eligible candidate is used only when its distance to the ball is no greater than the player ball distance; failure does not retry lower-priority pickups. Offscreen selected field players follow the ball without attacking or seeking pickups. Pickup placement/respawn and per-sprite origin offsets remain separate fidelity gaps.
+Selected pursuit now checks visible, active pickups in original order: token 1, token 2, equipment, coins 1â€“4 (current slots 0,1,6,2,3,4,5). Coincident candidates are excluded because the original empty blocked-direction masks reject zero direction. The first eligible candidate is used only when its distance to the ball is no greater than the player ball distance; failure does not retry lower-priority pickups. Offscreen selected field players follow the ball without attacking or seeking pickups. Pickup placement/respawn and per-sprite origin offsets remain separate fidelity gaps.
 
 Tests cover viewport dead zone, scroll cap, limits, inclusive visibility boundaries, pickup priority, offscreen rejection and first-candidate distance failure. All 136 JavaScript tests, Go tests, Go vet and the production build pass.
 
@@ -703,7 +705,7 @@ All 141 JavaScript tests, Go tests, Go vet and the production build pass. The lo
 
 ### Selected keeper immediate actions
 
-The first branches of Amiga `active_goalie_no_ball_ai` (0xfcf4–0xfd60) now drive selected keeper actions in both simulations. Against a free ball or opposing carrier, a visible keeper starts slide/jump-at-target within eight sustain units (inclusive), using the keeper intelligence prediction constrained by its zone. Friendly possession bypasses this branch. Outside action reach, a stationary target with half-aggression greater than the existing decision random byte is approached within the keeper zone. The old generic fixed-distance keeper attack heuristic was removed.
+The first branches of Amiga `active_goalie_no_ball_ai` (0xfcf4â€“0xfd60) now drive selected keeper actions in both simulations. Against a free ball or opposing carrier, a visible keeper starts slide/jump-at-target within eight sustain units (inclusive), using the keeper intelligence prediction constrained by its zone. Friendly possession bypasses this branch. Outside action reach, a stationary target with half-aggression greater than the existing decision random byte is approached within the keeper zone. The old generic fixed-distance keeper attack heuristic was removed.
 
 Two WIP differences were resolved against the Amiga instructions: 0xfd4c compares the stored random byte rather than drawing another; 0xfd54/0xfd58 load the target entity position rather than the keeper position. Tests cover reach 64/65 and 96/97, aggression equality, teammate possession and simulation-level keeper action initiation. All 143 JavaScript tests, Go tests, Go vet and the build pass.
 
@@ -712,7 +714,7 @@ The remaining selected-keeper interception/positioning branches (0xfd60 onward) 
 
 ### Selected keeper interception positioning
 
-The remaining Amiga `active_goalie_no_ball_ai` positioning branches (0xfd60–0xfece) replace the fixed selected-keeper goal position. Shared keeper prediction feeds distinct selected/unselected interception thresholds. Selected positioning uses the goal back line at terrain Y 32/1120, averages toward that line, averages lateral intercepts once for released balls and an additional time for relevant held-ball directions, then clamps to the keeper zone. The asymmetric right-side comparison at 0xfd9e–0xfdb2 is retained literally rather than symmetrized.
+The remaining Amiga `active_goalie_no_ball_ai` positioning branches (0xfd60â€“0xfece) replace the fixed selected-keeper goal position. Shared keeper prediction feeds distinct selected/unselected interception thresholds. Selected positioning uses the goal back line at terrain Y 32/1120, averages toward that line, averages lateral intercepts once for released balls and an additional time for relevant held-ball directions, then clamps to the keeper zone. The asymmetric right-side comparison at 0xfd9eâ€“0xfdb2 is retained literally rather than symmetrized.
 
 Coordinate fixtures cover left/right approaches, the asymmetric branch, central distant and straight shots, diagonal free and held balls, zone clamping, and swapped ends. Existing unselected keeper fixtures remain unchanged and pass. All 144 JavaScript tests, Go tests, Go vet and the production build pass. The selected keeper no-ball positioning no longer uses the fixed -19.5 world-X fallback. Keeper carrier passing/throw decisions remain part of the broader unfinished AI port.
 
@@ -1774,9 +1776,9 @@ spinning case has been reproduced or resolved in a live match.
 ### Zap activation range
 
 `powerup_zap` checks the opponent offscreen flag before applying damage
-(0x11a20–0x11a26); the WIP `Token.Init_ZapTeam` has the same exclusion.
-`update_offscreen_bit` (0xda5e–0xda98) uses inclusive player-center bounds
-of 0–320 horizontally and 0–184 vertically relative to the logical view.
+(0x11a20â€“0x11a26); the WIP `Token.Init_ZapTeam` has the same exclusion.
+`update_offscreen_bit` (0xda5eâ€“0xda98) uses inclusive player-center bounds
+of 0â€“320 horizontally and 0â€“184 vertically relative to the logical view.
 Both simulations now apply that boundary before Zap damage or ball release.
 
 The shared ball-following logical view determines gameplay range; modern browser
@@ -1794,7 +1796,7 @@ All 221 JavaScript tests, Go tests, Go vet and the production build pass.
 
 The full Amiga `do_tackle` routine plays sound 0x06 at 0x10494 before
 rolling success at 0x104aa. A failed contact therefore still has audible feedback.
-After a successful possession transfer, 0x10576–0x105ae plays the same
+After a successful possession transfer, 0x10576â€“0x105ae plays the same
 team-dependent 0x28/0x29 signal used for interceptions.
 
 Both simulations now emit contact event 29 before the roll, then the existing
@@ -1819,10 +1821,10 @@ implementation and source-based tests.
 
 ### Falling counter-contact
 
-Amiga `do_tackle` (0x104ea–0x1050e) retains an unresolved slide, keeper slide
+Amiga `do_tackle` (0x104eaâ€“0x1050e) retains an unresolved slide, keeper slide
 or punch callback on a victim instead of always installing `noop`. A falling
-attacker reverses the impact direction (0x1051a–0x1052a). When the next victim
-has the ball, 0x10554–0x10562 clears possession without taking ownership or
+attacker reverses the impact direction (0x1051aâ€“0x1052a). When the next victim
+has the ball, 0x10554â€“0x10562 clears possession without taking ownership or
 applying a new throw impulse.
 
 The browser and Go simulations now retain that pending contact separately from

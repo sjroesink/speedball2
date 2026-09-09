@@ -1,4 +1,4 @@
-# Speedball — Neon League
+# Speedball â€” Neon League
 
 A browser sports game inspired by Speedball 2, with original Blender assets, Three.js rendering and an authoritative Go server using WebTransport / HTTP/3 / QUIC. There is no WebSocket fallback.
 
@@ -104,7 +104,7 @@ npm run build
 
 Tests cover actions, throws, catches, collisions, scoring, power effects and expiry, injuries and substitutes, equipment, warp-gates, charged balls, goal locks, audio lifecycle and packet size. JavaScript tests decode an actual Go-generated protocol-v8 snapshot. Two local browser clients are used for WebTransport checks.
 
-This is an exhibition-match adaptation. Career/league management, transfers, persistent injuries between matches, ranked matchmaking, accounts, reconnect and touch controls are not included. Attribute values, damage, pickup timing and AI are tuned for this remake rather than emulated cycle for cycle. See [original-game comparison](docs/original-comparison.md) for source findings and differences.
+This is an exhibition-match adaptation. Career/league management, transfers, persistent injuries between matches, ranked matchmaking, accounts, reconnect and touch controls are not included. Match mechanics now use source-derived attribute, damage, pickup, ball-flight and AI rules, but full original-game parity is not established. Physical carried-ball offsets and other unresolved requirements are tracked in [current fidelity status](docs/fidelity-status.md); [original-game comparison](docs/original-comparison.md) preserves the chronological source research.
 
 References: [webtransport-go](https://quic-go.net/docs/webtransport/), [WebTransport](https://developer.mozilla.org/en-US/docs/Web/API/WebTransport/WebTransport), [original coaching manual](https://retrogames.biz/games/c64/speedball-2/), [Amiga reverse engineering](https://github.com/simon-frankau/speedball2-re-amiga).
 
