@@ -19,7 +19,7 @@ test("stationary action punches for four frames without moving", () => {
   assert.equal(p.x, 4);
   for (let n = 1; n < 4; n++) {
     step(s, simulationStep, { tackle: true, x: 1 }, [true, true]);
-    assert.equal(p.action, 7);
+    assert.equal(p.action, n === 3 ? 0 : 7);
     assert.equal(p.x, 4);
   }
   step(s, simulationStep, { tackle: true, x: 1 }, [true, true]);

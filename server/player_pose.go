@@ -3,7 +3,14 @@ package main
 // The fall -5 terminator resolves movement and injury in the animation pass.
 func (s *State) advancePlayerPose(i int, dt float64) bool {
 	p := &s.Players[i]
-	if !advancePhysicalPose(p, i, s.Period, dt) {
+	control := advancePhysicalPose(p, i, s.Period, dt)
+	// -3 clears action flags while retaining velocity and animation cursor.
+	if control == -3 {
+		p.Action, p.ActionTime = 0, 0
+		p.jumping = false
+		return false
+	}
+	if control != -5 || p.Action != 4 {
 		return false
 	}
 	p.Stun, p.ActionTime = 0, 0

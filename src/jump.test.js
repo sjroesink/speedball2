@@ -112,7 +112,7 @@ test("slide releases control on original sustain frame without extra cooldown", 
     assert.equal(p.actionTime, frames / 25);
     for (let i = 1; i < frames; i++) {
       step(s, simulationStep, { tackleId: 1, x: 1 });
-      assert.equal(p.action, 1, `speed ${speed}, frame ${i}`);
+      assert.equal(p.action, i === frames - 1 ? 0 : 1, `speed ${speed}, frame ${i}`);
     }
     step(s, simulationStep, { tackleId: 1, x: 1 });
     assert.equal(p.action, 0);

@@ -41,7 +41,7 @@ Matches fill the browser viewport and request native fullscreen. The overhead ca
 | Manic | Boosts both teams for six seconds |
 | Slow | Slows opponents for six seconds |
 | Ball magnet | Gives the collector possession immediately |
-| Ball transport | Gives possession to the leading available teammate |
+| Ball transport | Gives possession to roster slot eight if that player is available |
 | Goal lock | Blocks the collecting team's goal for six seconds |
 | Shield | Protects the collecting team from tackles, zap and electroballs for six seconds |
 | Full energy | Restores the collector's energy |
@@ -59,7 +59,7 @@ The HUD displays energy, equipment, reserves, credits, active effects and remain
 
 ## Blender assets
 
-`assets/build.py` authors all arena, player, ball, pickup, gate, target, impact and medic meshes in Blender 5.2. No original game sprites or disk images are shipped. Editable sources are in `assets/*.blend`; exports are in `public/assets/*.glb`. Players include Run, Slide, Jump, Throw, Hit, Catch and Punch animation clips. `speedball.blend` contains the arena/player composition; `pickups.blend` and `medic.blend` contain the additional models.
+`assets/build.py` authors all arena, player, ball, pickup, gate, target, impact and medic meshes in Blender 5.2. No original game sprites or disk images are shipped. Editable sources are in `assets/*.blend`; exports are in `public/assets/*.glb`. Players include Run, Slide, Jump, Throw, Hit, Knockout, Catch and Punch animation clips. `speedball.blend` contains the arena/player composition; `pickups.blend` and `medic.blend` contain the additional models.
 
 ```powershell
 npm run assets

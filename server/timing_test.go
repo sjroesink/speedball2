@@ -68,8 +68,12 @@ func TestThrowAnimationIndices(t *testing.T) {
 		}
 		for index := 5; index < 8; index++ {
 			s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})
-			if p.Action != 3 {
-				t.Fatal("early recovery", index)
+			expectedAction := 3
+			if index == 7 {
+				expectedAction = 0
+			}
+			if p.Action != expectedAction || p.physicalFrame != index {
+				t.Fatal("completion frame", index)
 			}
 		}
 		s.simulate(simulationStep, [2]Input{}, [2]bool{true, true})

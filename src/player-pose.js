@@ -5,7 +5,15 @@ import { startInjury } from "./features.js";
 // the player's animation pass, rather than waiting for the next timer tick.
 export function advancePlayerPose(s, i, dt) {
   const p = s.players[i];
-  if (!advancePhysicalPose(p, i, s.period, dt)) return false;
+  const control = advancePhysicalPose(p, i, s.period, dt);
+  // -3 clears action flags after the final displayed frame (0x10d9a).
+  // It retains velocity and cursor for the following movement callback.
+  if (control === -3) {
+    p.action = p.actionTime = 0;
+    p.jumping = false;
+    return false;
+  }
+  if (control !== -5 || p.action !== 4) return false;
   p.stun = p.actionTime = 0;
   p.moveX = p.moveZ = p.fallX = p.fallZ = 0;
   p.fallAttack = p.fallAttackTime = 0;

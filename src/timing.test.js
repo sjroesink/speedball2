@@ -24,7 +24,7 @@ test("released action counter survives sampling at 25 Hz", () => {
   assert.equal(s.events.filter((e) => e.kind === 3).length, 1);
 });
 
-test("throw releases at index four, samples current button and finishes at index eight", () => {
+test("throw releases at index four, samples current button and clears action after displaying index seven", () => {
   for (const high of [false, true]) {
     const s = initial();
     s.logicalView = [160, 380];
@@ -42,7 +42,8 @@ test("throw releases at index four, samples current button and finishes at index
     assert.equal(s.players[7].actionTime, 4 / 25);
     for (let index = 5; index < 8; index++) {
       step(s, simulationStep, {}, [true, true]);
-      assert.equal(s.players[7].action, 3);
+      assert.equal(s.players[7].action, index === 7 ? 0 : 3);
+      assert.equal(s.players[7].physicalFrame, index);
     }
     step(s, simulationStep, {}, [true, true]);
     assert.equal(s.players[7].action, 0);

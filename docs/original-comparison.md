@@ -2879,3 +2879,16 @@ snapshots. Three releases/windups/cue dispatches matched. Four recovery seeks
 had zero normalized phase error; held-grip error was zero. Minimum energy was
 93, so this network sample did not exercise fatal injury or medical transport.
 The medical presentation evidence above is local simulation, not network proof.
+
+
+## Action -3 completion and test checkpoint (2026-09-09)
+
+The physical pose helper now returns the encountered control opcode. The
+player wrapper handles -3 at 0x10d9a–0x10ddc: clear the action/jumping flags
+after the last displayed frame, retaining velocity and cursor for the following
+movement callback. The old timer-only completion left those flags set through
+that final frame. Updated punch, slide and throw regressions in both languages
+to assert the source transition; throw release remains at index four and the
+last displayed throw frame remains index seven. Complete callback equivalence
+is still unproven. All 264 JavaScript tests (including six 10,000-tick JS/Go
+traces), Go tests/vet and the production build pass.

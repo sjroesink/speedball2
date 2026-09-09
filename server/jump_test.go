@@ -131,8 +131,12 @@ func TestSlideDurationAndRecovery(t *testing.T) {
 		}
 		for i := 1; i < tc[1]; i++ {
 			s.simulate(simulationStep, inputs, [2]bool{true, false})
-			if p.Action != 1 {
-				t.Fatal("ended early", tc, i)
+			expected := 1
+			if i == tc[1]-1 {
+				expected = 0
+			}
+			if p.Action != expected {
+				t.Fatal("completion frame", tc, i)
 			}
 		}
 		s.simulate(simulationStep, inputs, [2]bool{true, false})

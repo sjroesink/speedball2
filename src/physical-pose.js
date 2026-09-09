@@ -93,7 +93,9 @@ export function advancePhysicalPose(p, i, period, dt) {
   p.poseKind = kind;
   p.poseRemaining = p.actionTime;
   p.fallPosePending = false;
-  return kind === 4 && index === frames.length - 1 && data.controls[group][direction] === -5;
+  return index === frames.length - 1
+    ? data.controls[group][keeper && kind === 0 ? (up ? 0 : 4) : direction]
+    : 0;
 }
 export function physicalBallOffset(p, b) {
   const ballSprite =

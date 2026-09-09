@@ -23,7 +23,11 @@ func TestStationaryPunch(t *testing.T) {
 	inputs := [2]Input{{Tackle: true, X: 1}, {}}
 	for n := 1; n < 4; n++ {
 		s.simulate(simulationStep, inputs, [2]bool{true, true})
-		if p.Action != 7 || p.X != 4 {
+		expected := 7
+		if n == 3 {
+			expected = 0
+		}
+		if p.Action != expected || p.X != 4 {
 			t.Fatal("punch busy")
 		}
 	}
